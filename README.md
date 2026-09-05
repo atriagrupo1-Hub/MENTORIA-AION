@@ -5,8 +5,33 @@ painel administrativo.
 
 ## Estado do repositório
 
-Em construção. O que existe hoje é o pacote de handoff versionado; o código de
-produção entra a seguir.
+As telas estão recriadas em React: área da aluna (Login, Início, Módulos, página
+do módulo, tela da aula, aula ao vivo, Presentes, Perfil) e painel
+administrativo (Alunas, Conteúdo, Presentes).
+
+Os dados ainda vêm de um adaptador local (`src/data/repositorio.ts`), que é o
+único arquivo que conhece a origem. O Supabase entra ali.
+
+```bash
+npm install
+npm run dev      # http://localhost:5173
+npm run build
+npm run lint     # checagem de tipos
+```
+
+Rotas: `/` login · `/inicio` · `/modulos` · `/modulo/:numero` ·
+`/aula/:modulo/:aula` · `/ao-vivo/:modulo` · `/presentes` · `/presente/:id` ·
+`/perfil` · `/admin` (senha do protótipo: `mentoria`).
+
+## Organização
+
+| Pasta | O que tem |
+|---|---|
+| `src/design/` | Tokens do item 3 do README do handoff: cores, paleta por módulo, tipografia |
+| `src/data/` | Catálogo transcrito do protótipo, tipos do modelo aprovado, adaptador de dados e estado |
+| `src/components/` | Peças compartilhadas: capa com fundo de reserva, barra, ícones em CSS, aviso |
+| `src/screens/` | Telas da aluna |
+| `src/admin/` | Painel administrativo |
 
 ## Arquitetura decidida
 

@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Base global do protótipo. O original usava `cqw` e `@container` porque
+ * simulava a largura do celular dentro de uma coluna de 402px; aqui vale
+ * `vw` e `@media`, com os mesmos pontos de quebra (640px e 560px).
+ */
+@layer base {
+  h1,
+  h2,
+  h3,
+  p,
+  span {
+    font-variant-numeric: lining-nums;
+    font-feature-settings: "lnum" 1;
+  }
+
+  html,
+  body {
+    margin: 0;
+    padding: 0;
+    background: #000000;
+    color: #f3ece1;
+    font-family: Lato, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: clip;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  a {
+    color: #e2c485;
+    text-decoration: none;
+  }
+
+  a:hover {
+    color: #f4e0b0;
+  }
+
+  button,
+  input,
+  textarea {
+    font-family: inherit;
+  }
+
+  ::selection {
+    background: rgba(212, 177, 112, 0.3);
+  }
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes softGlow {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.rise-in {
+  animation: riseIn 0.8s ease both;
+}
+
+.rise-in-lento {
+  animation: riseIn 0.9s ease both;
+}
+
+.rise-in-rapido {
+  animation: riseIn 0.7s ease both;
+}
+
+/* Barras de rolagem escondidas nas fileiras deslizáveis. */
+.sem-barra {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sem-barra::-webkit-scrollbar {
+  display: none;
+}
+
+/* Saída suave da tela da aula. */
+.tela-aula {
+  transition: opacity 0.28s ease;
+}
+
+.tela-aula[data-saindo="1"] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
