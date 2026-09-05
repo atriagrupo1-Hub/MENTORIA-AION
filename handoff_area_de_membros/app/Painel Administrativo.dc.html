@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Painel Administrativo — Caminho do Desbloqueio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #05070f; color: #f3ece1; font-family: Lato, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; overflow-x: clip; }
+  * { box-sizing: border-box; }
+  a { color: #e2c485; text-decoration: none; }
+  a:hover { color: #f4e0b0; }
+  button, input { font-family: inherit; }
+  @keyframes riseIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</helmet>
+
+<div style="min-height: 100vh; background: linear-gradient(180deg, rgba(157,117,54,.28) 0px, rgba(157,117,54,.08) 220px, rgba(5,7,15,0) 420px) no-repeat, #05070f;">
+
+  <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+    <div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 32px 18px;">
+      <form onSubmit="{{ onAdminLogin }}" style="width: 100%; max-width: 420px; padding: 28px 24px; background: linear-gradient(170deg, rgba(16,24,42,.94), rgba(6,9,18,.96)); border: 1px solid rgba(212,177,112,.2); border-radius: 20px; box-shadow: 0 40px 90px -50px rgba(212,177,112,.35); animation: riseIn .8s ease both;">
+        <p style="margin: 0 0 8px; text-align: center; font-size: 11px; letter-spacing: .3em; text-transform: uppercase; color: #f6efe3;">Mentoria</p>
+        <h1 style="margin: 0 0 4px; text-align: center; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 26px; font-weight: 600; letter-spacing: .08em; color: #e8cf9a;">PAINEL ADMINISTRATIVO</h1>
+        <p style="margin: 0 0 24px; text-align: center; font-size: 14px; color: rgba(243,236,225,.6);">Acesso restrito à equipe da mentoria.</p>
+
+        <label for="adm-key" style="display: block; margin-bottom: 8px; font-size: 12px; font-weight: 700; color: rgba(243,236,225,.75);">Senha de administrador</label>
+        <input id="adm-key" type="password" value="{{ keyField }}" onChange="{{ onKeyChange }}" placeholder="Digite a senha" style="width: 100%; height: 54px; padding: 0 16px; font-size: 15px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 12px; outline: none;" style-focus="border-color: #d4b170; box-shadow: 0 0 0 3px rgba(212,177,112,.16);" />
+
+        <sc-if value="{{ loginError }}" hint-placeholder-val="{{ false }}">
+          <p style="margin: 12px 0 0; font-size: 14px; color: #e6b8a0;">{{ loginError }}</p>
+        </sc-if>
+
+        <button type="submit" style="width: 100%; min-height: 54px; margin-top: 20px; font-size: 16px; font-weight: 700; color: #1a1408; background: linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f); border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">Entrar no painel</button>
+      </form>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isPanel }}" hint-placeholder-val="{{ false }}">
+    <div style="max-width: 1180px; margin: 0 auto; padding: 26px 20px 90px; animation: riseIn .7s ease both;">
+      <header style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 26px;">
+        <div style="flex: 1 1 240px;">
+          <p style="margin: 0 0 4px; font-size: 11px; letter-spacing: .28em; text-transform: uppercase; color: #a58a52;">Painel administrativo</p>
+          <h1 style="margin: 0; font-family: 'Cormorant Garamond', Georgia, serif; font-size: clamp(24px, 5cqw, 32px); font-weight: 600; color: #f6efe3;">{{ pageTitle }}</h1>
+        </div>
+        <span style="font-size: 14px; color: rgba(243,236,225,.6);">{{ pageSummary }}</span>
+        <button onClick="{{ adminLogout }}" style="min-height: 40px; padding: 0 16px; font-size: 14px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">Sair</button>
+      </header>
+
+      <div style="display: flex; gap: 10px; margin-bottom: 22px;">
+        <button onClick="{{ goAlunas }}" style="{{ alunasTabStyle }}">Alunas</button>
+        <button onClick="{{ goConteudo }}" style="{{ conteudoTabStyle }}">Conteúdo</button>
+      </div>
+
+      <sc-if value="{{ tabAlunas }}" hint-placeholder-val="{{ true }}">
+      <form onSubmit="{{ addStudent }}" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; padding: 16px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.1); border-radius: 14px;">
+        <input type="text" value="{{ newName }}" onChange="{{ onNewName }}" placeholder="Nome da aluna" aria-label="Nome da aluna" style="flex: 2 1 220px; min-height: 48px; padding: 0 16px; font-size: 15px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+        <input type="text" value="{{ newLogin }}" onChange="{{ onNewLogin }}" placeholder="Usuário de acesso" aria-label="Usuário de acesso" style="flex: 1 1 180px; min-height: 48px; padding: 0 16px; font-size: 15px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+        <button type="submit" style="flex: 0 0 auto; min-height: 48px; padding: 0 24px; font-size: 15px; font-weight: 700; color: #1a1408; background: linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f); border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">Cadastrar aluna</button>
+      </form>
+
+      <sc-if value="{{ noStudents }}" hint-placeholder-val="{{ false }}">
+        <p style="margin: 0 0 24px; padding: 22px; text-align: center; font-size: 15px; color: rgba(243,236,225,.5); background: rgba(255,255,255,.03); border: 1px dashed rgba(255,255,255,.14); border-radius: 14px;">Nenhuma aluna cadastrada ainda.</p>
+      </sc-if>
+
+      <div style="display: flex; flex-direction: column; gap: 12px;">
+        <sc-for list="{{ students }}" as="s" hint-placeholder-count="2">
+          <div style="padding: 16px; background: {{ s.cardBg }}; border: 1px solid {{ s.cardRing }}; border-radius: 16px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 12px;">
+              <span style="flex: 0 0 auto; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: linear-gradient(135deg, #d4b170, #8f7a45); color: #1a1408; font-weight: 700; font-size: 16px;">{{ s.initial }}</span>
+              <span style="flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+                <span style="font-size: 16px; font-weight: 700; color: #ffffff;">{{ s.name }}</span>
+                <span style="font-size: 13px; color: rgba(243,236,225,.55);">{{ s.login }} · {{ s.accessLabel }}</span>
+              </span>
+              <span style="flex: 0 0 auto; padding: 6px 12px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: {{ s.statusColor }}; border: 1px solid {{ s.statusColor }}; border-radius: 99px;">{{ s.statusLabel }}</span>
+              <span style="display: flex; gap: 8px;">
+                <button onClick="{{ s.toggleOpen }}" style="min-height: 38px; padding: 0 14px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">{{ s.openLabel }}</button>
+                <button onClick="{{ s.toggleBlock }}" style="min-height: 38px; padding: 0 14px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">{{ s.blockLabel }}</button>
+                <button onClick="{{ s.remove }}" style="min-height: 38px; padding: 0 14px; font-size: 13px; color: #e6a89a; background: rgba(255,255,255,.04); border: 1px solid rgba(230,168,154,.3); border-radius: 99px; cursor: pointer;" style-hover="border-color: #e6a89a; color: #f2c6ba;">{{ s.removeLabel }}</button>
+              </span>
+            </div>
+
+            <sc-if value="{{ s.open }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.1);">
+                <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #d4b170;">Progresso e comentários</p>
+                <sc-if value="{{ s.activity.empty }}" hint-placeholder-val="{{ true }}">
+                  <p style="margin: 0 0 18px; font-size: 14px; color: rgba(243,236,225,.5);">Nenhum registro de acesso desta aluna neste dispositivo.</p>
+                </sc-if>
+                <sc-if value="{{ s.activity.has }}" hint-placeholder-val="{{ false }}">
+                  <div style="margin-bottom: 18px;">
+                    <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 7px;">
+                      <span style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; color: #e8cf9a;">{{ s.activity.pctLabel }}</span>
+                      <span style="font-size: 13px; color: rgba(243,236,225,.6);">{{ s.activity.doneLabel }}</span>
+                    </div>
+                    <div style="height: 5px; border-radius: 99px; background: rgba(212,177,112,.16); overflow: hidden;">
+                      <div style="height: 100%; border-radius: 99px; background: linear-gradient(90deg, #b8934f, #f0dca8); width: {{ s.activity.pct }}%;"></div>
+                    </div>
+                    <p style="margin: 14px 0 6px; font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: rgba(243,236,225,.55);">{{ s.activity.commentsLabel }}</p>
+                    <sc-if value="{{ s.activity.noComments }}" hint-placeholder-val="{{ true }}">
+                      <p style="margin: 0; font-size: 13px; color: rgba(243,236,225,.45);">Nenhum comentário registrado.</p>
+                    </sc-if>
+                    <div style="display: flex; flex-direction: column;">
+                      <sc-for list="{{ s.activity.comments }}" as="c" hint-placeholder-count="0">
+                        <div style="padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.07);">
+                          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px;">
+                            <span style="font-size: 12px; color: rgba(243,236,225,.55);">{{ c.where }}</span>
+                            <span style="padding: 2px 7px; font-size: 11px; color: #e2c485; background: rgba(212,177,112,.14); border-radius: 5px;">{{ c.at }}</span>
+                            <span style="margin-left: auto; font-size: 11px; color: rgba(243,236,225,.35);">{{ c.date }}</span>
+                          </div>
+                          <p style="margin: 5px 0 0; font-size: 13px; line-height: 1.5; color: rgba(243,236,225,.85);">{{ c.text }}</p>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+                <p style="margin: 0 0 10px; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: #d4b170;">Conteúdo liberado</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
+                  <button onClick="{{ s.grantAll }}" style="min-height: 40px; padding: 0 16px; font-size: 13px; color: #1a1408; background: #d4b170; border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .88;">Liberar curso inteiro</button>
+                  <button onClick="{{ s.revokeAll }}" style="min-height: 40px; padding: 0 16px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">Remover tudo</button>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  <sc-for list="{{ s.modules }}" as="m" hint-placeholder-count="4">
+                    <div style="padding: 12px 14px; background: rgba(255,255,255,.03); border: 1px solid {{ m.ring }}; border-radius: 12px;">
+                      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+                        <button onClick="{{ m.toggleAll }}" aria-label="{{ m.checkLabel }}" style="flex: 0 0 auto; width: 26px; height: 26px; display: grid; place-items: center; font-size: 14px; color: {{ m.checkColor }}; background: {{ m.checkFill }}; border: 1px solid {{ m.checkRing }}; border-radius: 6px; cursor: pointer;">{{ m.checkGlyph }}</button>
+                        <span style="flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                          <span style="font-size: 14px; font-weight: 700; color: #ffffff;">Módulo {{ m.num }} — {{ m.title }}</span>
+                          <span style="font-size: 12px; color: rgba(243,236,225,.5);">{{ m.countLabel }}</span>
+                        </span>
+                        <button onClick="{{ m.toggleOpen }}" style="flex: 0 0 auto; min-height: 34px; padding: 0 12px; font-size: 12px; color: rgba(243,236,225,.75); background: none; border: 1px solid rgba(255,255,255,.14); border-radius: 99px; cursor: pointer;" style-hover="color: #f4e0b0; border-color: #d4b170;">{{ m.openLabel }}</button>
+                      </div>
+
+                      <sc-if value="{{ m.open }}" hint-placeholder-val="{{ false }}">
+                        <div style="display: flex; flex-direction: column; gap: 2px; margin: 10px 0 0; padding-left: 36px;">
+                          <sc-for list="{{ m.lessons }}" as="l" hint-placeholder-count="3">
+                            <button onClick="{{ l.toggle }}" style="display: flex; align-items: center; gap: 10px; padding: 9px 0; text-align: left; background: none; border: none; border-bottom: 1px solid rgba(255,255,255,.07); cursor: pointer;" style-hover="opacity: .8;">
+                              <span style="flex: 0 0 auto; width: 22px; height: 22px; display: grid; place-items: center; font-size: 12px; color: {{ l.checkColor }}; background: {{ l.checkFill }}; border: 1px solid {{ l.checkRing }}; border-radius: 5px;">{{ l.checkGlyph }}</span>
+                              <span style="flex: 1 1 auto; min-width: 0; font-size: 13px; color: {{ l.textColor }};">Aula {{ l.num }} — {{ l.title }}</span>
+                            </button>
+                          </sc-for>
+                        </div>
+                      </sc-if>
+                    </div>
+                  </sc-for>
+                </div>
+
+                <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.1);">
+                  <button onClick="{{ s.cancelAccess }}" style="min-height: 44px; padding: 0 20px; font-size: 14px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">Cancelar</button>
+                  <button onClick="{{ s.saveAccess }}" style="min-height: 44px; padding: 0 24px; font-size: 14px; font-weight: 700; color: {{ s.saveColor }}; background: {{ s.saveFill }}; border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">{{ s.saveLabel }}</button>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ tabConteudo }}" hint-placeholder-val="{{ false }}">
+        <div>
+          <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;">
+            <sc-for list="{{ subtabs }}" as="t" hint-placeholder-count="2">
+              <button onClick="{{ t.pick }}" style="{{ t.style }}">{{ t.name }}</button>
+            </sc-for>
+          </div>
+
+          <sc-if value="{{ subMentoria }}" hint-placeholder-val="{{ true }}">
+          <section style="padding: 16px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.1); border-radius: 18px;">
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+              <span style="flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+                <span style="font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: #a58a52;">Mentoria</span>
+                <span style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; color: #f6efe3;">Caminho do Desbloqueio</span>
+              </span>
+              <span style="font-size: 13px; color: rgba(243,236,225,.55);">{{ contentSummary }}</span>
+              <button onClick="{{ toggleContent }}" style="min-height: 40px; padding: 0 16px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">{{ contentToggleLabel }}</button>
+            </div>
+
+            <sc-if value="{{ contentOpen }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.1);">
+          <form onSubmit="{{ addModule }}" style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; padding: 16px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.1); border-radius: 14px;">
+            <input type="text" value="{{ newModule }}" onChange="{{ onNewModule }}" placeholder="Nome do novo módulo" aria-label="Nome do novo módulo" style="flex: 2 1 260px; min-height: 48px; padding: 0 16px; font-size: 15px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+            <button type="submit" style="flex: 0 0 auto; min-height: 48px; padding: 0 24px; font-size: 15px; font-weight: 700; color: #1a1408; background: linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f); border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">Adicionar módulo</button>
+          </form>
+
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <sc-for list="{{ contentModules }}" as="m" hint-placeholder-count="4">
+              <div style="padding: 16px; background: rgba(255,255,255,.03); border: 1px solid {{ m.ring }}; border-radius: 16px;">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+                  <span style="flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+                    <span style="font-size: 15px; font-weight: 700; color: #ffffff;">Módulo {{ m.num }} — {{ m.title }}</span>
+                    <span style="font-size: 12px; color: rgba(243,236,225,.5);">{{ m.countLabel }}</span>
+                  </span>
+                  <span style="flex: 0 0 auto; padding: 5px 11px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: {{ m.statusColor }}; border: 1px solid {{ m.statusColor }}; border-radius: 99px;">{{ m.statusLabel }}</span>
+                  <span style="display: flex; flex-wrap: wrap; gap: 8px;">
+                    <button onClick="{{ m.toggleEdit }}" style="min-height: 36px; padding: 0 13px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">{{ m.editLabel }}</button>
+                    <button onClick="{{ m.toggleAdd }}" style="min-height: 36px; padding: 0 13px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">{{ m.addLabel }}</button>
+                    <button onClick="{{ m.toggleBlock }}" style="min-height: 36px; padding: 0 13px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">{{ m.blockLabel }}</button>
+                    <button onClick="{{ m.remove }}" style="min-height: 36px; padding: 0 13px; font-size: 13px; color: #e6a89a; background: rgba(255,255,255,.04); border: 1px solid rgba(230,168,154,.3); border-radius: 99px; cursor: pointer;" style-hover="border-color: #e6a89a; color: #f2c6ba;">{{ m.removeLabel }}</button>
+                  </span>
+                </div>
+
+                <sc-if value="{{ m.editing }}" hint-placeholder-val="{{ false }}">
+                  <form onSubmit="{{ m.saveEdit }}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
+                    <input type="text" value="{{ editField }}" onChange="{{ onEditField }}" placeholder="Nome do módulo" aria-label="Nome do módulo" style="flex: 2 1 240px; min-height: 44px; padding: 0 14px; font-size: 14px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+                    <button type="submit" style="flex: 0 0 auto; min-height: 44px; padding: 0 20px; font-size: 14px; font-weight: 700; color: #1a1408; background: linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f); border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">Salvar nome</button>
+                      <button type="button" onClick="{{ m.toggleEdit }}" style="flex: 0 0 auto; min-height: 44px; padding: 0 18px; font-size: 14px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">Cancelar</button>
+                  </form>
+                </sc-if>
+
+                <sc-if value="{{ m.adding }}" hint-placeholder-val="{{ false }}">
+                  <form onSubmit="{{ m.submitLesson }}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
+                    <input type="text" value="{{ newLesson }}" onChange="{{ onNewLesson }}" placeholder="Nome da nova aula" aria-label="Nome da nova aula" style="flex: 2 1 240px; min-height: 44px; padding: 0 14px; font-size: 14px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+                    <button type="submit" style="flex: 0 0 auto; min-height: 44px; padding: 0 20px; font-size: 14px; font-weight: 700; color: #1a1408; background: linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f); border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">Salvar aula</button>
+                      <button type="button" onClick="{{ m.toggleAdd }}" style="flex: 0 0 auto; min-height: 44px; padding: 0 18px; font-size: 14px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">Cancelar</button>
+                  </form>
+                </sc-if>
+
+                <div style="display: flex; flex-direction: column; margin-top: 10px;">
+                  <sc-for list="{{ m.lessons }}" as="l" hint-placeholder-count="3">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.07);">
+                      <span style="flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                        <span style="font-size: 13px; color: {{ l.textColor }};">Aula {{ l.num }} — {{ l.title }}</span>
+                        <span style="font-size: 11px; color: rgba(243,236,225,.4);">{{ l.metaSummary }}</span>
+                      </span>
+                      <button onClick="{{ l.moveUp }}" aria-label="Mover para cima" style="width: 32px; height: 32px; display: grid; place-items: center; font-size: 14px; color: rgba(243,236,225,.7); background: none; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; cursor: pointer;" style-hover="color: #f4e0b0; border-color: #d4b170;">↑</button>
+                      <button onClick="{{ l.moveDown }}" aria-label="Mover para baixo" style="width: 32px; height: 32px; display: grid; place-items: center; font-size: 14px; color: rgba(243,236,225,.7); background: none; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; cursor: pointer;" style-hover="color: #f4e0b0; border-color: #d4b170;">↓</button>
+                      <button onClick="{{ l.toggleMeta }}" style="min-height: 32px; padding: 0 11px; font-size: 12px; color: #e2c485; background: none; border: 1px solid rgba(212,177,112,.4); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">{{ l.metaLabel }}</button>
+                      <button onClick="{{ l.toggleEdit }}" style="min-height: 32px; padding: 0 11px; font-size: 12px; color: rgba(243,236,225,.75); background: none; border: 1px solid rgba(255,255,255,.14); border-radius: 99px; cursor: pointer;" style-hover="color: #f4e0b0; border-color: #d4b170;">{{ l.editLabel }}</button>
+                      <button onClick="{{ l.toggleBlock }}" style="min-height: 32px; padding: 0 11px; font-size: 12px; color: rgba(243,236,225,.75); background: none; border: 1px solid rgba(255,255,255,.14); border-radius: 99px; cursor: pointer;" style-hover="color: #f4e0b0; border-color: #d4b170;">{{ l.blockLabel }}</button>
+                      <button onClick="{{ l.remove }}" style="min-height: 32px; padding: 0 11px; font-size: 12px; color: #e6a89a; background: none; border: 1px solid rgba(230,168,154,.28); border-radius: 99px; cursor: pointer;" style-hover="border-color: #e6a89a; color: #f2c6ba;">{{ l.removeLabel }}</button>
+                    </div>
+                    <sc-if value="{{ l.metaOpen }}" hint-placeholder-val="{{ false }}">
+                      <form onSubmit="{{ l.saveMeta }}" style="display: flex; flex-direction: column; gap: 8px; padding: 6px 0 14px;">
+                        <label style="font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: rgba(243,236,225,.6);">Link do vídeo (YouTube)</label>
+                        <input type="text" value="{{ metaVideo }}" onChange="{{ onMetaVideo }}" placeholder="https://www.youtube.com/watch?v=..." aria-label="Link do vídeo" style="min-height: 42px; padding: 0 14px; font-size: 13px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+                        <label style="font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: rgba(243,236,225,.6);">Capa da aula (arquivo 16:9)</label>
+                        <input type="text" value="{{ metaCover }}" onChange="{{ onMetaCover }}" placeholder="assets/capas/modulo-0-aula-1.png" aria-label="Capa da aula" style="min-height: 42px; padding: 0 14px; font-size: 13px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+                        <label style="font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: rgba(243,236,225,.6);">Material da aula (PDF)</label>
+                        <input type="text" value="{{ metaMaterial }}" onChange="{{ onMetaMaterial }}" placeholder="assets/materiais/modulo-0-aula-1.pdf" aria-label="Material da aula" style="min-height: 42px; padding: 0 14px; font-size: 13px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px;">
+                          <button type="submit" style="min-height: 42px; padding: 0 18px; font-size: 13px; font-weight: 700; color: #1a1408; background: linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f); border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">Salvar conteúdo</button>
+                          <button type="button" onClick="{{ l.toggleMeta }}" style="min-height: 42px; padding: 0 16px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">Cancelar</button>
+                        </div>
+                      </form>
+                    </sc-if>
+                    <sc-if value="{{ l.editing }}" hint-placeholder-val="{{ false }}">
+                      <form onSubmit="{{ l.saveEdit }}" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0 12px;">
+                        <input type="text" value="{{ editField }}" onChange="{{ onEditField }}" placeholder="Nome da aula" aria-label="Nome da aula" style="flex: 2 1 220px; min-height: 42px; padding: 0 14px; font-size: 14px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+                        <button type="submit" style="flex: 0 0 auto; min-height: 42px; padding: 0 18px; font-size: 13px; font-weight: 700; color: #1a1408; background: linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f); border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">Salvar</button>
+                            <button type="button" onClick="{{ l.toggleEdit }}" style="flex: 0 0 auto; min-height: 42px; padding: 0 16px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">Cancelar</button>
+                      </form>
+                    </sc-if>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+              </div>
+            </sc-if>
+          </section>
+          </sc-if>
+
+          <sc-if value="{{ subPresentes }}" hint-placeholder-val="{{ false }}">
+            <section style="padding: 16px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.1); border-radius: 18px;">
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+                <span style="flex: 1 1 220px; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+                  <span style="font-size: 11px; letter-spacing: .24em; text-transform: uppercase; color: #a58a52;">{{ cardKicker }}</span>
+                  <span style="font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; color: #f6efe3;">{{ cardTitle }}</span>
+                </span>
+                <span style="font-size: 13px; color: rgba(243,236,225,.55);">{{ giftsSummary }}</span>
+                <button onClick="{{ toggleGifts }}" style="min-height: 40px; padding: 0 16px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">{{ giftsToggleLabel }}</button>
+              </div>
+
+              <sc-if value="{{ giftsOpen }}" hint-placeholder-val="{{ true }}">
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.1);">
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <sc-for list="{{ cats }}" as="c" hint-placeholder-count="4">
+                <div style="padding: 16px; background: rgba(255,255,255,.03); border: 1px solid {{ c.ring }}; border-radius: 16px;">
+                  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px;">
+                    <span style="flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 3px;">
+                      <span style="font-size: 15px; font-weight: 700; color: #ffffff;">{{ c.name }}</span>
+                      <span style="font-size: 12px; color: rgba(243,236,225,.5);">{{ c.countLabel }}</span>
+                    </span>
+                    <span style="flex: 0 0 auto; padding: 5px 11px; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: {{ c.statusColor }}; border: 1px solid {{ c.statusColor }}; border-radius: 99px;">{{ c.statusLabel }}</span>
+                    <span style="display: flex; flex-wrap: wrap; gap: 8px;">
+                      <button onClick="{{ c.toggleEdit }}" style="min-height: 36px; padding: 0 13px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">{{ c.editLabel }}</button>
+                      <button onClick="{{ c.toggleAdd }}" style="min-height: 36px; padding: 0 13px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">{{ c.addLabel }}</button>
+                      <button onClick="{{ c.toggleSolo }}" style="min-height: 36px; padding: 0 13px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">{{ c.soloLabel }}</button>
+                      <button onClick="{{ c.toggleBlock }}" style="min-height: 36px; padding: 0 13px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">{{ c.blockLabel }}</button>
+                      <button onClick="{{ c.remove }}" style="min-height: 36px; padding: 0 13px; font-size: 13px; color: #e6a89a; background: rgba(255,255,255,.04); border: 1px solid rgba(230,168,154,.3); border-radius: 99px; cursor: pointer;" style-hover="border-color: #e6a89a; color: #f2c6ba;">Remover categoria</button>
+                    </span>
+                  </div>
+
+                  <sc-if value="{{ c.editing }}" hint-placeholder-val="{{ false }}">
+                    <form onSubmit="{{ c.saveEdit }}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
+                      <input type="text" value="{{ editField }}" onChange="{{ onEditField }}" placeholder="Nome da categoria" aria-label="Nome da categoria" style="flex: 2 1 240px; min-height: 44px; padding: 0 14px; font-size: 14px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+                      <button type="submit" style="flex: 0 0 auto; min-height: 44px; padding: 0 20px; font-size: 14px; font-weight: 700; color: #1a1408; background: linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f); border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">Salvar nome</button>
+                      <button type="button" onClick="{{ c.toggleEdit }}" style="flex: 0 0 auto; min-height: 44px; padding: 0 18px; font-size: 14px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">Cancelar</button>
+                    </form>
+                  </sc-if>
+
+                  <sc-if value="{{ c.adding }}" hint-placeholder-val="{{ false }}">
+                    <form onSubmit="{{ c.submitItem }}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;">
+                      <input type="text" value="{{ newItem }}" onChange="{{ onNewItem }}" placeholder="Nome do novo presente" aria-label="Nome do novo presente" style="flex: 2 1 240px; min-height: 44px; padding: 0 14px; font-size: 14px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+                      <button type="submit" style="flex: 0 0 auto; min-height: 44px; padding: 0 20px; font-size: 14px; font-weight: 700; color: #1a1408; background: linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f); border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">Salvar presente</button>
+                      <button type="button" onClick="{{ c.toggleAdd }}" style="flex: 0 0 auto; min-height: 44px; padding: 0 18px; font-size: 14px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">Cancelar</button>
+                    </form>
+                  </sc-if>
+
+                  <div style="display: flex; flex-direction: column; margin-top: 10px;">
+                    <sc-for list="{{ c.items }}" as="p" hint-placeholder-count="0">
+                      <div>
+                        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.07);">
+                          <span style="flex: 1 1 200px; min-width: 0; display: flex; flex-direction: column; gap: 2px;">
+                            <span style="font-size: 13px; color: {{ p.textColor }};">{{ p.num }}. {{ p.title }}</span>
+                            <span style="font-size: 11px; color: rgba(243,236,225,.4);">{{ p.metaSummary }}</span>
+                          </span>
+                          <button onClick="{{ p.moveUp }}" aria-label="Mover para cima" style="width: 32px; height: 32px; display: grid; place-items: center; font-size: 14px; color: rgba(243,236,225,.7); background: none; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; cursor: pointer;" style-hover="color: #f4e0b0; border-color: #d4b170;">↑</button>
+                          <button onClick="{{ p.moveDown }}" aria-label="Mover para baixo" style="width: 32px; height: 32px; display: grid; place-items: center; font-size: 14px; color: rgba(243,236,225,.7); background: none; border: 1px solid rgba(255,255,255,.14); border-radius: 50%; cursor: pointer;" style-hover="color: #f4e0b0; border-color: #d4b170;">↓</button>
+                          <button onClick="{{ p.toggleEdit }}" style="min-height: 32px; padding: 0 11px; font-size: 12px; color: rgba(243,236,225,.75); background: none; border: 1px solid rgba(255,255,255,.14); border-radius: 99px; cursor: pointer;" style-hover="color: #f4e0b0; border-color: #d4b170;">{{ p.editLabel }}</button>
+                          <button onClick="{{ p.toggleBlock }}" style="min-height: 32px; padding: 0 11px; font-size: 12px; color: rgba(243,236,225,.75); background: none; border: 1px solid rgba(255,255,255,.14); border-radius: 99px; cursor: pointer;" style-hover="color: #f4e0b0; border-color: #d4b170;">{{ p.blockLabel }}</button>
+                          <button onClick="{{ p.toggleMeta }}" style="min-height: 32px; padding: 0 11px; font-size: 12px; color: #e2c485; background: none; border: 1px solid rgba(212,177,112,.4); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">{{ p.metaLabel }}</button>
+                          <button onClick="{{ p.toggleMove }}" style="min-height: 32px; padding: 0 11px; font-size: 12px; color: rgba(243,236,225,.75); background: none; border: 1px solid rgba(255,255,255,.14); border-radius: 99px; cursor: pointer;" style-hover="color: #f4e0b0; border-color: #d4b170;">{{ p.moveLabel }}</button>
+                          <button onClick="{{ p.remove }}" style="min-height: 32px; padding: 0 11px; font-size: 12px; color: #e6a89a; background: none; border: 1px solid rgba(230,168,154,.28); border-radius: 99px; cursor: pointer;" style-hover="border-color: #e6a89a; color: #f2c6ba;">{{ p.removeLabel }}</button>
+                        </div>
+                        <sc-if value="{{ p.metaOpen }}" hint-placeholder-val="{{ false }}">
+                          <form onSubmit="{{ p.saveMeta }}" style="display: flex; flex-direction: column; gap: 8px; padding: 6px 0 14px;">
+                            <label style="font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: rgba(243,236,225,.6);">Link do vídeo (YouTube)</label>
+                            <input type="text" value="{{ metaVideo }}" onChange="{{ onMetaVideo }}" placeholder="https://www.youtube.com/watch?v=..." aria-label="Link do vídeo" style="min-height: 42px; padding: 0 14px; font-size: 13px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+                            <label style="font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: rgba(243,236,225,.6);">Capa vertical (2:3)</label>
+                            <input type="text" value="{{ metaCover }}" onChange="{{ onMetaCover }}" placeholder="assets/capas/presente-1.png" aria-label="Capa do presente" style="min-height: 42px; padding: 0 14px; font-size: 13px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+                            <label style="font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: rgba(243,236,225,.6);">Duração</label>
+                            <input type="text" value="{{ metaDuration }}" onChange="{{ onMetaDuration }}" placeholder="48 min" aria-label="Duração" style="min-height: 42px; padding: 0 14px; font-size: 13px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+                            <label style="font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: rgba(243,236,225,.6);">Descrição</label>
+                            <input type="text" value="{{ metaAbout }}" onChange="{{ onMetaAbout }}" placeholder="Sobre este presente" aria-label="Descrição" style="min-height: 42px; padding: 0 14px; font-size: 13px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 2px;">
+                              <button type="submit" style="min-height: 42px; padding: 0 18px; font-size: 13px; font-weight: 700; color: #1a1408; background: linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f); border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">Salvar conteúdo</button>
+                              <button type="button" onClick="{{ p.toggleMeta }}" style="min-height: 42px; padding: 0 16px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">Cancelar</button>
+                            </div>
+                          </form>
+                        </sc-if>
+                        <sc-if value="{{ p.moving }}" hint-placeholder-val="{{ false }}">
+                          <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 4px 0 12px;">
+                            <span style="font-size: 12px; color: rgba(243,236,225,.55);">Mover para:</span>
+                            <sc-for list="{{ p.targets }}" as="t" hint-placeholder-count="3">
+                              <button onClick="{{ t.pick }}" style="{{ t.style }}">{{ t.name }}</button>
+                            </sc-for>
+                          </div>
+                        </sc-if>
+                        <sc-if value="{{ p.editing }}" hint-placeholder-val="{{ false }}">
+                          <form onSubmit="{{ p.saveEdit }}" style="display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0 12px;">
+                            <input type="text" value="{{ editField }}" onChange="{{ onEditField }}" placeholder="Nome do presente" aria-label="Nome do presente" style="flex: 2 1 220px; min-height: 42px; padding: 0 14px; font-size: 14px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+                            <button type="submit" style="flex: 0 0 auto; min-height: 42px; padding: 0 18px; font-size: 13px; font-weight: 700; color: #1a1408; background: linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f); border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">Salvar</button>
+                            <button type="button" onClick="{{ p.toggleEdit }}" style="flex: 0 0 auto; min-height: 42px; padding: 0 16px; font-size: 13px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">Cancelar</button>
+                          </form>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ showAddCat }}" hint-placeholder-val="{{ true }}">
+            <form onSubmit="{{ addCat }}" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px;">
+              <input type="text" value="{{ newCat }}" onChange="{{ onNewCat }}" placeholder="Nome da nova categoria" aria-label="Nome da nova categoria" style="flex: 2 1 240px; min-height: 46px; padding: 0 16px; font-size: 15px; color: #f3ece1; background: rgba(8,12,24,.85); border: 1px solid rgba(212,177,112,.24); border-radius: 10px; outline: none;" style-focus="border-color: #d4b170;" />
+              <button type="submit" style="flex: 0 0 auto; min-height: 46px; padding: 0 22px; font-size: 14px; font-weight: 700; color: #1a1408; background: linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f); border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">Adicionar categoria</button>
+            </form>
+            </sc-if>
+                </div>
+              </sc-if>
+            </section>
+          </sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ askOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(3,5,10,.82);">
+      <form onSubmit="{{ askConfirm }}" style="width: 100%; max-width: 430px; padding: 24px 22px; background: linear-gradient(170deg, rgba(16,24,42,.98), rgba(6,9,18,.99)); border: 1px solid rgba(230,168,154,.35); border-radius: 18px; box-shadow: 0 40px 90px rgba(0,0,0,.7); animation: riseIn .3s ease both;">
+        <h2 style="margin: 0 0 8px; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 24px; font-weight: 600; color: #f6efe3;">{{ askTitle }}</h2>
+        <p style="margin: 0 0 18px; font-size: 14px; line-height: 1.6; color: rgba(243,236,225,.65);">{{ askMessage }}</p>
+        <label for="adm-ask" style="display: block; margin-bottom: 8px; font-size: 12px; font-weight: 700; color: rgba(243,236,225,.75);">Escreva REMOVER para confirmar</label>
+        <input id="adm-ask" type="text" value="{{ askField }}" onChange="{{ onAskChange }}" autoComplete="off" placeholder="REMOVER" style="width: 100%; min-height: 50px; padding: 0 16px; font-size: 15px; letter-spacing: .1em; color: #f3ece1; background: rgba(8,12,24,.9); border: 1px solid rgba(230,168,154,.3); border-radius: 10px; outline: none;" style-focus="border-color: #e6a89a;" />
+        <div style="display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 18px;">
+          <button type="button" onClick="{{ askCancel }}" style="min-height: 46px; padding: 0 20px; font-size: 14px; color: #f3ece1; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.16); border-radius: 99px; cursor: pointer;" style-hover="border-color: #d4b170; color: #f4e0b0;">Cancelar</button>
+          <button type="submit" style="min-height: 46px; padding: 0 24px; font-size: 14px; font-weight: 700; color: {{ askColor }}; background: {{ askFill }}; border: none; border-radius: 99px; cursor: pointer;" style-hover="opacity: .9;">Remover definitivamente</button>
+        </div>
+      </form>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; left: 0; right: 0; bottom: 28px; z-index: 90; display: flex; justify-content: center; padding: 0 20px; pointer-events: none;">
+      <div role="status" style="max-width: 520px; padding: 16px 24px; text-align: center; font-size: 15px; color: #f6efe3; background: linear-gradient(135deg, rgba(22,32,55,.97), rgba(7,10,20,.97)); border: 1px solid rgba(212,177,112,.45); border-radius: 14px; box-shadow: 0 30px 70px rgba(0,0,0,.7); animation: riseIn .4s ease both;">{{ toast }}</div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1080,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  MODULES = [
+    { title: "BOAS-VINDAS E DIAGNÓSTICO", lessons: ["Você não entrou em mais um curso", "Seu ponto de partida e a vida que deseja construir"] },
+    { title: "DESCOBRINDO O VERDADEIRO BLOQUEIO", lessons: ["Os frutos que você vê não são o começo", "O processo invisível por trás dos resultados", "O Ciclo da Escassez e o Ciclo da Prosperidade", "O mapa dos resultados que se repetem"] },
+    { title: "ENCONTRANDO A ORIGEM DOS BLOQUEIOS", lessons: ["Ninguém nasce acreditando tudo o que acredita hoje", "A Primeira Escrita da Vida: heranças e período pré-natal", "Antes das palavras: a fase pré-verbal", "Quando as palavras começaram a definir o mundo", "Quem e o que participou da sua formação"] },
+    { title: "DESCONSTRUINDO AS CRENÇAS LIMITANTES", lessons: ["O fato e o significado que você deu a ele", "Como uma interpretação se transforma em crença", "Os hábitos da mente e a identidade antiga", "Crenças de dinheiro, prosperidade e escassez", "Merecimento, culpa, sofrimento e abundância", "Relacionamentos, saúde e envelhecimento", "A verdade que enfraquece a crença antiga"] },
+    { title: "RESTAURANDO A FORMA CORRETA DE ORAR", lessons: ["O que sua oração revela sobre aquilo em que você acredita", "Fé, desespero, perseverança e insegurança", "Esperar em Deus sem abandonar sua responsabilidade", "Sua nova prática de oração"] },
+    { title: "CONSTRUINDO UMA NOVA IDENTIDADE", lessons: ["A identidade antiga não precisa continuar governando", "Nascer de novo: uma nova forma de pensar e viver", "Quem você decidiu se tornar", "Autorização interna para receber, crescer e administrar", "As primeiras evidências da nova identidade"] },
+    { title: "REPROGRAMANDO O AMBIENTE", lessons: ["Seu ambiente repete uma identidade todos os dias", "Ambiente físico e emocional", "Televisão, notícias e redes sociais", "Pessoas, limites e uma rotina que protege a mudança"] },
+    { title: "REPROGRAMANDO O VERBO", lessons: ["As três formas do verbo", "A linguagem da identidade antiga", "Reconhecer sem condenar e afirmar com coerência", "O verbo, a oração e o novo diálogo interior"] },
+    { title: "FORTALECENDO O ESTADO INTERIOR", lessons: ["O estado interior participa de suas respostas", "Paz, esperança e confiança", "Ansiedade e medo sem governo automático", "Frustração, culpa e disciplina emocional", "Imaginação e visualização do futuro"] },
+    { title: "TRANSFORMANDO A FÉ EM AÇÃO", lessons: ["Fé e responsabilidade caminham juntas", "A menor ação coerente e o poder da decisão", "Da ação ao hábito que confirma a nova identidade", "Ação nas finanças, organização, administração e trabalho", "Plano Integrado de Fé em Ação"] },
+    { title: "CONSOLIDANDO A NOVA VIDA", lessons: ["Consolidar não é terminar", "Sinais de retorno à identidade antiga", "O Protocolo de Retorno", "Seus ciclos de 21, 60 e 90 dias", "Administrando as novas bênçãos e seguindo com autonomia"] }
+  ];
+
+  KEY = "cdb-admin-v1";
+  CONTENT_KEY = "cdb-content-v1";
+  ADMIN_KEY = "mentoria";
+
+  state = {
+    authed: false,
+    keyField: "",
+    loginError: "",
+    students: null,
+    newName: "",
+    newLogin: "",
+    openId: "",
+    draft: null,
+    discardId: "",
+    ask: null,
+    askField: "",
+    tab: "alunas",
+    content: null,
+    cats: null,
+    blocked: null,
+    meta: null,
+    metaKey: "",
+    metaVideo: "",
+    metaCover: "",
+    metaMaterial: "",
+    metaAbout: "",
+    metaDuration: "",
+    newModule: "",
+    newLessonFor: -1,
+    newLesson: "",
+    newCat: "",
+    editKey: "",
+    newItemFor: -1,
+    moveKey: "",
+    newItem: "",
+    editField: "",
+    openModule: -1,
+    confirmId: "",
+    toast: ""
+  };
+
+  componentDidMount() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(this.KEY) || "null"); } catch (e) { saved = null; }
+    let c = null;
+    try { c = JSON.parse(localStorage.getItem(this.CONTENT_KEY) || "null"); } catch (e) { c = null; }
+    this.setState({
+      students: (saved && saved.students) || [],
+      authed: !!(saved && saved.authed),
+      content: (c && c.modules) || this.MODULES.map(m => ({ title: m.title, lessons: m.lessons.slice() })),
+      cats: ((c && c.cats) || ["Lançamentos", "Frequências", "Ebooks", "Documentários"]).map(x =>
+        typeof x === "string" ? { title: x, items: [] } : { title: x.title, items: (x.items || []).slice() }
+      ),
+      blocked: (c && c.blocked) || {},
+      meta: (c && c.meta) || {}
+    });
+  }
+
+  componentWillUnmount() { clearTimeout(this._toast); }
+
+  save(students, authed) {
+    try { localStorage.setItem(this.KEY, JSON.stringify({ students, authed: authed === undefined ? this.state.authed : authed })); } catch (e) {}
+  }
+
+  remapAccess(fn) {
+    const next = this.list().map(s => {
+      const a = s.access || {};
+      const out = {};
+      Object.keys(a).forEach(k => {
+        if (!a[k]) return;
+        const moved = fn(k);
+        if (moved) out[moved] = true;
+      });
+      return Object.assign({}, s, { access: out });
+    });
+    this.setState({ students: next });
+    this.save(next);
+  }
+
+  mapBlocked(fn) {
+    const b = this.state.blocked || {};
+    const out = {};
+    Object.keys(b).forEach(k => {
+      if (!b[k]) return;
+      const moved = fn(k);
+      if (moved) out[moved] = true;
+    });
+    return out;
+  }
+
+  saveContent(patch) {
+    const next = {
+      modules: patch.modules || this.state.content,
+      cats: patch.cats || this.state.cats,
+      blocked: patch.blocked || this.state.blocked,
+      meta: patch.meta || this.state.meta
+    };
+    this.setState(Object.assign({}, patch, { content: next.modules }));
+    try { localStorage.setItem(this.CONTENT_KEY, JSON.stringify(next)); } catch (e) {}
+  }
+
+  tabStyle(on) {
+    return "min-height: 42px; padding: 0 20px; font-size: 14px; font-weight: 700; color: " + (on ? "#1a1408" : "#f3ece1") +
+      "; background: " + (on ? "linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f)" : "rgba(255,255,255,.06)") +
+      "; border: 1px solid " + (on ? "transparent" : "rgba(255,255,255,.16)") + "; border-radius: 99px; cursor: pointer;";
+  }
+
+  confirm(title, message, run) {
+    this.setState({ ask: { title, message, run }, askField: "" });
+  }
+
+  showToast(msg) {
+    clearTimeout(this._toast);
+    this.setState({ toast: msg });
+    this._toast = setTimeout(() => this.setState({ toast: "" }), 3600);
+  }
+
+  list() { return this.state.students || []; }
+
+  DEMO_KEYS = ["cdb-demo-v2", "cdb-demo-primeiro-acesso-v1"];
+
+  record(s) {
+    for (const k of this.DEMO_KEYS) {
+      let d = null;
+      try { d = JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { d = null; }
+      if (!d) continue;
+      const who = (d.studentLogin || d.user || "").trim().toLowerCase();
+      if (who && (who === (s.login || "").toLowerCase() || who === (s.name || "").toLowerCase())) return d;
+    }
+    return null;
+  }
+
+  mods() { return this.state.content || this.MODULES; }
+
+  totalLessons() { return this.mods().reduce((s, m) => s + m.lessons.length, 0); }
+
+  update(id, patch) {
+    const next = this.list().map(s => (s.id === id ? Object.assign({}, s, patch) : s));
+    this.setState({ students: next });
+    this.save(next);
+  }
+
+  grantedCount(s) {
+    return Object.keys(s.access || {}).filter(k => s.access[k]).length;
+  }
+
+  renderVals() {
+    const st = this.state;
+    const total = this.totalLessons();
+    const content = st.content || [];
+    const blocked = st.blocked || {};
+    const meta = st.meta || {};
+    const giftTotal = (st.cats || []).reduce((n, c) => n + (c.items || []).length, 0);
+    const sub = st.sub || "mentoria";
+    const soloIdx = sub.slice(0, 5) === "solo:" ? Number(sub.slice(5)) : -1;
+
+    const students = this.list().map(s => {
+      const isOpen = st.openId === s.id;
+      const access = isOpen && st.draft ? st.draft : (s.access || {});
+      const granted = this.grantedCount(s);
+      const isConfirming = st.confirmId === s.id;
+      const dirty = isOpen && st.draft ? JSON.stringify(Object.keys(st.draft).filter(k => st.draft[k]).sort()) !== JSON.stringify(Object.keys(s.access || {}).filter(k => (s.access || {})[k]).sort()) : false;
+
+      const setAccess = next => this.setState({ draft: next });
+
+      return {
+        id: s.id, name: s.name, login: s.login,
+        initial: (s.name || "A").charAt(0).toUpperCase(),
+        blocked: !!s.blocked,
+        statusLabel: s.blocked ? "Bloqueada" : "Ativa",
+        statusColor: s.blocked ? "#e6a89a" : "#9dc08b",
+        accessLabel: granted === 0 ? "sem conteúdo liberado" : granted === total ? "curso inteiro liberado" : granted + " de " + total + " aulas liberadas",
+        cardBg: s.blocked ? "rgba(230,168,154,.05)" : "rgba(255,255,255,.03)",
+        cardRing: s.blocked ? "rgba(230,168,154,.24)" : "rgba(255,255,255,.1)",
+        open: isOpen,
+        openLabel: !isOpen ? "Definir acessos" : st.discardId === s.id ? "Descartar alterações" : "Fechar acessos",
+        toggleOpen: () => {
+          if (isOpen && dirty && st.discardId !== s.id) { this.setState({ discardId: s.id }); this.showToast("Há alterações não salvas nesta aluna."); return; }
+          this.setState({ openId: isOpen ? "" : s.id, draft: isOpen ? null : Object.assign({}, s.access || {}), openModule: -1, confirmId: "", discardId: "" });
+        },
+        dirty,
+        saveLabel: dirty ? "Salvar alterações" : "Tudo salvo",
+        saveColor: dirty ? "#1a1408" : "rgba(243,236,225,.45)",
+        saveFill: dirty ? "linear-gradient(135deg, #f0dca8, #d4b170 55%, #b8934f)" : "rgba(255,255,255,.06)",
+        saveAccess: () => {
+          if (!dirty) return;
+          this.update(s.id, { access: Object.assign({}, access) });
+          this.setState({ openId: "", draft: null, openModule: -1, discardId: "" });
+          this.showToast("Acessos de " + s.name + " atualizados.");
+        },
+        cancelAccess: () => {
+          this.setState({ openId: "", draft: null, openModule: -1, discardId: "" });
+          if (dirty) this.showToast("Alterações descartadas.");
+        },
+        blockLabel: s.blocked ? "Desbloquear" : "Bloquear",
+        toggleBlock: () => {
+          this.update(s.id, { blocked: !s.blocked });
+          this.showToast(s.blocked ? s.name + " foi desbloqueada." : s.name + " foi bloqueada.");
+        },
+        removeLabel: "Remover",
+        remove: () => this.confirm("Remover " + s.name + "?", "A aluna perde o acesso e o registro de liberações dela é apagado.", () => {
+          const next = this.list().filter(x => x.id !== s.id);
+          this.setState({ students: next, confirmId: "", openId: "", draft: null });
+          this.save(next);
+          this.showToast(s.name + " foi removida.");
+        }),
+        grantAll: () => {
+          const next = {};
+          this.mods().forEach((m, mi) => m.lessons.forEach((_, li) => { next[mi + "-" + li] = true; }));
+          setAccess(next);
+          this.showToast("Curso inteiro marcado. Salve para aplicar.");
+        },
+        revokeAll: () => this.confirm("Remover todo o conteúdo de " + s.name + "?", "Todas as aulas serão desmarcadas. A mudança só vale depois de salvar.", () => { setAccess({}); this.showToast("Tudo desmarcado. Salve para aplicar."); }),
+        activity: (() => {
+          const rec = this.record(s);
+          if (!rec) return { has: false, empty: true, doneLabel: "", pct: 0, pctLabel: "", comments: [], noComments: true, commentsLabel: "" };
+          const done = Object.keys(rec.completed || {}).filter(k => (rec.completed || {})[k]).length;
+          const pct = total ? Math.round((done / total) * 100) : 0;
+          const cmap = rec.comments || {};
+          const rows = [];
+          Object.keys(cmap).forEach(key => {
+            const parts = key.split("-");
+            const mi = Number(parts[0]), li = Number(parts[1]);
+            const mod = this.mods()[mi];
+            (cmap[key] || []).forEach(c => rows.push({
+              where: mod ? "Módulo " + mi + " · Aula " + (li + 1) + " — " + mod.lessons[li] : key,
+              at: c.at, date: c.date, text: c.text
+            }));
+          });
+          return {
+            has: true, empty: false,
+            doneLabel: done + " de " + total + " aulas concluídas",
+            pct, pctLabel: pct + "%",
+            comments: rows, noComments: rows.length === 0,
+            commentsLabel: rows.length === 1 ? "1 comentário" : rows.length + " comentários"
+          };
+        })(),
+        modules: this.mods().map((m, mi) => {
+          const on = m.lessons.filter((_, li) => access[mi + "-" + li]).length;
+          const all = on === m.lessons.length;
+          const some = on > 0 && !all;
+          const mOpen = isOpen && st.openModule === mi;
+          return {
+            num: mi, title: m.title,
+            countLabel: on === 0 ? m.lessons.length + " aulas · nenhuma liberada" : all ? m.lessons.length + " aulas · todas liberadas" : on + " de " + m.lessons.length + " aulas liberadas",
+            ring: all ? "rgba(212,177,112,.4)" : some ? "rgba(212,177,112,.2)" : "rgba(255,255,255,.08)",
+            checkGlyph: all ? "✓" : some ? "–" : "",
+            checkColor: all ? "#1a1408" : "#f0dca8",
+            checkFill: all ? "#d4b170" : "transparent",
+            checkRing: all || some ? "#d4b170" : "rgba(255,255,255,.28)",
+            checkLabel: all ? "Remover módulo inteiro" : "Liberar módulo inteiro",
+            toggleAll: () => {
+              const next = Object.assign({}, access);
+              m.lessons.forEach((_, li) => {
+                if (all) { delete next[mi + "-" + li]; } else { next[mi + "-" + li] = true; }
+              });
+              setAccess(next);
+            },
+            open: mOpen,
+            openLabel: mOpen ? "Ocultar aulas" : "Selecionar aulas",
+            toggleOpen: () => this.setState({ openModule: mOpen ? -1 : mi }),
+            lessons: m.lessons.map((title, li) => {
+              const lOn = !!access[mi + "-" + li];
+              return {
+                num: li + 1, title,
+                checkGlyph: lOn ? "✓" : "",
+                checkColor: "#1a1408",
+                checkFill: lOn ? "#d4b170" : "transparent",
+                checkRing: lOn ? "#d4b170" : "rgba(255,255,255,.28)",
+                textColor: lOn ? "#ffffff" : "rgba(243,236,225,.6)",
+                toggle: () => {
+                  const next = Object.assign({}, access);
+                  if (lOn) { delete next[mi + "-" + li]; } else { next[mi + "-" + li] = true; }
+                  setAccess(next);
+                }
+              };
+            })
+          };
+        })
+      };
+    });
+
+    const activeCount = this.list().filter(s => !s.blocked).length;
+
+    return {
+      isLogin: !st.authed,
+      isPanel: st.authed,
+      keyField: st.keyField,
+      loginError: st.loginError,
+      onKeyChange: e => this.setState({ keyField: e.target.value, loginError: "" }),
+      onAdminLogin: e => {
+        e.preventDefault();
+        if (st.keyField.trim() !== this.ADMIN_KEY) { this.setState({ loginError: "Senha incorreta." }); return; }
+        this.setState({ authed: true, keyField: "", loginError: "" });
+        this.save(this.list(), true);
+      },
+      adminLogout: () => { this.setState({ authed: false }); this.save(this.list(), false); },
+      studentSummary: this.list().length === 0 ? "Nenhuma aluna" : this.list().length + (this.list().length === 1 ? " aluna" : " alunas") + " · " + activeCount + " ativa" + (activeCount === 1 ? "" : "s"),
+      newName: st.newName,
+      newLogin: st.newLogin,
+      onNewName: e => this.setState({ newName: e.target.value }),
+      onNewLogin: e => this.setState({ newLogin: e.target.value }),
+      addStudent: e => {
+        e.preventDefault();
+        const name = st.newName.trim();
+        const login = st.newLogin.trim() || name.toLowerCase().replace(/\s+/g, ".");
+        if (!name) { this.showToast("Informe o nome da aluna."); return; }
+        const next = this.list().concat([{ id: String(Date.now()), name, login, blocked: false, access: {} }]);
+        this.setState({ students: next, newName: "", newLogin: "" });
+        this.save(next);
+        this.showToast(name + " foi cadastrada.");
+      },
+      subtabs: [
+        { name: "Mentoria", style: this.tabStyle(sub === "mentoria"), pick: () => this.setState({ sub: "mentoria" }) },
+        { name: "Presentes", style: this.tabStyle(sub === "presentes"), pick: () => this.setState({ sub: "presentes" }) }
+      ].concat((st.cats || []).map((c, i) => ({ c, i })).filter(x => x.c.solo).map(x => ({
+        name: x.c.title,
+        style: this.tabStyle(sub === "solo:" + x.i),
+        pick: () => this.setState({ sub: "solo:" + x.i })
+      }))),
+      cardKicker: soloIdx >= 0 ? "Categoria" : "Presentes",
+      cardTitle: soloIdx >= 0 ? (st.cats[soloIdx] || {}).title : "Acervo de presentes",
+      pageTitle: st.tab === "conteudo" ? "Conteúdo da mentoria" : "Alunas da mentoria",
+      pageSummary: st.tab !== "conteudo"
+        ? (this.list().length === 0 ? "Nenhuma aluna" : this.list().length + (this.list().length === 1 ? " aluna" : " alunas") + " · " + this.list().filter(x => !x.blocked).length + " ativa" + (this.list().filter(x => !x.blocked).length === 1 ? "" : "s"))
+        : (sub !== "mentoria"
+            ? (st.cats || []).length + ((st.cats || []).length === 1 ? " categoria · " : " categorias · ") + giftTotal + (giftTotal === 1 ? " presente" : " presentes")
+            : content.length + (content.length === 1 ? " módulo · " : " módulos · ") + total + (total === 1 ? " aula" : " aulas")),
+      tabAlunas: st.tab === "alunas",
+      tabConteudo: st.tab === "conteudo",
+      alunasTabStyle: this.tabStyle(st.tab === "alunas"),
+      conteudoTabStyle: this.tabStyle(st.tab === "conteudo"),
+      goAlunas: () => this.setState({ tab: "alunas" }),
+      goConteudo: () => this.setState({ tab: "conteudo", openId: "", draft: null }),
+
+      sub: st.sub || "mentoria",
+      subMentoria: sub === "mentoria",
+      subPresentes: sub === "presentes" || soloIdx >= 0,
+      showAddCat: sub === "presentes",
+      mentoriaSubStyle: this.tabStyle((st.sub || "mentoria") === "mentoria"),
+      presentesSubStyle: this.tabStyle(st.sub === "presentes"),
+      goMentoria: () => this.setState({ sub: "mentoria" }),
+      goPresentes: () => this.setState({ sub: "presentes" }),
+      giftsOpen: st.giftsOpen !== false,
+      giftsToggleLabel: st.giftsOpen === false ? "Expandir" : "Recolher",
+      toggleGifts: () => this.setState({ giftsOpen: st.giftsOpen === false }),
+      giftsSummary: soloIdx >= 0 ? (((st.cats[soloIdx] || {}).items || []).length === 1 ? "1 presente" : (((st.cats[soloIdx] || {}).items || []).length) + " presentes") : (st.cats || []).length + ((st.cats || []).length === 1 ? " categoria · " : " categorias · ") + giftTotal + (giftTotal === 1 ? " presente" : " presentes"),
+      contentOpen: st.contentOpen !== false,
+      contentToggleLabel: st.contentOpen === false ? "Expandir" : "Recolher",
+      toggleContent: () => this.setState({ contentOpen: st.contentOpen === false }),
+      contentSummary: content.length + (content.length === 1 ? " módulo · " : " módulos · ") + total + (total === 1 ? " aula" : " aulas"),
+      metaVideo: st.metaVideo,
+      metaCover: st.metaCover,
+      metaMaterial: st.metaMaterial,
+      onMetaVideo: e => this.setState({ metaVideo: e.target.value }),
+      onMetaCover: e => this.setState({ metaCover: e.target.value }),
+      onMetaMaterial: e => this.setState({ metaMaterial: e.target.value }),
+      metaAbout: st.metaAbout,
+      metaDuration: st.metaDuration,
+      onMetaAbout: e => this.setState({ metaAbout: e.target.value }),
+      onMetaDuration: e => this.setState({ metaDuration: e.target.value }),
+      editField: st.editField,
+      onEditField: e => this.setState({ editField: e.target.value }),
+      newModule: st.newModule,
+      onNewModule: e => this.setState({ newModule: e.target.value }),
+      addModule: e => {
+        e.preventDefault();
+        const t = st.newModule.trim();
+        if (!t) { this.showToast("Informe o nome do módulo."); return; }
+        this.saveContent({ modules: content.concat([{ title: t.toUpperCase(), lessons: [] }]), newModule: "" });
+        this.showToast("Módulo criado.");
+      },
+      newLesson: st.newLesson,
+      onNewLesson: e => this.setState({ newLesson: e.target.value }),
+      contentModules: content.map((m, mi) => {
+        const mBlocked = !!blocked["m" + mi];
+        return {
+          num: mi, title: m.title,
+          countLabel: m.lessons.length === 1 ? "1 aula" : m.lessons.length + " aulas",
+          ring: mBlocked ? "rgba(230,168,154,.28)" : "rgba(255,255,255,.1)",
+          blockLabel: mBlocked ? "Desbloquear módulo" : "Bloquear para todas",
+          statusLabel: mBlocked ? "Bloqueado para todas" : "Ativo",
+          statusColor: mBlocked ? "#e6a89a" : "#9dc08b",
+          toggleBlock: () => {
+            const b = Object.assign({}, blocked);
+            if (mBlocked) { delete b["m" + mi]; } else { b["m" + mi] = true; }
+            this.saveContent({ blocked: b });
+          },
+          removeLabel: "Remover módulo",
+          remove: () => this.confirm("Remover o Módulo " + mi + "?", "As " + m.lessons.length + " aulas dele saem do curso para todas as alunas.", () => {
+            this.remapAccess(k => {
+              const p = k.split("-"), a = Number(p[0]), b = Number(p[1]);
+              if (a === mi) return null;
+              return (a > mi ? a - 1 : a) + "-" + b;
+            });
+            const bl = {};
+            Object.keys(blocked).forEach(k => {
+              if (k === "m" + mi) return;
+              if (k.charAt(0) === "m") { const a = Number(k.slice(1)); bl["m" + (a > mi ? a - 1 : a)] = true; return; }
+              const p = k.split("-"), a = Number(p[0]);
+              if (a === mi) return;
+              bl[(a > mi ? a - 1 : a) + "-" + p[1]] = true;
+            });
+            this.saveContent({ modules: content.filter((_, i) => i !== mi), blocked: bl, confirmId: "" });
+            this.showToast("Módulo removido.");
+          }),
+          editing: st.editKey === "m" + mi,
+          editLabel: st.editKey === "m" + mi ? "Cancelar edição" : "Editar nome",
+          toggleEdit: () => this.setState({ editKey: st.editKey === "m" + mi ? "" : "m" + mi, editField: m.title }),
+          saveEdit: e => {
+            e.preventDefault();
+            const t = st.editField.trim();
+            if (!t) { this.showToast("Informe o nome do módulo."); return; }
+            const mods = content.map((x, i) => (i === mi ? { title: t.toUpperCase(), lessons: x.lessons } : x));
+            this.saveContent({ modules: mods, editKey: "", editField: "" });
+            this.showToast("Nome do módulo atualizado.");
+          },
+          adding: st.newLessonFor === mi,
+          addLabel: st.newLessonFor === mi ? "Fechar" : "Adicionar aula",
+          toggleAdd: () => this.setState({ newLessonFor: st.newLessonFor === mi ? -1 : mi, newLesson: "" }),
+          submitLesson: e => {
+            e.preventDefault();
+            const t = st.newLesson.trim();
+            if (!t) { this.showToast("Informe o nome da aula."); return; }
+            const mods = content.map((x, i) => (i === mi ? { title: x.title, lessons: x.lessons.concat([t]) } : x));
+            this.saveContent({ modules: mods, newLesson: "" });
+            this.showToast("Aula adicionada.");
+          },
+          lessons: m.lessons.map((title, li) => {
+            const key = mi + "-" + li;
+            const lBlocked = !!blocked[key];
+            return {
+              num: li + 1, title,
+              textColor: lBlocked ? "rgba(243,236,225,.45)" : "#ffffff",
+              blockLabel: lBlocked ? "Desbloquear" : "Bloquear",
+              toggleBlock: () => {
+                const b = Object.assign({}, blocked);
+                if (lBlocked) { delete b[key]; } else { b[key] = true; }
+                this.saveContent({ blocked: b });
+              },
+              metaOpen: st.metaKey === key,
+              metaLabel: st.metaKey === key ? "Fechar conteúdo" : "Conteúdo",
+              metaSummary: (() => {
+                const d = meta[key] || {};
+                const on = [d.video ? "vídeo" : null, d.cover ? "capa" : null, d.material ? "material" : null].filter(Boolean);
+                return on.length ? on.join(" · ") : "sem conteúdo anexado";
+              })(),
+              toggleMeta: () => {
+                const d = meta[key] || {};
+                this.setState({
+                  metaKey: st.metaKey === key ? "" : key,
+                  metaVideo: d.video || "", metaCover: d.cover || "", metaMaterial: d.material || ""
+                });
+              },
+              saveMeta: e => {
+                e.preventDefault();
+                const next = Object.assign({}, meta);
+                next[key] = { video: st.metaVideo.trim(), cover: st.metaCover.trim(), material: st.metaMaterial.trim() };
+                this.saveContent({ meta: next, metaKey: "" });
+                this.showToast("Conteúdo da aula salvo.");
+              },
+              editing: st.editKey === "l" + key,
+              editLabel: st.editKey === "l" + key ? "Cancelar" : "Editar",
+              toggleEdit: () => this.setState({ editKey: st.editKey === "l" + key ? "" : "l" + key, editField: title }),
+              saveEdit: e => {
+                e.preventDefault();
+                const t = st.editField.trim();
+                if (!t) { this.showToast("Informe o nome da aula."); return; }
+                const mods = content.map((x, i) => (i === mi ? { title: x.title, lessons: x.lessons.map((y, k) => (k === li ? t : y)) } : x));
+                this.saveContent({ modules: mods, editKey: "", editField: "" });
+                this.showToast("Nome da aula atualizado.");
+              },
+              moveUp: () => {
+                if (li === 0) { this.showToast("Esta já é a primeira aula."); return; }
+                const mods = content.map((x, i) => {
+                  if (i !== mi) return x;
+                  const ls = x.lessons.slice();
+                  const tmp = ls[li - 1]; ls[li - 1] = ls[li]; ls[li] = tmp;
+                  return { title: x.title, lessons: ls };
+                });
+                const swapUp = k => {
+                  if (k.charAt(0) === "g" || k.charAt(0) === "m") return k;
+                  const p = k.split("-"), a = Number(p[0]), b = Number(p[1]);
+                  if (a !== mi) return k;
+                  if (b === li) return a + "-" + (li - 1);
+                  if (b === li - 1) return a + "-" + li;
+                  return k;
+                };
+                this.remapAccess(swapUp);
+                this.saveContent({ modules: mods, blocked: this.mapBlocked(swapUp) });
+              },
+              moveDown: () => {
+                if (li === m.lessons.length - 1) { this.showToast("Esta já é a última aula."); return; }
+                const mods = content.map((x, i) => {
+                  if (i !== mi) return x;
+                  const ls = x.lessons.slice();
+                  const tmp = ls[li + 1]; ls[li + 1] = ls[li]; ls[li] = tmp;
+                  return { title: x.title, lessons: ls };
+                });
+                const swapDown = k => {
+                  if (k.charAt(0) === "g" || k.charAt(0) === "m") return k;
+                  const p = k.split("-"), a = Number(p[0]), b = Number(p[1]);
+                  if (a !== mi) return k;
+                  if (b === li) return a + "-" + (li + 1);
+                  if (b === li + 1) return a + "-" + li;
+                  return k;
+                };
+                this.remapAccess(swapDown);
+                this.saveContent({ modules: mods, blocked: this.mapBlocked(swapDown) });
+              },
+              removeLabel: "Remover",
+              remove: () => this.confirm("Remover a Aula " + (li + 1) + "?", "\"" + title + "\" sai do curso para todas as alunas.", () => {
+                const mods = content.map((x, i) => (i === mi ? { title: x.title, lessons: x.lessons.filter((_, k) => k !== li) } : x));
+                this.remapAccess(k => {
+                  const p = k.split("-"), a = Number(p[0]), b = Number(p[1]);
+                  if (a !== mi) return k;
+                  if (b === li) return null;
+                  return a + "-" + (b > li ? b - 1 : b);
+                });
+                this.saveContent({ modules: mods, confirmId: "" });
+                this.showToast("Aula removida.");
+              })
+            };
+          })
+        };
+      }),
+      newItem: st.newItem,
+      onNewItem: e => this.setState({ newItem: e.target.value }),
+      newCat: st.newCat,
+      onNewCat: e => this.setState({ newCat: e.target.value }),
+      addCat: e => {
+        e.preventDefault();
+        const t = st.newCat.trim();
+        if (!t) { this.showToast("Informe o nome da categoria."); return; }
+        this.saveContent({ cats: (st.cats || []).concat([{ title: t, items: [] }]), newCat: "" });
+        this.showToast("Categoria criada.");
+      },
+      cats: (st.cats || []).map((cat, ci) => ({ cat, ci })).filter(x => (soloIdx >= 0 ? x.ci === soloIdx : !x.cat.solo)).map(({ cat, ci }) => {
+        const cats = st.cats || [];
+        const setCats = (next, blk) => this.saveContent(blk ? { cats: next, blocked: blk, editKey: "", editField: "", newItem: "" } : { cats: next, editKey: "", editField: "", newItem: "" });
+        const gpos = k => { if (k.charAt(0) !== "g" || k.charAt(1) === "c") return null; const p = k.slice(1).split("-"); return { c: Number(p[0]), i: Number(p[1]) }; };
+        const cBlocked = !!blocked["gc" + ci];
+        return {
+          name: cat.title,
+          countLabel: (cat.items || []).length === 1 ? "1 presente" : (cat.items || []).length + " presentes",
+          ring: cBlocked ? "rgba(230,168,154,.28)" : "rgba(255,255,255,.1)",
+          statusLabel: cBlocked ? "Bloqueada para todas" : "Ativa",
+          statusColor: cBlocked ? "#e6a89a" : "#9dc08b",
+          blockLabel: cBlocked ? "Desbloquear" : "Bloquear para todas",
+          toggleBlock: () => {
+            const b = Object.assign({}, blocked);
+            if (cBlocked) { delete b["gc" + ci]; } else { b["gc" + ci] = true; }
+            this.saveContent({ blocked: b });
+          },
+          soloLabel: cat.solo ? "Voltar para Presentes" : "Deixar sozinha",
+          toggleSolo: () => {
+            setCats(cats.map((x, i) => (i === ci ? { title: x.title, items: x.items, solo: !x.solo } : x)));
+            this.setState({ sub: cat.solo ? "presentes" : "solo:" + ci });
+            this.showToast(cat.solo ? cat.title + " voltou para Presentes." : cat.title + " agora tem sua própria subaba.");
+          },
+          editing: st.editKey === "c" + ci,
+          editLabel: st.editKey === "c" + ci ? "Cancelar edição" : "Editar nome",
+          toggleEdit: () => this.setState({ editKey: st.editKey === "c" + ci ? "" : "c" + ci, editField: cat.title }),
+          saveEdit: e => {
+            e.preventDefault();
+            const t = st.editField.trim();
+            if (!t) { this.showToast("Informe o nome da categoria."); return; }
+            setCats(cats.map((x, i) => (i === ci ? { title: t, items: x.items } : x)));
+            this.showToast("Nome da categoria atualizado.");
+          },
+          adding: st.newItemFor === ci,
+          addLabel: st.newItemFor === ci ? "Fechar" : "Adicionar presente",
+          toggleAdd: () => this.setState({ newItemFor: st.newItemFor === ci ? -1 : ci, newItem: "" }),
+          submitItem: e => {
+            e.preventDefault();
+            const t = st.newItem.trim();
+            if (!t) { this.showToast("Informe o nome do presente."); return; }
+            setCats(cats.map((x, i) => (i === ci ? { title: x.title, items: (x.items || []).concat([t]) } : x)));
+            this.showToast("Presente adicionado.");
+          },
+          remove: () => this.confirm("Remover a categoria " + cat.title + "?", "Os presentes dessa categoria também saem do aplicativo.", () => {
+            const blk = this.mapBlocked(k => {
+              if (k === "gc" + ci) return null;
+              if (k.slice(0, 2) === "gc") { const a = Number(k.slice(2)); return "gc" + (a > ci ? a - 1 : a); }
+              const g = gpos(k);
+              if (!g) return k;
+              if (g.c === ci) return null;
+              return "g" + (g.c > ci ? g.c - 1 : g.c) + "-" + g.i;
+            });
+            this.saveContent({ cats: cats.filter((_, k) => k !== ci), blocked: blk });
+            this.showToast("Categoria removida.");
+          }),
+          items: (cat.items || []).map((title, ii) => {
+            const key = "g" + ci + "-" + ii;
+            const iBlocked = !!blocked[key];
+            return {
+              num: ii + 1, title,
+              textColor: iBlocked ? "rgba(243,236,225,.45)" : "#ffffff",
+              blockLabel: iBlocked ? "Desbloquear" : "Bloquear",
+              toggleBlock: () => {
+                const b = Object.assign({}, blocked);
+                if (iBlocked) { delete b[key]; } else { b[key] = true; }
+                this.saveContent({ blocked: b });
+              },
+              metaOpen: st.metaKey === key,
+              metaLabel: st.metaKey === key ? "Fechar conteúdo" : "Conteúdo",
+              metaSummary: (() => {
+                const d = meta[key] || {};
+                const on = [d.video ? "vídeo" : null, d.cover ? "capa" : null].filter(Boolean);
+                return on.length ? on.join(" · ") : "sem conteúdo anexado";
+              })(),
+              toggleMeta: () => {
+                const d = meta[key] || {};
+                this.setState({ metaKey: st.metaKey === key ? "" : key, metaVideo: d.video || "", metaCover: d.cover || "", metaAbout: d.about || "", metaDuration: d.duration || "", metaMaterial: "" });
+              },
+              saveMeta: e => {
+                e.preventDefault();
+                const next = Object.assign({}, meta);
+                next[key] = { video: st.metaVideo.trim(), cover: st.metaCover.trim(), about: st.metaAbout.trim(), duration: st.metaDuration.trim() };
+                this.saveContent({ meta: next, metaKey: "" });
+                this.showToast("Conteúdo do presente salvo.");
+              },
+              editing: st.editKey === key,
+              editLabel: st.editKey === key ? "Cancelar" : "Editar",
+              toggleEdit: () => this.setState({ editKey: st.editKey === key ? "" : key, editField: title }),
+              saveEdit: e => {
+                e.preventDefault();
+                const t = st.editField.trim();
+                if (!t) { this.showToast("Informe o nome do presente."); return; }
+                setCats(cats.map((x, i) => (i === ci ? { title: x.title, items: x.items.map((y, k) => (k === ii ? t : y)) } : x)));
+                this.showToast("Presente atualizado.");
+              },
+              moveUp: () => {
+                if (ii === 0) { this.showToast("Este já é o primeiro."); return; }
+                const other = ii + (-1);
+                const blkSwap = this.mapBlocked(k => {
+                  const g = gpos(k);
+                  if (!g || g.c !== ci) return k;
+                  if (g.i === ii) return "g" + ci + "-" + other;
+                  if (g.i === other) return "g" + ci + "-" + ii;
+                  return k;
+                });
+                setCats(cats.map((x, i) => {
+                  if (i !== ci) return x;
+                  const ls = x.items.slice(); const t = ls[other]; ls[other] = ls[ii]; ls[ii] = t;
+                  return { title: x.title, items: ls };
+                }), blkSwap);
+              },
+              moveDown: () => {
+                if (ii === (cat.items || []).length - 1) { this.showToast("Este já é o último."); return; }
+                const other = ii + (1);
+                const blkSwap = this.mapBlocked(k => {
+                  const g = gpos(k);
+                  if (!g || g.c !== ci) return k;
+                  if (g.i === ii) return "g" + ci + "-" + other;
+                  if (g.i === other) return "g" + ci + "-" + ii;
+                  return k;
+                });
+                setCats(cats.map((x, i) => {
+                  if (i !== ci) return x;
+                  const ls = x.items.slice(); const t = ls[other]; ls[other] = ls[ii]; ls[ii] = t;
+                  return { title: x.title, items: ls };
+                }), blkSwap);
+              },
+              moving: st.moveKey === key,
+              moveLabel: st.moveKey === key ? "Fechar" : "Mover",
+              toggleMove: () => this.setState({ moveKey: st.moveKey === key ? "" : key }),
+              targets: cats.map((t, ti) => ({
+                name: t.title,
+                current: ti === ci,
+                style: "min-height: 34px; padding: 0 13px; font-size: 12px; border-radius: 99px; cursor: " + (ti === ci ? "default" : "pointer") +
+                  "; color: " + (ti === ci ? "rgba(243,236,225,.35)" : "#f3ece1") +
+                  "; background: rgba(255,255,255,.05); border: 1px solid " + (ti === ci ? "rgba(255,255,255,.1)" : "rgba(212,177,112,.35)") + ";",
+                pick: () => {
+                  if (ti === ci) return;
+                  const wasBlocked = !!blocked[key];
+                  const destIndex = (cats[ti].items || []).length;
+                  const blk = this.mapBlocked(k => {
+                    const g = gpos(k);
+                    if (!g) return k;
+                    if (g.c === ci && g.i === ii) return null;
+                    if (g.c === ci && g.i > ii) return "g" + ci + "-" + (g.i - 1);
+                    return k;
+                  });
+                  if (wasBlocked) blk["g" + ti + "-" + destIndex] = true;
+                  setCats(cats.map((x, i) => {
+                    if (i === ci) return { title: x.title, items: x.items.filter((_, k) => k !== ii) };
+                    if (i === ti) return { title: x.title, items: (x.items || []).concat([title]) };
+                    return x;
+                  }), blk);
+                  this.setState({ moveKey: "" });
+                  this.showToast("Movido para " + t.title + ".");
+                }
+              })),
+              removeLabel: "Remover",
+              remove: () => this.confirm("Remover " + title + "?", "Este presente sai do aplicativo para todas as alunas.", () => {
+                setCats(cats.map((x, i) => (i === ci ? { title: x.title, items: x.items.filter((_, k) => k !== ii) } : x)), this.mapBlocked(k => {
+                  const g = gpos(k);
+                  if (!g || g.c !== ci) return k;
+                  if (g.i === ii) return null;
+                  return "g" + ci + "-" + (g.i > ii ? g.i - 1 : g.i);
+                }));
+                this.showToast("Presente removido.");
+              })
+            };
+          })
+        };
+      }),
+      askOpen: !!st.ask,
+      askTitle: st.ask ? st.ask.title : "",
+      askMessage: st.ask ? st.ask.message : "",
+      askField: st.askField,
+      onAskChange: e => this.setState({ askField: e.target.value }),
+      askReady: st.askField.trim().toUpperCase() === "REMOVER",
+      askColor: st.askField.trim().toUpperCase() === "REMOVER" ? "#ffffff" : "rgba(243,236,225,.4)",
+      askFill: st.askField.trim().toUpperCase() === "REMOVER" ? "#b4453c" : "rgba(255,255,255,.06)",
+      askCancel: () => this.setState({ ask: null, askField: "" }),
+      askConfirm: e => {
+        e.preventDefault();
+        if (st.askField.trim().toUpperCase() !== "REMOVER") return;
+        const run = st.ask && st.ask.run;
+        this.setState({ ask: null, askField: "" });
+        if (run) run();
+      },
+      noStudents: this.list().length === 0,
+      students,
+      toast: st.toast
+    };
+  }
+}
+</script>
+</body>
+</html>
