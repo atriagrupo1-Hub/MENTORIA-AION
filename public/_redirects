@@ -1,0 +1,5 @@
+# A área de membros é uma página só, com rotas do lado do navegador.
+# Sem esta linha, abrir /inicio ou /modulo/3 direto — ou recarregar a
+# página numa dessas rotas — devolve 404, porque o arquivo não existe no
+# disco. Aqui toda rota entrega o index.html e o roteador resolve.
+/*    /index.html   200
