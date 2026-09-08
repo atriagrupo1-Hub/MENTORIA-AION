@@ -23,10 +23,24 @@ declare
   v_email  text := 'TROQUE@exemplo.com';   -- <- e-mail da administradora
   v_codigo text := '000000';               -- <- 6 dígitos, escolhidos por você
 begin
+  -- As colunas de token vão como string vazia, NUNCA nulas.
+  --
+  -- Custou uma depuração: o Auth lê `confirmation_token`,
+  -- `recovery_token`, `email_change`, `reauthentication_token` e as
+  -- outras como texto simples, e quebra ao encontrar nulo. O sintoma é
+  -- "Database error loading user" na primeira vez que alguém tenta
+  -- entrar — a conta parece existir e o login falha com 503.
+  --
+  -- Só acontece porque a linha é inserida à mão, o que é o caminho aqui:
+  -- as alunas não têm e-mail nem senha, então a API administrativa do
+  -- Auth não serve. `phone` fica nulo mesmo — ele é opcional de verdade.
   insert into auth.users (
     instance_id, id, aud, role, email,
     encrypted_password, email_confirmed_at,
     raw_app_meta_data, raw_user_meta_data,
+    confirmation_token, recovery_token,
+    email_change, email_change_token_new, email_change_token_current,
+    phone_change, phone_change_token, reauthentication_token,
     created_at, updated_at
   ) values (
     '00000000-0000-0000-0000-000000000000', v_id, 'authenticated', 'authenticated',
@@ -36,6 +50,7 @@ begin
     now(),
     '{"provider":"email","providers":["email"]}'::jsonb,
     '{"nome":"Administradora"}'::jsonb,
+    '', '', '', '', '', '', '', '',
     now(), now()
   );
 
