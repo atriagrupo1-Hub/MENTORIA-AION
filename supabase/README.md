@@ -13,6 +13,7 @@ descartável.
 | `migrations/0002_storage.sql` | Depósitos `capas`, `materiais` e `audios`, com suas regras |
 | `migrations/0003_comentarios_por_coluna.sql` | Anonimato dos comentários por privilégio de coluna, e a moderação |
 | `migrations/0004_catalogo.sql` | Os 11 módulos, as 50 aulas, as 11 aulas ao vivo e as 4 categorias |
+| `migrations/0005_limite_por_ip.sql` | Limite de tentativas de login por origem |
 
 ## Projeto
 
@@ -23,7 +24,7 @@ descartável.
 | Região | São Paulo (`sa-east-1`) |
 | Reference | `crcclhmamknqkamvavyp` |
 
-As quatro migrations estão aplicadas. O banco tem o catálogo completo e
+As cinco migrations estão aplicadas. O banco tem o catálogo completo e
 a conta de administradora; nenhuma aluna e nenhuma mídia ainda.
 
 Aplicar em ordem, como dono `postgres`. As funções `security definer`
@@ -73,9 +74,6 @@ Duas coisas do modelo mudaram junto:
 
 ## Ainda fora do SQL
 
-- **Edge Function `entrar`** — recebe nome e código, chama
-  `verificar_codigo()` com a chave de serviço, aplica limite por IP e
-  emite a sessão. É o único ponto que conhece a chave de serviço.
 - **Edge Function do vídeo** — troca o `video_ref` do Cloudflare Stream
   por um token assinado de curta duração.
 - **Primeira conta de administradora** — feita. O procedimento está em
@@ -119,3 +117,59 @@ O linter acusava também um **ERRO** — `security_definer_view` em
 0003: o anonimato deixou de depender do filtro dentro de uma view
 privilegiada e passou a ser privilégio de coluna, que nenhuma mudança
 futura de política reabre.
+
+## Edge Function `entrar`
+
+`functions/entrar/index.ts` — publicada e ativa.
+
+É o único ponto do sistema que conhece a chave de serviço. Recebe nome de
+acesso e código, confere no banco e, dando certo, emite a sessão. O
+navegador nunca vê a chave de serviço, nunca chama `verificar_codigo()` e
+nunca decide nada sobre acesso.
+
+```
+POST https://<projeto>.supabase.co/functions/v1/entrar
+Header:  apikey: <chave publicável>
+Corpo:   { "login": "admin", "codigo": "123456" }
+```
+
+| Resposta | Quando |
+|---|---|
+| `200` + `access_token`, `refresh_token` | Nome e código conferem |
+| `400` | Campo faltando, ou código fora do formato (4 a 6 dígitos) |
+| `401` `acesso_invalido` | Nome inexistente **ou** código errado — de propósito, a mesma resposta para os dois |
+| `403` `conta_bloqueada` | `profiles.status = 'bloqueada'` |
+| `423` `conta_travada` | 5 erros seguidos: 15 minutos |
+| `429` `muitas_tentativas` | 20 tentativas da mesma origem em 15 minutos |
+| `503` | Falha do servidor. O motivo fica no log da função, nunca na resposta |
+
+**`verify_jwt` está desligado, de propósito.** É o endpoint de login:
+quem chama ainda não tem sessão. A autenticação é a própria função, e é
+por isso que o limite por origem existe.
+
+**Duas travas, uma sobre a outra.** A de `verificar_codigo()` é por
+conta e protege uma aluna. A de `registrar_tentativa_ip()` é por origem e
+impede varrer muitas contas em paralelo — que é o ataque real contra um
+código de 4 dígitos. A segunda vive no banco porque Edge Function não
+guarda estado entre invocações.
+
+**Como a sessão é emitida.** O Supabase Auth não tem login por código.
+A função gera um token de uso único pela API administrativa e o consome
+ali mesmo, no próprio servidor: nunca é enviado por e-mail nem exposto ao
+navegador. O que volta para o aplicativo é a sessão pronta.
+
+### Testar
+
+```bash
+CHAVE_ANON=<chave publicável> ./supabase/testes/testar_entrar.sh admin <codigo>
+```
+
+Cinco chamadas, dos casos de erro ao acesso válido. Não imprime os
+tokens — só o tamanho, para confirmar que vieram. As tentativas erradas
+contam para a trava de 5 por conta.
+
+### Variável a definir em produção
+
+`ORIGENS_PERMITIDAS` — o domínio da Cloudflare Pages, separando por
+vírgula se houver mais de um. Sem ela, a função responde a qualquer
+origem, o que serve para desenvolvimento e não para produção.
