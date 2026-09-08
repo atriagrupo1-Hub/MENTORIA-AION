@@ -13,6 +13,8 @@ export type Modulo = {
   intro: string;
   ordem: number;
   bloqueadoGeral: boolean;
+  /** A arte da capa já traz o título; a tela não sobrepõe o dela. */
+  tituloNaArte: boolean;
   aulas: Aula[];
 };
 

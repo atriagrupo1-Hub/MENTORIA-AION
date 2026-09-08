@@ -7,7 +7,7 @@ import { useAviso } from "@/components/useAviso";
 import { rotuloAcaoModulo, rotuloConcluidas } from "@/data/derivados";
 import { rotuloDuracao, useEstado } from "@/data/estado";
 import { useJornada } from "@/data/useJornada";
-import { cores, temArte } from "@/design/tokens";
+import { cores } from "@/design/tokens";
 import { useRef } from "react";
 
 export function Inicio() {
@@ -172,7 +172,7 @@ export function Inicio() {
                   caminhos={[capaModulo(e.modulo.numero)]}
                   alt={`Capa do Módulo ${e.modulo.numero} — ${e.modulo.titulo}`}
                 />
-                {temArte(e.modulo.numero) ? (
+                {e.modulo.tituloNaArte ? (
                   <span
                     className="absolute inset-0"
                     style={{

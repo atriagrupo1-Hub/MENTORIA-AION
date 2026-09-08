@@ -325,7 +325,7 @@ export function TelaAula() {
         <div className="flex items-center gap-3 pb-1 pt-[14px]">
           <span
             className="relative h-[46px] flex-[0_0_46px] overflow-hidden rounded-full"
-            style={{ background: "#101830" }}
+            style={{ background: cores.placeholderCapa }}
           >
             <Capa
               caminhos={[capaModulo(modulo.numero)]}
@@ -553,7 +553,7 @@ export function TelaAula() {
               >
                 <span
                   className="relative aspect-video flex-[0_0_clamp(126px,34vw,150px)] overflow-hidden rounded-mini"
-                  style={{ background: "#101830" }}
+                  style={{ background: cores.placeholderCapa }}
                 >
                   <Capa
                     caminhos={[

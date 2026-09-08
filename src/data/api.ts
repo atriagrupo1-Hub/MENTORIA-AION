@@ -116,6 +116,7 @@ type LinhaModulo = {
   cor_destaque: string | null;
   ordem: number;
   bloqueado_geral: boolean;
+  titulo_na_arte: boolean;
 };
 
 type LinhaAula = {
@@ -181,6 +182,7 @@ export async function carregarCatalogo(): Promise<Catalogo> {
     intro: m.intro ?? "",
     ordem: m.ordem,
     bloqueadoGeral: m.bloqueado_geral,
+    tituloNaArte: m.titulo_na_arte,
     aulas: (porModulo.get(m.id) ?? [])
       .sort((x, y) => x.ordem - y.ordem)
       .map((a) => ({

@@ -10,7 +10,7 @@ import {
   rotuloEstadoModulo,
 } from "@/data/derivados";
 import { rotuloDuracao, useEstado } from "@/data/estado";
-import { cores, paleta, temArte } from "@/design/tokens";
+import { cores, paleta } from "@/design/tokens";
 
 const NAV: React.CSSProperties = {
   minHeight: 34,
@@ -93,7 +93,7 @@ export function PaginaModulo() {
             caminhos={[capaModulo(modulo.numero)]}
             alt={`Capa do Módulo ${modulo.numero} — ${modulo.titulo}`}
           />
-          {temArte(modulo.numero) ? null : (
+          {modulo.tituloNaArte ? null : (
             <>
               <span
                 className="absolute inset-0"

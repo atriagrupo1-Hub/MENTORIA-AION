@@ -137,7 +137,12 @@ export async function criarModulo(titulo: string, numero: number, ordem: number)
 
 export async function atualizarModulo(
   id: string,
-  patch: Partial<{ titulo: string; intro: string; bloqueado_geral: boolean }>,
+  patch: Partial<{
+    titulo: string;
+    intro: string;
+    bloqueado_geral: boolean;
+    titulo_na_arte: boolean;
+  }>,
 ) {
   const { error } = await supabase.from("modulos").update(patch).eq("id", id);
   if (error) throw new Error(`módulo: ${error.message}`);

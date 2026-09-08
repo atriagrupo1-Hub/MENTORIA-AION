@@ -63,7 +63,7 @@ export function Login() {
             <span
               className="absolute inset-0 flex flex-col items-center justify-center gap-[7px] overflow-hidden rounded-full"
               style={{
-                background: "linear-gradient(160deg, #131c33, #060911 60%, #101830)",
+                background: cores.placeholderCapa,
                 border: "2px solid rgba(212,177,112,.75)",
                 boxShadow: "0 0 44px -12px rgba(212,177,112,.6)",
               }}

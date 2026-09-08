@@ -207,6 +207,24 @@ export function AbaConteudo({
                       {modulo.bloqueadoGeral ? "Desbloquear módulo" : "Bloquear para todas"}
                     </button>
                     <button
+                      onClick={async () =>
+                        avisar(
+                          (await executar(() =>
+                            dados.atualizarModulo(modulo.id, {
+                              titulo_na_arte: !modulo.tituloNaArte,
+                            }),
+                          )) ??
+                            (modulo.tituloNaArte
+                              ? "A tela volta a escrever o título sobre a capa."
+                              : "O título sai da tela: quem mostra agora é a arte."),
+                        )
+                      }
+                      style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
+                      title="Use quando a arte da capa já traz o nome do módulo escrito nela, para o título não aparecer duas vezes."
+                    >
+                      {modulo.tituloNaArte ? "Escrever título na tela" : "Título já está na arte"}
+                    </button>
+                    <button
                       onClick={() =>
                         pedirConfirmacao({
                           titulo: `Remover o Módulo ${modulo.numero}?`,

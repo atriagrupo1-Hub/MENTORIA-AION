@@ -27,7 +27,7 @@ export const cores = {
   alertaForte: "#b4453c",
   verificado: "#1d9bf0",
   divisoria: "rgba(255,255,255,.08)",
-  placeholderCapa: "linear-gradient(160deg, #131c33, #060911 55%, #101830)",
+  placeholderCapa: "linear-gradient(160deg, #131c33, #060911 60%, #101830)",
 } as const;
 
 /** Escala tipográfica do item 3, com `cqw` trocado por `vw`. */
@@ -65,15 +65,13 @@ export function paleta(numeroModulo: number): CorModulo {
   return PALETA[numeroModulo] ?? NEUTRO;
 }
 
-/**
- * Módulos cuja arte final já traz o título embutido — não recebem
- * título sobreposto (lista `ART` do protótipo).
+/*
+ * A lista `ART` do protótipo não existe mais aqui.
+ *
+ * Quais módulos têm o título embutido na arte passou a ser dado do
+ * banco (`modulos.titulo_na_arte`), editável no painel. Uma arte nova
+ * não exige mais mexer neste arquivo nem publicar de novo.
  */
-const COM_ARTE = new Set([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
-
-export function temArte(numeroModulo: number): boolean {
-  return COM_ARTE.has(numeroModulo);
-}
 
 /** Degradê do topo, com a cor do módulo em que a aluna está. */
 export function fundoApp(numeroModulo: number): string {
