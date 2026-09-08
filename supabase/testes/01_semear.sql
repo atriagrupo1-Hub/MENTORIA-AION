@@ -1,4 +1,7 @@
--- Duas alunas e uma administradora, com liberação parcial.
+-- Duas alunas e uma administradora sobre o catálogo real (migration
+-- 0004). Nada de módulos inventados: os testes usam o Módulo 0 e o
+-- Módulo 1 do próprio curso, para que a prova valha para o dado real.
+
 insert into auth.users (id) values
   ('11111111-1111-1111-1111-111111111111'),
   ('22222222-2222-2222-2222-222222222222'),
@@ -14,23 +17,21 @@ insert into credenciais (aluna_id, codigo) values
   ('22222222-2222-2222-2222-222222222222', '1234'),
   ('33333333-3333-3333-3333-333333333333', '5678');
 
-insert into modulos (id, numero, titulo, ordem) values
-  ('aaaaaaaa-0000-0000-0000-000000000000', 0, 'BOAS-VINDAS E DIAGNOSTICO', 0),
-  ('bbbbbbbb-0000-0000-0000-000000000000', 1, 'DESCOBRINDO O VERDADEIRO BLOQUEIO', 1);
-
-insert into aulas (id, modulo_id, numero, titulo, ordem) values
-  ('a0a00000-0000-0000-0000-000000000001', 'aaaaaaaa-0000-0000-0000-000000000000', 1, 'Aula 0.1', 0),
-  ('a0a00000-0000-0000-0000-000000000002', 'aaaaaaaa-0000-0000-0000-000000000000', 2, 'Aula 0.2', 1),
-  ('b0b00000-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000000', 1, 'Aula 1.1', 0);
-
-insert into aula_midia (aula_id, video_provider, video_ref) values
-  ('a0a00000-0000-0000-0000-000000000001', 'stream', 'uid-secreto-aula-0-1'),
-  ('b0b00000-0000-0000-0000-000000000001', 'stream', 'uid-secreto-aula-1-1');
+-- Mídia em duas aulas: uma do Módulo 0 (que a Maria terá) e uma do
+-- Módulo 1 (que ela não terá), para provar que o endereço do vídeo não
+-- vaza do módulo bloqueado.
+insert into aula_midia (aula_id, video_provider, video_ref)
+select a.id, 'stream', 'uid-secreto-modulo-' || m.numero || '-aula-' || a.numero
+from aulas a join modulos m on m.id = a.modulo_id
+where (m.numero = 0 and a.numero = 1) or (m.numero = 1 and a.numero = 1);
 
 -- Maria tem só o Módulo 0. Ana não tem nada.
-insert into acessos (aluna_id, escopo, modulo_id) values
-  ('22222222-2222-2222-2222-222222222222', 'modulo', 'aaaaaaaa-0000-0000-0000-000000000000');
+insert into acessos (aluna_id, escopo, modulo_id)
+select '22222222-2222-2222-2222-222222222222', 'modulo', id
+from modulos where numero = 0;
 
--- Um comentário de Maria.
-insert into comentarios (aula_id, autora_id, texto, posicao_segundos) values
-  ('a0a00000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'Comentario da Maria', 272);
+-- Um comentário da Maria na primeira aula do Módulo 0.
+insert into comentarios (aula_id, autora_id, texto, posicao_segundos)
+select a.id, '22222222-2222-2222-2222-222222222222', 'Comentario da Maria', 272
+from aulas a join modulos m on m.id = a.modulo_id
+where m.numero = 0 and a.numero = 1;

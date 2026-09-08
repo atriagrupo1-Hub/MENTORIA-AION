@@ -12,6 +12,7 @@ descartável.
 | `migrations/0001_estrutura_inicial.sql` | Tabelas, RLS e funções |
 | `migrations/0002_storage.sql` | Depósitos `capas`, `materiais` e `audios`, com suas regras |
 | `migrations/0003_comentarios_por_coluna.sql` | Anonimato dos comentários por privilégio de coluna, e a moderação |
+| `migrations/0004_catalogo.sql` | Os 11 módulos, as 50 aulas, as 11 aulas ao vivo e as 4 categorias |
 
 ## Projeto
 
@@ -22,7 +23,8 @@ descartável.
 | Região | São Paulo (`sa-east-1`) |
 | Reference | `crcclhmamknqkamvavyp` |
 
-As três migrations estão aplicadas.
+As quatro migrations estão aplicadas. O banco tem o catálogo completo e
+a conta de administradora; nenhuma aluna e nenhuma mídia ainda.
 
 Aplicar em ordem, como dono `postgres`. As funções `security definer`
 leem tabelas protegidas por RLS de dentro das políticas dessas mesmas
@@ -76,9 +78,15 @@ Duas coisas do modelo mudaram junto:
   emite a sessão. É o único ponto que conhece a chave de serviço.
 - **Edge Function do vídeo** — troca o `video_ref` do Cloudflare Stream
   por um token assinado de curta duração.
-- **Primeira conta de administradora** — criar no Auth, depois inserir a
-  linha em `profiles` (papel `admin`) e a de `credenciais` com um código
-  de 6 dígitos.
+- **Primeira conta de administradora** — feita. O procedimento está em
+  `administradora.exemplo.sql`, com placeholders: o código de acesso é
+  credencial e não entra no repositório.
+- **As 56 capas** — subir para o depósito `capas`. Os caminhos já estão
+  gravados em `modulos.capa_path` e `aulas.capa_path`, na convenção do
+  item 10 do README do handoff.
+- **Os vídeos** — subir para o Cloudflare Stream e gravar o `uid` de
+  cada um em `aula_midia`. Enquanto a tabela estiver vazia, a aula
+  aparece como indisponível, que é o comportamento correto.
 
 ## Sobre os avisos do linter do Supabase
 
