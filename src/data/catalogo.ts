@@ -1,10 +1,11 @@
 /**
  * Catálogo da mentoria, transcrito do protótipo sem alteração.
- * Não renomear módulos ou aulas, nem mudar a ordem (item 11 do README).
- * A numeração de aulas reinicia em cada módulo.
  *
- * Em produção estes dados vêm das tabelas `modulos` e `aulas` do
- * Supabase; aqui servem de semente do catálogo local.
+ * O aplicativo NÃO lê este arquivo: o catálogo vem das tabelas `modulos`
+ * e `aulas` do Supabase. Ele ficou como origem da migration
+ * `0004_catalogo.sql`, que foi gerada a partir daqui — é o registro de
+ * onde os 11 módulos e as 50 aulas vieram, e de que nada foi renomeado
+ * nem reordenado no caminho (item 11 do README do handoff).
  */
 
 export type ModuloSemente = {

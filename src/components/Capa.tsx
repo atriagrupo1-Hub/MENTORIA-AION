@@ -1,3 +1,4 @@
+import { urlDaCapa } from "@/data/api";
 import { cores } from "@/design/tokens";
 
 /**
@@ -35,13 +36,22 @@ export function Capa({
   );
 }
 
-/** Caminhos oficiais das capas — convenção do item 10 do README. */
-export const capaModulo = (numero: number) => `/assets/capas/modulo-${numero}.png`;
+/**
+ * Capas — depósito `capas` do Supabase Storage.
+ *
+ * O banco guarda só o caminho relativo (`modulo-0.png`), nunca a URL: é
+ * o item (J) do modelo. Aqui o caminho vira endereço público. O depósito
+ * é público de propósito — a capa não tem valor isolado e aparece antes
+ * de qualquer conferência de liberação.
+ *
+ * Os nomes seguem a convenção do item 10 do README do handoff.
+ */
+const nomeDaCapa = (caminho: string) => urlDaCapa(caminho) ?? "";
+
+export const capaModulo = (numero: number) => nomeDaCapa(`modulo-${numero}.png`);
 export const capaAula = (numero: number, ordem: number) =>
-  `/assets/capas/modulo-${numero}-aula-${ordem + 1}.png`;
-export const capaAoVivo = (numero: number) =>
-  `/assets/capas/ao-vivo-modulo-${numero}.png`;
-export const capaPresente = (indice: number) =>
-  `/assets/capas/presente-${indice + 1}.png`;
+  nomeDaCapa(`modulo-${numero}-aula-${ordem + 1}.png`);
+export const capaAoVivo = (numero: number) => nomeDaCapa(`ao-vivo-modulo-${numero}.png`);
+export const capaPresente = (indice: number) => nomeDaCapa(`presente-${indice + 1}.png`);
 
 export const fundoReserva = cores.placeholderCapa;

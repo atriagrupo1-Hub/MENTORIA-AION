@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { useEstado } from "@/data/estado";
-import type { Categoria, Presente } from "@/data/tipos";
 import { cores } from "@/design/tokens";
 import { idDoVideo } from "./AbaConteudo";
 import type { PedidoConfirmacao } from "./Confirmacao";
+import * as dados from "./dados";
 import { botaoNeutro, botaoOuro, botaoRemover, campo } from "./estilos";
+import type { Painel } from "./usePainel";
 
 const BOTAO_LINHA: React.CSSProperties = {
   minHeight: 32,
@@ -17,16 +17,25 @@ const BOTAO_LINHA: React.CSSProperties = {
   cursor: "pointer",
 };
 
+function provedorDoLink(entrada: string): string {
+  const s = entrada.toLowerCase();
+  if (s.includes("youtu")) return "youtube";
+  if (s.includes("vimeo")) return "vimeo";
+  return "stream";
+}
+
 export function AbaPresentes({
+  painel,
   categoriaSozinha,
   pedirConfirmacao,
   avisar,
 }: {
+  painel: Painel;
   categoriaSozinha: string | null;
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
-  const { catalogo, atualizarCatalogo } = useEstado();
+  const { catalogo, midiaPresentes, executar } = painel;
   const [expandido, setExpandido] = useState(true);
   const [novaCategoria, setNovaCategoria] = useState("");
   const [novoPresenteEm, setNovoPresenteEm] = useState("");
@@ -44,46 +53,23 @@ export function AbaPresentes({
     ? catalogo.categorias.filter((c) => c.id === categoriaSozinha)
     : catalogo.categorias.filter((c) => !c.destacada);
 
-  const totalPresentes = catalogo.categorias.reduce(
-    (s, c) => s + c.presentes.length,
-    0,
-  );
+  const totalPresentes = catalogo.categorias.reduce((s, c) => s + c.presentes.length, 0);
 
-  function trocarCategorias(categorias: Categoria[]) {
-    atualizarCatalogo({ ...catalogo, categorias });
-  }
-
-  function mapearCategoria(id: string, fn: (c: Categoria) => Categoria) {
-    trocarCategorias(catalogo.categorias.map((c) => (c.id === id ? fn(c) : c)));
-  }
-
-  function renumerar(presentes: Presente[]): Presente[] {
-    return presentes.map((p, i) => ({ ...p, ordem: i }));
-  }
-
-  function adicionarCategoria(e: FormEvent) {
+  async function adicionarCategoria(e: FormEvent) {
     e.preventDefault();
     if (!novaCategoria.trim()) {
       avisar("Informe o nome da categoria.");
       return;
     }
-    trocarCategorias([
-      ...catalogo.categorias,
-      {
-        id: `categoria-${Date.now()}`,
-        titulo: novaCategoria.trim(),
-        ordem: catalogo.categorias.length,
-        destacada: false,
-        bloqueadaGeral: false,
-        presentes: [],
-      },
-    ]);
-    setNovaCategoria("");
-    avisar("Categoria criada.");
+    const falha = await executar(() =>
+      dados.criarCategoria(novaCategoria.trim(), catalogo.categorias.length),
+    );
+    if (!falha) setNovaCategoria("");
+    avisar(falha ?? "Categoria criada.");
   }
 
   const cabecalho = categoriaSozinha
-    ? catalogo.categorias.find((c) => c.id === categoriaSozinha)?.titulo ?? "Categoria"
+    ? (catalogo.categorias.find((c) => c.id === categoriaSozinha)?.titulo ?? "Categoria")
     : "Acervo de presentes";
 
   return (
@@ -100,8 +86,8 @@ export function AbaPresentes({
         </span>
         <span className="text-[13px] text-[rgba(243,236,225,.55)]">
           {catalogo.categorias.length}{" "}
-          {catalogo.categorias.length === 1 ? "categoria" : "categorias"} ·{" "}
-          {totalPresentes} {totalPresentes === 1 ? "presente" : "presentes"}
+          {catalogo.categorias.length === 1 ? "categoria" : "categorias"} · {totalPresentes}{" "}
+          {totalPresentes === 1 ? "presente" : "presentes"}
         </span>
         <button
           onClick={() => setExpandido((v) => !v)}
@@ -172,27 +158,31 @@ export function AbaPresentes({
                       {novoPresenteEm === categoria.id ? "Fechar" : "Adicionar presente"}
                     </button>
                     <button
-                      onClick={() => {
-                        mapearCategoria(categoria.id, (c) => ({
-                          ...c,
-                          destacada: !c.destacada,
-                        }));
+                      onClick={async () =>
                         avisar(
-                          categoria.destacada
-                            ? `${categoria.titulo} voltou para Presentes.`
-                            : `${categoria.titulo} agora tem sua própria subaba.`,
-                        );
-                      }}
+                          (await executar(() =>
+                            dados.atualizarCategoria(categoria.id, {
+                              destacada: !categoria.destacada,
+                            }),
+                          )) ??
+                            (categoria.destacada
+                              ? `${categoria.titulo} voltou para Presentes.`
+                              : `${categoria.titulo} agora tem sua própria subaba.`),
+                        )
+                      }
                       style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
                     >
                       {categoria.destacada ? "Voltar para Presentes" : "Deixar sozinha"}
                     </button>
                     <button
-                      onClick={() =>
-                        mapearCategoria(categoria.id, (c) => ({
-                          ...c,
-                          bloqueadaGeral: !c.bloqueadaGeral,
-                        }))
+                      onClick={async () =>
+                        avisar(
+                          (await executar(() =>
+                            dados.atualizarCategoria(categoria.id, {
+                              bloqueada_geral: !categoria.bloqueadaGeral,
+                            }),
+                          )) ?? "Estado da categoria atualizado.",
+                        )
                       }
                       style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
                     >
@@ -203,12 +193,12 @@ export function AbaPresentes({
                         pedirConfirmacao({
                           titulo: `Remover a categoria ${categoria.titulo}?`,
                           mensagem: `Os ${categoria.presentes.length} presentes dela saem do acervo para todas as alunas.`,
-                          executar: () => {
-                            trocarCategorias(
-                              catalogo.categorias.filter((c) => c.id !== categoria.id),
-                            );
-                            avisar("Categoria removida.");
-                          },
+                          executar: async () =>
+                            avisar(
+                              (await executar(() =>
+                                dados.removerCategoria(categoria.id),
+                              )) ?? "Categoria removida.",
+                            ),
                         })
                       }
                       style={{ ...botaoRemover, minHeight: 36, padding: "0 13px" }}
@@ -220,18 +210,17 @@ export function AbaPresentes({
 
                 {editando === `c:${categoria.id}` ? (
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
                       if (!textoEdicao.trim()) {
                         avisar("Informe o nome da categoria.");
                         return;
                       }
-                      mapearCategoria(categoria.id, (c) => ({
-                        ...c,
-                        titulo: textoEdicao.trim(),
-                      }));
-                      setEditando("");
-                      avisar("Nome da categoria atualizado.");
+                      const falha = await executar(() =>
+                        dados.atualizarCategoria(categoria.id, { titulo: textoEdicao.trim() }),
+                      );
+                      if (!falha) setEditando("");
+                      avisar(falha ?? "Nome da categoria atualizado.");
                     }}
                     className="mt-3 flex flex-wrap gap-2"
                   >
@@ -253,32 +242,21 @@ export function AbaPresentes({
 
                 {novoPresenteEm === categoria.id ? (
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
                       if (!novoPresente.trim()) {
                         avisar("Informe o nome do presente.");
                         return;
                       }
-                      mapearCategoria(categoria.id, (c) => ({
-                        ...c,
-                        presentes: renumerar([
-                          ...c.presentes,
-                          {
-                            id: `presente-${Date.now()}`,
-                            categoriaId: c.id,
-                            titulo: novoPresente.trim(),
-                            descricao: "",
-                            duracaoTexto: "",
-                            capaPath: null,
-                            videoProvider: null,
-                            videoRef: null,
-                            ordem: c.presentes.length,
-                            bloqueadoGeral: false,
-                          },
-                        ]),
-                      }));
-                      setNovoPresente("");
-                      avisar("Presente adicionado.");
+                      const falha = await executar(() =>
+                        dados.criarPresente(
+                          categoria.id,
+                          novoPresente.trim(),
+                          categoria.presentes.length,
+                        ),
+                      );
+                      if (!falha) setNovoPresente("");
+                      avisar(falha ?? "Presente adicionado.");
                     }}
                     className="mt-3 flex flex-wrap gap-2"
                   >
@@ -301,25 +279,12 @@ export function AbaPresentes({
 
                 <div className="mt-[10px] flex flex-col">
                   {categoria.presentes.map((presente) => {
+                    const midia = midiaPresentes.get(presente.id);
                     const anexos = [
-                      presente.videoRef ? "vídeo" : null,
+                      midia ? `vídeo (${midia.provider})` : null,
                       presente.capaPath ? "capa" : null,
                       presente.descricao ? "descrição" : null,
                     ].filter(Boolean);
-
-                    function mover(passo: number) {
-                      const destino = presente.ordem + passo;
-                      if (destino < 0 || destino >= categoria.presentes.length) return;
-                      const lista = [...categoria.presentes];
-                      [lista[presente.ordem], lista[destino]] = [
-                        lista[destino],
-                        lista[presente.ordem],
-                      ];
-                      mapearCategoria(categoria.id, (c) => ({
-                        ...c,
-                        presentes: renumerar(lista),
-                      }));
-                    }
 
                     return (
                       <div key={presente.id}>
@@ -344,34 +309,10 @@ export function AbaPresentes({
                           </span>
 
                           <button
-                            onClick={() => mover(-1)}
-                            aria-label="Mover para cima"
-                            className="grid h-8 w-8 place-items-center rounded-full bg-transparent text-[14px]"
-                            style={{
-                              color: "rgba(243,236,225,.7)",
-                              border: "1px solid rgba(255,255,255,.14)",
-                              cursor: "pointer",
-                            }}
-                          >
-                            ↑
-                          </button>
-                          <button
-                            onClick={() => mover(1)}
-                            aria-label="Mover para baixo"
-                            className="grid h-8 w-8 place-items-center rounded-full bg-transparent text-[14px]"
-                            style={{
-                              color: "rgba(243,236,225,.7)",
-                              border: "1px solid rgba(255,255,255,.14)",
-                              cursor: "pointer",
-                            }}
-                          >
-                            ↓
-                          </button>
-                          <button
                             onClick={() => {
                               const aberto = conteudoDe === presente.id;
                               setConteudoDe(aberto ? "" : presente.id);
-                              setVideo(presente.videoRef ?? "");
+                              setVideo(midia?.ref ?? "");
                               setCapa(presente.capaPath ?? "");
                               setDuracao(presente.duracaoTexto);
                               setDescricao(presente.descricao);
@@ -403,15 +344,14 @@ export function AbaPresentes({
                             {movendo === presente.id ? "Fechar" : "Mover"}
                           </button>
                           <button
-                            onClick={() =>
-                              mapearCategoria(categoria.id, (c) => ({
-                                ...c,
-                                presentes: c.presentes.map((x) =>
-                                  x.id === presente.id
-                                    ? { ...x, bloqueadoGeral: !x.bloqueadoGeral }
-                                    : x,
-                                ),
-                              }))
+                            onClick={async () =>
+                              avisar(
+                                (await executar(() =>
+                                  dados.atualizarPresente(presente.id, {
+                                    bloqueado_geral: !presente.bloqueadoGeral,
+                                  }),
+                                )) ?? "Estado do presente atualizado.",
+                              )
                             }
                             style={BOTAO_LINHA}
                           >
@@ -421,17 +361,13 @@ export function AbaPresentes({
                             onClick={() =>
                               pedirConfirmacao({
                                 titulo: `Remover ${presente.titulo}?`,
-                                mensagem:
-                                  "O presente sai do acervo para todas as alunas.",
-                                executar: () => {
-                                  mapearCategoria(categoria.id, (c) => ({
-                                    ...c,
-                                    presentes: renumerar(
-                                      c.presentes.filter((x) => x.id !== presente.id),
-                                    ),
-                                  }));
-                                  avisar("Presente removido.");
-                                },
+                                mensagem: "O presente sai do acervo para todas as alunas.",
+                                executar: async () =>
+                                  avisar(
+                                    (await executar(() =>
+                                      dados.removerPresente(presente.id),
+                                    )) ?? "Presente removido.",
+                                  ),
                               })
                             }
                             style={{
@@ -451,33 +387,17 @@ export function AbaPresentes({
                               .map((destino) => (
                                 <button
                                   key={destino.id}
-                                  onClick={() => {
-                                    trocarCategorias(
-                                      catalogo.categorias.map((c) => {
-                                        if (c.id === categoria.id) {
-                                          return {
-                                            ...c,
-                                            presentes: renumerar(
-                                              c.presentes.filter(
-                                                (x) => x.id !== presente.id,
-                                              ),
-                                            ),
-                                          };
-                                        }
-                                        if (c.id === destino.id) {
-                                          return {
-                                            ...c,
-                                            presentes: renumerar([
-                                              ...c.presentes,
-                                              { ...presente, categoriaId: c.id },
-                                            ]),
-                                          };
-                                        }
-                                        return c;
+                                  onClick={async () => {
+                                    const falha = await executar(() =>
+                                      dados.atualizarPresente(presente.id, {
+                                        categoria_id: destino.id,
+                                        ordem: destino.presentes.length,
                                       }),
                                     );
                                     setMovendo("");
-                                    avisar(`Presente movido para ${destino.titulo}.`);
+                                    avisar(
+                                      falha ?? `Presente movido para ${destino.titulo}.`,
+                                    );
                                   }}
                                   style={BOTAO_LINHA}
                                 >
@@ -489,40 +409,41 @@ export function AbaPresentes({
 
                         {conteudoDe === presente.id ? (
                           <form
-                            onSubmit={(e) => {
+                            onSubmit={async (e) => {
                               e.preventDefault();
-                              mapearCategoria(categoria.id, (c) => ({
-                                ...c,
-                                presentes: c.presentes.map((x) =>
-                                  x.id === presente.id
-                                    ? {
-                                        ...x,
-                                        videoRef: idDoVideo(video) || null,
-                                        videoProvider: idDoVideo(video) ? "youtube" : null,
-                                        capaPath: capa.trim() || null,
-                                        duracaoTexto: duracao.trim(),
-                                        descricao: descricao.trim(),
-                                      }
-                                    : x,
-                                ),
-                              }));
-                              setConteudoDe("");
-                              avisar("Conteúdo do presente salvo.");
+                              const ref = idDoVideo(video);
+                              const falha =
+                                (await executar(() =>
+                                  dados.definirMidiaDoPresente(
+                                    presente.id,
+                                    provedorDoLink(video),
+                                    ref,
+                                  ),
+                                )) ??
+                                (await executar(() =>
+                                  dados.atualizarPresente(presente.id, {
+                                    capa_path: capa.trim() || null,
+                                    duracao_texto: duracao.trim(),
+                                    descricao: descricao.trim(),
+                                  }),
+                                ));
+                              if (!falha) setConteudoDe("");
+                              avisar(falha ?? "Conteúdo do presente salvo.");
                             }}
                             className="flex flex-col gap-2 pb-[14px] pt-[6px]"
                           >
                             {[
                               {
-                                rotulo: "Link do vídeo (YouTube)",
+                                rotulo: "Vídeo — link ou identificador (Cloudflare Stream)",
                                 valor: video,
                                 mudar: setVideo,
-                                dica: "https://www.youtube.com/watch?v=...",
+                                dica: "https://iframe.videodelivery.net/<uid>  ou só o uid",
                               },
                               {
-                                rotulo: "Capa do presente (arquivo 2:3)",
+                                rotulo: "Capa — arquivo no depósito `capas` (2:3)",
                                 valor: capa,
                                 mudar: setCapa,
-                                dica: `/assets/capas/presente-${presente.ordem + 1}.png`,
+                                dica: `presente-${presente.ordem + 1}.png`,
                               },
                               {
                                 rotulo: "Duração",
@@ -575,22 +496,19 @@ export function AbaPresentes({
 
                         {editando === `p:${presente.id}` ? (
                           <form
-                            onSubmit={(e) => {
+                            onSubmit={async (e) => {
                               e.preventDefault();
                               if (!textoEdicao.trim()) {
                                 avisar("Informe o nome do presente.");
                                 return;
                               }
-                              mapearCategoria(categoria.id, (c) => ({
-                                ...c,
-                                presentes: c.presentes.map((x) =>
-                                  x.id === presente.id
-                                    ? { ...x, titulo: textoEdicao.trim() }
-                                    : x,
-                                ),
-                              }));
-                              setEditando("");
-                              avisar("Nome do presente atualizado.");
+                              const falha = await executar(() =>
+                                dados.atualizarPresente(presente.id, {
+                                  titulo: textoEdicao.trim(),
+                                }),
+                              );
+                              if (!falha) setEditando("");
+                              avisar(falha ?? "Nome do presente atualizado.");
                             }}
                             className="flex flex-wrap gap-2 pb-3 pt-1"
                           >

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import * as api from "@/data/api";
 import { Capa, capaPresente } from "@/components/Capa";
 import { Cadeado, Play } from "@/components/Icones";
 import { useEstado } from "@/data/estado";
@@ -10,12 +11,29 @@ export function PaginaPresente() {
   const { catalogo, presenteLiberado } = useEstado();
   const navegar = useNavigate();
   const [tocando, setTocando] = useState(false);
+  const [video, setVideo] = useState<api.Video | null>(null);
 
   const todos = catalogo.categorias.flatMap((c) =>
     c.presentes.map((p) => ({ presente: p, categoriaId: c.id })),
   );
   const indice = todos.findIndex((x) => x.presente.id === id);
   const atual = todos[indice];
+
+  const presenteId = atual?.presente.id ?? null;
+
+  // O endereço do vídeo vem do servidor, depois de conferida a liberação.
+  useEffect(() => {
+    if (!presenteId) return;
+    let valeAinda = true;
+    setVideo(null);
+    void api
+      .videoDoPresente(presenteId)
+      .then((v) => valeAinda && setVideo(v))
+      .catch(() => undefined);
+    return () => {
+      valeAinda = false;
+    };
+  }, [presenteId]);
 
   if (!atual) return <main className="p-8">Presente não encontrado.</main>;
 
@@ -72,9 +90,9 @@ export function PaginaPresente() {
               background: "linear-gradient(180deg, rgba(5,8,16,.35), rgba(5,8,16,.8))",
             }}
           />
-          {tocando && presente.videoRef ? (
+          {tocando && video ? (
             <iframe
-              src={`https://www.youtube.com/embed/${presente.videoRef}?autoplay=1&rel=0&playsinline=1`}
+              src={api.enderecoDoVideo(video)}
               title={presente.titulo}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen

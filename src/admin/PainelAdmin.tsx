@@ -8,125 +8,187 @@ import { AbaConteudo } from "./AbaConteudo";
 import { AbaPresentes } from "./AbaPresentes";
 import { Confirmacao, type PedidoConfirmacao } from "./Confirmacao";
 import { aba, campo } from "./estilos";
+import { usePainel } from "./usePainel";
+
+const FUNDO =
+  "linear-gradient(180deg, rgba(157,117,54,.28) 0px, rgba(157,117,54,.08) 220px, rgba(5,7,15,0) 420px) no-repeat, #05070f";
 
 /**
- * Senha fixa do protótipo. Em produção, conta com papel de admin —
- * a palavra sai do código e vira uma linha com `papel = 'admin'`.
+ * Painel administrativo.
+ *
+ * A senha `mentoria` do protótipo não existe mais. Quem entra aqui entra
+ * com o mesmo nome e código de qualquer aluna; o que abre o painel é o
+ * papel `admin` no banco, conferido pelo Supabase. Um token de aluna não
+ * passa — e mesmo que a tela fosse burlada, a RLS recusaria cada escrita.
  */
-const SENHA_PROTOTIPO = "mentoria";
-const CHAVE_SESSAO_ADMIN = "aion-admin-v1";
-
 export function PainelAdmin() {
-  const { catalogo, alunas } = useEstado();
-  const aviso = useAviso();
-  const [autenticada, setAutenticada] = useState(() => {
-    try {
-      return localStorage.getItem(CHAVE_SESSAO_ADMIN) === "1";
-    } catch {
-      return false;
-    }
-  });
-  const [senha, setSenha] = useState("");
-  const [erro, setErro] = useState("");
-  const [abaAtiva, setAbaAtiva] = useState<"alunas" | "conteudo">("alunas");
-  const [subaba, setSubaba] = useState("mentoria");
-  const [pedido, setPedido] = useState<PedidoConfirmacao | null>(null);
+  const { aluna, entrar, sair, carregando: carregandoSessao } = useEstado();
+  const ehAdmin = aluna?.papel === "admin";
 
-  function entrar(e: FormEvent) {
-    e.preventDefault();
-    if (senha.trim() !== SENHA_PROTOTIPO) {
-      setErro("Senha incorreta.");
-      return;
-    }
-    setAutenticada(true);
-    setSenha("");
-    setErro("");
-    try {
-      localStorage.setItem(CHAVE_SESSAO_ADMIN, "1");
-    } catch {
-      /* ignora */
-    }
-  }
-
-  function sair() {
-    setAutenticada(false);
-    try {
-      localStorage.removeItem(CHAVE_SESSAO_ADMIN);
-    } catch {
-      /* ignora */
-    }
-  }
-
-  const fundo =
-    "linear-gradient(180deg, rgba(157,117,54,.28) 0px, rgba(157,117,54,.08) 220px, rgba(5,7,15,0) 420px) no-repeat, #05070f";
-
-  if (!autenticada) {
+  if (carregandoSessao) {
     return (
-      <div className="min-h-screen" style={{ background: fundo }}>
-        <div className="flex min-h-screen items-center justify-center px-[18px] py-8">
-          <form
-            onSubmit={entrar}
-            className="rise-in w-full max-w-[420px] rounded-[20px] px-6 py-7"
-            style={{
-              background: cores.cartaoForte,
-              border: "1px solid rgba(212,177,112,.2)",
-              boxShadow: "0 40px 90px -50px rgba(212,177,112,.35)",
-            }}
-          >
-            <p className="mb-2 mt-0 text-center text-[11px] uppercase tracking-[.3em] text-marfim">
-              Mentoria
-            </p>
-            <h1
-              className="mb-1 mt-0 text-center font-titulo text-[26px] font-semibold tracking-[.08em]"
-              style={{ color: cores.ouroSuave }}
-            >
-              PAINEL ADMINISTRATIVO
-            </h1>
-            <p className="mb-6 mt-0 text-center text-[14px] text-[rgba(243,236,225,.6)]">
-              Acesso restrito à equipe da mentoria.
-            </p>
-
-            <label
-              htmlFor="admin-senha"
-              className="mb-2 block text-[12px] font-bold text-[rgba(243,236,225,.75)]"
-            >
-              Senha de administradora
-            </label>
-            <input
-              id="admin-senha"
-              type="password"
-              value={senha}
-              onChange={(e) => {
-                setSenha(e.target.value);
-                setErro("");
-              }}
-              placeholder="Digite a senha"
-              style={{ ...campo, height: 54, width: "100%", borderRadius: 12 }}
-            />
-
-            {erro ? (
-              <p className="mb-0 mt-3 text-[14px]" style={{ color: "#e6b8a0" }}>
-                {erro}
-              </p>
-            ) : null}
-
-            <button
-              type="submit"
-              className="mt-5 min-h-[54px] w-full rounded-pilula border-none text-[16px] font-bold hover:opacity-90"
-              style={{
-                color: cores.ouroTexto,
-                background: cores.botaoOuro,
-                cursor: "pointer",
-              }}
-            >
-              Entrar no painel
-            </button>
-          </form>
-        </div>
+      <div className="flex min-h-screen items-center justify-center" style={{ background: FUNDO }}>
+        <p className="m-0 text-[15px]" style={{ color: cores.textoSecundario }}>
+          Carregando…
+        </p>
       </div>
     );
   }
 
+  if (!ehAdmin) {
+    return <EntradaAdmin entrar={entrar} logada={Boolean(aluna)} sair={sair} />;
+  }
+
+  return <PainelLogado />;
+}
+
+function EntradaAdmin({
+  entrar,
+  logada,
+  sair,
+}: {
+  entrar: (login: string, codigo: string) => Promise<string | null>;
+  logada: boolean;
+  sair: () => Promise<void>;
+}) {
+  const [login, setLogin] = useState("");
+  const [codigo, setCodigo] = useState("");
+  const [erro, setErro] = useState("");
+  const [entrando, setEntrando] = useState(false);
+
+  async function enviar(e: FormEvent) {
+    e.preventDefault();
+    if (entrando) return;
+    setEntrando(true);
+    setErro("");
+    try {
+      const falha = await entrar(login, codigo);
+      if (falha) setErro(falha);
+    } finally {
+      setEntrando(false);
+    }
+  }
+
+  return (
+    <div className="min-h-screen" style={{ background: FUNDO }}>
+      <div className="flex min-h-screen items-center justify-center px-[18px] py-8">
+        <form
+          onSubmit={enviar}
+          className="rise-in w-full max-w-[420px] rounded-[20px] px-6 py-7"
+          style={{
+            background: cores.cartaoForte,
+            border: "1px solid rgba(212,177,112,.2)",
+            boxShadow: "0 40px 90px -50px rgba(212,177,112,.35)",
+          }}
+        >
+          <p className="mb-2 mt-0 text-center text-[11px] uppercase tracking-[.3em] text-marfim">
+            Mentoria
+          </p>
+          <h1
+            className="mb-1 mt-0 text-center font-titulo text-[26px] font-semibold tracking-[.08em]"
+            style={{ color: cores.ouroSuave }}
+          >
+            PAINEL ADMINISTRATIVO
+          </h1>
+          <p className="mb-6 mt-0 text-center text-[14px] text-[rgba(243,236,225,.6)]">
+            Acesso restrito à equipe da mentoria.
+          </p>
+
+          {logada ? (
+            <>
+              <p className="mb-5 mt-0 text-center text-[14px]" style={{ color: "#e6b8a0" }}>
+                Esta conta não tem acesso ao painel.
+              </p>
+              <button
+                type="button"
+                onClick={() => void sair()}
+                className="min-h-[54px] w-full rounded-pilula border-none text-[16px] font-bold"
+                style={{
+                  color: cores.ouroTexto,
+                  background: cores.botaoOuro,
+                  cursor: "pointer",
+                }}
+              >
+                Sair e entrar com outra conta
+              </button>
+            </>
+          ) : (
+            <>
+              <label
+                htmlFor="admin-login"
+                className="mb-2 block text-[12px] font-bold text-[rgba(243,236,225,.75)]"
+              >
+                Seu nome de acesso
+              </label>
+              <input
+                id="admin-login"
+                type="text"
+                value={login}
+                onChange={(e) => {
+                  setLogin(e.target.value);
+                  setErro("");
+                }}
+                autoComplete="off"
+                placeholder="admin"
+                style={{ ...campo, height: 54, width: "100%", borderRadius: 12 }}
+              />
+
+              <label
+                htmlFor="admin-codigo"
+                className="mb-2 mt-4 block text-[12px] font-bold text-[rgba(243,236,225,.75)]"
+              >
+                Seu código
+              </label>
+              <input
+                id="admin-codigo"
+                type="password"
+                value={codigo}
+                onChange={(e) => {
+                  setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6));
+                  setErro("");
+                }}
+                inputMode="numeric"
+                autoComplete="off"
+                placeholder="••••••"
+                style={{ ...campo, height: 54, width: "100%", borderRadius: 12 }}
+              />
+
+              {erro ? (
+                <p className="mb-0 mt-3 text-[14px]" style={{ color: "#e6b8a0" }}>
+                  {erro}
+                </p>
+              ) : null}
+
+              <button
+                type="submit"
+                disabled={entrando}
+                className="mt-5 min-h-[54px] w-full rounded-pilula border-none text-[16px] font-bold hover:opacity-90"
+                style={{
+                  color: cores.ouroTexto,
+                  background: cores.botaoOuro,
+                  cursor: entrando ? "wait" : "pointer",
+                  opacity: entrando ? 0.7 : 1,
+                }}
+              >
+                {entrando ? "Entrando..." : "Entrar no painel"}
+              </button>
+            </>
+          )}
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function PainelLogado() {
+  const { sair } = useEstado();
+  const painel = usePainel();
+  const aviso = useAviso();
+  const [abaAtiva, setAbaAtiva] = useState<"alunas" | "conteudo">("alunas");
+  const [subaba, setSubaba] = useState("mentoria");
+  const [pedido, setPedido] = useState<PedidoConfirmacao | null>(null);
+
+  const { catalogo, alunas, carregando, erro } = painel;
   const ativas = alunas.filter((a) => a.status === "ativa").length;
   const totalAulas = catalogo.modulos.reduce((s, m) => s + m.aulas.length, 0);
   const totalPresentes = catalogo.categorias.reduce((s, c) => s + c.presentes.length, 0);
@@ -159,7 +221,7 @@ export function PainelAdmin() {
   ];
 
   return (
-    <div className="min-h-screen" style={{ background: fundo }}>
+    <div className="min-h-screen" style={{ background: FUNDO }}>
       <div className="rise-in-rapido mx-auto max-w-[1180px] px-5 pb-[90px] pt-[26px]">
         <header className="mb-[26px] flex flex-wrap items-center gap-3">
           <div className="flex-[1_1_240px]">
@@ -174,10 +236,10 @@ export function PainelAdmin() {
             </h1>
           </div>
           <span className="text-[14px] text-[rgba(243,236,225,.6)]">
-            {abaAtiva === "conteudo" ? resumoConteudo : resumoAlunas}
+            {carregando ? "Carregando…" : abaAtiva === "conteudo" ? resumoConteudo : resumoAlunas}
           </span>
           <button
-            onClick={sair}
+            onClick={() => void sair()}
             className="min-h-[40px] rounded-pilula px-4 text-[14px] text-marfim-corpo"
             style={{
               background: "rgba(255,255,255,.06)",
@@ -189,6 +251,19 @@ export function PainelAdmin() {
           </button>
         </header>
 
+        {erro ? (
+          <p
+            className="mb-5 rounded-botao p-4 text-[14px]"
+            style={{
+              color: cores.alerta,
+              background: "rgba(230,168,154,.06)",
+              border: "1px solid rgba(230,168,154,.3)",
+            }}
+          >
+            {erro}
+          </p>
+        ) : null}
+
         <div className="mb-[22px] flex gap-[10px]">
           <button onClick={() => setAbaAtiva("alunas")} style={aba(abaAtiva === "alunas")}>
             Alunas
@@ -199,7 +274,7 @@ export function PainelAdmin() {
         </div>
 
         {abaAtiva === "alunas" ? (
-          <AbaAlunas pedirConfirmacao={setPedido} avisar={aviso.mostrar} />
+          <AbaAlunas painel={painel} pedirConfirmacao={setPedido} avisar={aviso.mostrar} />
         ) : (
           <div>
             <div className="mb-4 flex flex-wrap gap-2">
@@ -215,9 +290,14 @@ export function PainelAdmin() {
             </div>
 
             {subaba === "mentoria" ? (
-              <AbaConteudo pedirConfirmacao={setPedido} avisar={aviso.mostrar} />
+              <AbaConteudo
+                painel={painel}
+                pedirConfirmacao={setPedido}
+                avisar={aviso.mostrar}
+              />
             ) : (
               <AbaPresentes
+                painel={painel}
                 categoriaSozinha={sozinhaId}
                 pedirConfirmacao={setPedido}
                 avisar={aviso.mostrar}
@@ -227,9 +307,7 @@ export function PainelAdmin() {
         )}
       </div>
 
-      {pedido ? (
-        <Confirmacao pedido={pedido} aoCancelar={() => setPedido(null)} />
-      ) : null}
+      {pedido ? <Confirmacao pedido={pedido} aoCancelar={() => setPedido(null)} /> : null}
       <Aviso mensagem={aviso.mensagem} aoFechar={aviso.limpar} duracao={3600} />
     </div>
   );

@@ -30,17 +30,24 @@ export function Login() {
   const [mostrarCodigo, setMostrarCodigo] = useState(false);
   const [erro, setErro] = useState("");
   const [focado, setFocado] = useState("");
+  const [entrando, setEntrando] = useState(false);
 
-  function enviar(e: FormEvent) {
+  async function enviar(e: FormEvent) {
     e.preventDefault();
-    const falha = entrar(nome, codigo);
-    if (falha) {
-      setErro(falha);
-      return;
-    }
+    if (entrando) return;
+    setEntrando(true);
     setErro("");
-    setCodigo("");
-    navegar("/inicio");
+    try {
+      const falha = await entrar(nome, codigo);
+      if (falha) {
+        setErro(falha);
+        return;
+      }
+      setCodigo("");
+      navegar("/inicio");
+    } finally {
+      setEntrando(false);
+    }
   }
 
   const foco = (campo: string): React.CSSProperties =>
@@ -210,10 +217,16 @@ export function Login() {
 
           <button
             type="submit"
+            disabled={entrando}
             className="relative mt-[22px] flex min-h-[56px] w-full items-center justify-center rounded-pilula border-none px-[54px] py-4 text-[17px] font-bold transition-opacity hover:opacity-90"
-            style={{ color: cores.ouroTexto, background: cores.botaoOuro, cursor: "pointer" }}
+            style={{
+              color: cores.ouroTexto,
+              background: cores.botaoOuro,
+              cursor: entrando ? "wait" : "pointer",
+              opacity: entrando ? 0.7 : 1,
+            }}
           >
-            Entrar na mentoria
+            {entrando ? "Entrando..." : "Entrar na mentoria"}
             <span
               aria-hidden="true"
               className="absolute right-2 top-1/2 grid h-[38px] w-[38px] -translate-y-1/2 place-items-center rounded-full text-[17px]"

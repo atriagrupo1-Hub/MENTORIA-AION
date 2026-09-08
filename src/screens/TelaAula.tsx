@@ -5,6 +5,8 @@ import { Capa, capaAula, capaModulo } from "@/components/Capa";
 import { Play } from "@/components/Icones";
 import { useAviso } from "@/components/useAviso";
 import { tituloEmFrase } from "@/data/derivados";
+import * as api from "@/data/api";
+import type { ComentarioPublico } from "@/data/api";
 import { minutosDaAula, relogio, rotuloDuracao, useEstado } from "@/data/estado";
 import { cores, paleta } from "@/design/tokens";
 
@@ -41,8 +43,6 @@ export function TelaAula() {
     alternarConcluida,
     alternarCurtida,
     registrarPosicao,
-    comentar,
-    atividade,
     aulaBloqueada,
     moduloLiberado,
   } = estado;
@@ -56,10 +56,14 @@ export function TelaAula() {
   const [comentariosAbertos, setComentariosAbertos] = useState(true);
   const [rascunho, setRascunho] = useState("");
   const [saindo, setSaindo] = useState(false);
+  const [comentarios, setComentarios] = useState<ComentarioPublico[]>([]);
+  const [video, setVideo] = useState<api.Video | null>(null);
   const timer = useRef<number | null>(null);
 
   const modulo = catalogo.modulos.find((m) => m.numero === numeroModulo);
   const aula = modulo?.aulas[ordem];
+
+  const aulaId = aula?.id ?? null;
 
   useEffect(() => {
     setTocando(false);
@@ -67,6 +71,26 @@ export function TelaAula() {
     setPainel("");
     if (timer.current) window.clearInterval(timer.current);
   }, [numeroModulo, ordem]);
+
+  // Comentários e endereço do vídeo vêm do banco, por aula. O endereço
+  // só é devolvido depois de o servidor conferir a liberação.
+  useEffect(() => {
+    if (!aulaId) return;
+    let valeAinda = true;
+    setComentarios([]);
+    setVideo(null);
+    void api
+      .comentariosDaAula(aulaId)
+      .then((lista) => valeAinda && setComentarios(lista))
+      .catch(() => undefined);
+    void api
+      .videoDaAula(aulaId)
+      .then((v) => valeAinda && setVideo(v))
+      .catch(() => undefined);
+    return () => {
+      valeAinda = false;
+    };
+  }, [aulaId]);
 
   useEffect(() => () => { if (timer.current) window.clearInterval(timer.current); }, []);
 
@@ -76,13 +100,13 @@ export function TelaAula() {
   const feita = concluida(aula.id);
   const duracaoSeg = minutosDaAula(modulo, aula) * 60;
   const segundoAtual = (pctVideo / 100) * duracaoSeg;
-  const comentarios = atividade.comentarios.filter((c) => c.aulaId === aula.id);
+
 
   function alternarPlay() {
     if (tocando) {
       if (timer.current) window.clearInterval(timer.current);
       setTocando(false);
-      registrarPosicao(aula!.id, pctVideo, (pctVideo / 100) * duracaoSeg);
+      registrarPosicao(aula!.id, (pctVideo / 100) * duracaoSeg, duracaoSeg);
       return;
     }
     setTocando(true);
@@ -91,7 +115,7 @@ export function TelaAula() {
     timer.current = window.setInterval(() => {
       setPctVideo((anterior) => {
         const proximo = Math.min(100, anterior + 1.5);
-        registrarPosicao(aula!.id, proximo, (proximo / 100) * duracaoSeg);
+        registrarPosicao(aula!.id, (proximo / 100) * duracaoSeg, duracaoSeg);
         if (proximo >= 100) {
           if (timer.current) window.clearInterval(timer.current);
           setTocando(false);
@@ -131,8 +155,8 @@ export function TelaAula() {
     navegar(`/aula/${seguinte.numero}/0`);
   }
 
-  function marcarConcluida() {
-    const virou = alternarConcluida(aula!.id);
+  async function marcarConcluida() {
+    const virou = await alternarConcluida(aula!.id);
     if (!virou) return;
     const temProxima = ordem + 1 < modulo!.aulas.length;
     const seguinte = catalogo.modulos.find((m) => m.numero === numeroModulo + 1);
@@ -145,11 +169,18 @@ export function TelaAula() {
     );
   }
 
-  function enviarComentario(e: FormEvent) {
+  async function enviarComentario(e: FormEvent) {
     e.preventDefault();
-    if (!rascunho.trim()) return;
-    comentar(aula!.id, rascunho.trim(), segundoAtual);
+    const texto = rascunho.trim();
+    if (!texto || !aulaId) return;
     setRascunho("");
+    try {
+      await api.comentar(aulaId, texto, segundoAtual);
+      setComentarios(await api.comentariosDaAula(aulaId));
+    } catch {
+      setRascunho(texto);
+      aviso.mostrar("Não conseguimos publicar seu comentário. Tente de novo.");
+    }
   }
 
   return (
@@ -180,9 +211,9 @@ export function TelaAula() {
           ✕
         </button>
 
-        {tocando && aula.videoRef ? (
+        {tocando && video ? (
           <iframe
-            src={`https://www.youtube.com/embed/${aula.videoRef}?autoplay=1&rel=0&playsinline=1`}
+            src={api.enderecoDoVideo(video)}
             title={aula.titulo}
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
@@ -192,7 +223,7 @@ export function TelaAula() {
         ) : null}
 
         {/* A camada de play não intercepta cliques fora do círculo. */}
-        {!(tocando && aula.videoRef) ? (
+        {!(tocando && video) ? (
           <button
             onClick={alternarPlay}
             aria-label={tocando ? "Pausar aula" : "Assistir aula"}
@@ -328,7 +359,7 @@ export function TelaAula() {
             {
               rotulo: "Curtir",
               glifo: curtiu(aula.id) ? "♥" : "♡",
-              acao: () => alternarCurtida(aula.id),
+              acao: () => void alternarCurtida(aula.id),
               cor: curtiu(aula.id) ? cores.ouroMedio : "rgba(255,255,255,.72)",
             },
             { rotulo: "Material", glifo: "▤", acao: () => setPainel("material") },
@@ -460,9 +491,7 @@ export function TelaAula() {
                       <span className="text-[14px] font-bold text-white">Anônimo</span>
                       <span className="text-[13px] text-white/35">•</span>
                       <button
-                        onClick={() =>
-                          setPctVideo((c.posicaoSegundos / duracaoSeg) * 100)
-                        }
+                        onClick={() => setPctVideo((c.posicaoSegundos / duracaoSeg) * 100)}
                         aria-label="Voltar para este momento do vídeo"
                         className="rounded-[5px] border-none px-[9px] py-[3px] text-[12px]"
                         style={{

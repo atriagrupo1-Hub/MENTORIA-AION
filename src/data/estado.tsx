@@ -2,33 +2,31 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-import {
-  carregarAlunas,
-  carregarAtividade,
-  carregarCatalogo,
-  carregarSessao,
-  salvarAlunas,
-  salvarAtividade,
-  salvarCatalogo,
-  salvarSessao,
-} from "./repositorio";
-import type {
-  Aluna,
-  AtividadeAluna,
-  Aula,
-  Catalogo,
-  Modulo,
-} from "./tipos";
+import * as api from "./api";
+import type { AulaLiberada, PerfilSessao } from "./api";
+import type { Aula, Catalogo, Modulo } from "./tipos";
 
 /**
- * Duração de demonstração do protótipo. Em produção a plataforma grava
- * a duração real informada pelo player na primeira reprodução
- * (`aulas.duracao_segundos`); enquanto o campo estiver vazio, é este
- * valor que aparece na tela.
+ * Estado da área da aluna.
+ *
+ * O Supabase é a única autoridade. Este arquivo pergunta e guarda a
+ * resposta; não decide nada. Não havendo resposta, `erro` fica
+ * preenchido e as telas não concedem acesso — nunca se cai para um
+ * palpite local.
+ */
+
+const CATALOGO_VAZIO: Catalogo = { modulos: [], categorias: [], aoVivo: {} };
+
+/**
+ * Duração de demonstração, herdada do protótipo. Vale só enquanto
+ * `aulas.duracao_segundos` estiver vazio; a plataforma grava a duração
+ * real na primeira reprodução.
  */
 export function duracaoDemo(numeroModulo: number, ordemAula: number): number {
   return 11 + ((numeroModulo * 5 + ordemAula * 7) % 15);
@@ -49,15 +47,14 @@ export function relogio(segundos: number): string {
 }
 
 type Estado = {
+  carregando: boolean;
+  erro: string | null;
+  aluna: PerfilSessao | null;
   catalogo: Catalogo;
-  alunas: Aluna[];
-  aluna: Aluna | null;
-  atividade: AtividadeAluna;
-  /** Verdadeiro quando nenhuma aluna foi cadastrada — modo demonstração. */
-  semTurma: boolean;
 
-  entrar: (nome: string, codigo: string) => string | null;
-  sair: () => void;
+  entrar: (login: string, codigo: string) => Promise<string | null>;
+  sair: () => Promise<void>;
+  recarregar: () => Promise<void>;
 
   aulaLiberada: (modulo: Modulo, aula: Aula) => boolean;
   aulaBloqueada: (modulo: Modulo, aula: Aula) => boolean;
@@ -66,259 +63,241 @@ type Estado = {
 
   concluida: (aulaId: string) => boolean;
   percentualAssistido: (aulaId: string) => number;
+  posicaoSegundos: (aulaId: string) => number;
   curtiu: (aulaId: string) => boolean;
 
-  alternarConcluida: (aulaId: string) => boolean;
-  alternarCurtida: (aulaId: string) => void;
-  registrarPosicao: (aulaId: string, percentual: number, segundos: number) => void;
-  comentar: (aulaId: string, texto: string, segundos: number) => void;
-
-  atualizarCatalogo: (catalogo: Catalogo) => void;
-  atualizarAlunas: (alunas: Aluna[]) => void;
+  alternarConcluida: (aulaId: string) => Promise<boolean>;
+  alternarCurtida: (aulaId: string) => Promise<void>;
+  registrarPosicao: (aulaId: string, segundos: number, duracao: number) => void;
 };
 
 const Contexto = createContext<Estado | null>(null);
 
-const SEM_ATIVIDADE: AtividadeAluna = {
-  alunaId: "",
-  progresso: {},
-  curtidas: [],
-  comentarios: [],
-};
-
 export function ProvedorEstado({ children }: { children: ReactNode }) {
-  const [catalogo, setCatalogo] = useState<Catalogo>(() => carregarCatalogo());
-  const [alunas, setAlunas] = useState<Aluna[]>(() => carregarAlunas());
-  const [alunaId, setAlunaId] = useState<string | null>(
-    () => carregarSessao()?.alunaId ?? null,
-  );
-  const [atividade, setAtividade] = useState<AtividadeAluna>(() => {
-    const sessao = carregarSessao();
-    return sessao ? carregarAtividade(sessao.alunaId) : SEM_ATIVIDADE;
-  });
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+  const [aluna, setAluna] = useState<PerfilSessao | null>(null);
+  const [catalogo, setCatalogo] = useState<Catalogo>(CATALOGO_VAZIO);
+  const [liberadas, setLiberadas] = useState<Map<string, AulaLiberada>>(new Map());
+  const [presentesLib, setPresentesLib] = useState<Set<string>>(new Set());
+  const [curtidasSet, setCurtidasSet] = useState<Set<string>>(new Set());
 
-  /** Conta improvisada quando ainda não há turma cadastrada. */
-  const [visitante, setVisitante] = useState<Aluna | null>(
-    () => carregarSessao()?.visitante ?? null,
-  );
+  /** Posição do vídeo em andamento, antes de chegar ao banco. */
+  const posicoesLocais = useRef<Map<string, number>>(new Map());
+  const enviosPendentes = useRef<Map<string, number>>(new Map());
 
-  const aluna = useMemo(
-    () => alunas.find((a) => a.id === alunaId) ?? visitante,
-    [alunas, alunaId, visitante],
-  );
+  const carregarTudo = useCallback(async () => {
+    setCarregando(true);
+    setErro(null);
+    try {
+      if (!(await api.temSessao())) {
+        setAluna(null);
+        setCatalogo(CATALOGO_VAZIO);
+        setLiberadas(new Map());
+        setPresentesLib(new Set());
+        setCurtidasSet(new Set());
+        return;
+      }
 
-  const semTurma = alunas.length === 0;
+      const perfil = await api.meuPerfil();
+      if (!perfil || perfil.status === "bloqueada") {
+        await api.sair();
+        setAluna(null);
+        setErro(
+          perfil?.status === "bloqueada"
+            ? "Seu acesso está temporariamente suspenso. Fale com a equipe da mentoria."
+            : null,
+        );
+        return;
+      }
+      setAluna(perfil);
 
-  const gravarAtividade = useCallback((proxima: AtividadeAluna) => {
-    setAtividade(proxima);
-    if (proxima.alunaId) salvarAtividade(proxima);
+      const [cat, aulas, likes] = await Promise.all([
+        api.carregarCatalogo(),
+        api.minhasAulas(),
+        api.curtidas(),
+      ]);
+
+      setCatalogo(cat);
+      setLiberadas(new Map(aulas.map((a) => [a.aulaId, a])));
+      setCurtidasSet(likes);
+
+      const idsPresentes = cat.categorias.flatMap((c) => c.presentes.map((p) => p.id));
+      setPresentesLib(await api.presentesLiberados(idsPresentes));
+    } catch (falha) {
+      // Sem resposta do banco, nada é liberado. É a regra do item 8.
+      setLiberadas(new Map());
+      setPresentesLib(new Set());
+      setErro(
+        falha instanceof Error
+          ? `Não conseguimos carregar seus dados. ${falha.message}`
+          : "Não conseguimos carregar seus dados.",
+      );
+    } finally {
+      setCarregando(false);
+    }
   }, []);
+
+  useEffect(() => {
+    void carregarTudo();
+  }, [carregarTudo]);
 
   const entrar = useCallback<Estado["entrar"]>(
-    (nome, codigo) => {
-      const chave = nome.trim().toLowerCase();
-      if (!chave || !codigo.trim()) {
-        return "Preencha seu nome e seu código para entrar.";
-      }
-
-      if (alunas.length === 0) {
-        // Sem turma cadastrada, o protótipo abre em demonstração.
-        const conta: Aluna = {
-          id: "demo",
-          nome: nome.trim().charAt(0).toUpperCase() + nome.trim().slice(1),
-          login: chave,
-          codigo,
-          status: "ativa",
-          acessos: [],
-          acessosPresentes: [],
-        };
-        setVisitante(conta);
-        setAlunaId(conta.id);
-        salvarSessao({ alunaId: conta.id, visitante: conta });
-        gravarAtividade(carregarAtividade(conta.id));
-        return null;
-      }
-
-      const encontrada = alunas.find(
-        (a) => a.login.toLowerCase() === chave || a.nome.toLowerCase() === chave,
-      );
-      if (!encontrada) {
-        return "Não encontramos este acesso. Confira o nome informado.";
-      }
-      if (encontrada.status === "bloqueada") {
-        return "Seu acesso está temporariamente suspenso. Fale com a equipe da mentoria.";
-      }
-      if (encontrada.codigo && encontrada.codigo !== codigo.trim()) {
-        return "Código incorreto. Confira os números informados.";
-      }
-
-      setAlunaId(encontrada.id);
-      setVisitante(null);
-      salvarSessao({ alunaId: encontrada.id, visitante: null });
-      gravarAtividade(carregarAtividade(encontrada.id));
+    async (login, codigo) => {
+      const r = await api.entrar(login, codigo);
+      if (!r.ok) return r.falha.mensagem;
+      await carregarTudo();
       return null;
     },
-    [alunas, gravarAtividade],
+    [carregarTudo],
   );
 
-  const sair = useCallback(() => {
-    setAlunaId(null);
-    setVisitante(null);
-    salvarSessao(null);
-    setAtividade(SEM_ATIVIDADE);
+  const sair = useCallback<Estado["sair"]>(async () => {
+    await api.sair();
+    setAluna(null);
+    setCatalogo(CATALOGO_VAZIO);
+    setLiberadas(new Map());
+    setPresentesLib(new Set());
+    setCurtidasSet(new Set());
+    posicoesLocais.current.clear();
   }, []);
 
-  const moduloLiberado = useCallback<Estado["moduloLiberado"]>(
-    (modulo) => {
-      if (modulo.bloqueadoGeral) return false;
-      if (semTurma || !aluna) return true;
-      return modulo.aulas.some((a) => aluna.acessos.includes(a.id));
-    },
-    [aluna, semTurma],
+  const aulaLiberada = useCallback<Estado["aulaLiberada"]>(
+    (_modulo, aula) => liberadas.has(aula.id),
+    [liberadas],
   );
 
-  const aulaLiberada = useCallback<Estado["aulaLiberada"]>(
-    (modulo, aula) => {
-      if (modulo.bloqueadoGeral || aula.bloqueadoGeral) return false;
-      if (semTurma || !aluna) return true;
-      return aluna.acessos.includes(aula.id);
-    },
-    [aluna, semTurma],
+  const moduloLiberado = useCallback<Estado["moduloLiberado"]>(
+    (modulo) => modulo.aulas.some((a) => liberadas.has(a.id)),
+    [liberadas],
   );
 
   const concluida = useCallback<Estado["concluida"]>(
-    (aulaId) => Boolean(atividade.progresso[aulaId]?.concluidaEm),
-    [atividade],
+    (aulaId) => liberadas.get(aulaId)?.concluida ?? false,
+    [liberadas],
   );
 
+  /**
+   * Bloqueada é o contrário de liberada, e ponto. Quem decide é a tabela
+   * `acessos`; a tela não inventa sequência.
+   */
   const aulaBloqueada = useCallback<Estado["aulaBloqueada"]>(
-    (modulo, aula) => {
-      if (!aulaLiberada(modulo, aula)) return true;
-      // Com turma cadastrada, a liberação da administradora decide sozinha.
-      if (!semTurma && aluna) return false;
-      // Em demonstração, a aula abre depois da anterior concluída.
-      if (aula.ordem === 0) return false;
-      const anterior = modulo.aulas[aula.ordem - 1];
-      return anterior ? !concluida(anterior.id) : false;
-    },
-    [aluna, aulaLiberada, concluida, semTurma],
+    (_modulo, aula) => !liberadas.has(aula.id),
+    [liberadas],
   );
 
   const presenteLiberado = useCallback<Estado["presenteLiberado"]>(
-    (categoriaId, presenteId) => {
-      const categoria = catalogo.categorias.find((c) => c.id === categoriaId);
-      if (!categoria || categoria.bloqueadaGeral) return false;
-      const presente = categoria.presentes.find((p) => p.id === presenteId);
-      if (!presente || presente.bloqueadoGeral) return false;
-      if (!presente.videoRef) return false;
-      if (semTurma || !aluna) return true;
-      return aluna.acessosPresentes.includes(presenteId);
-    },
-    [aluna, catalogo, semTurma],
+    (_categoriaId, presenteId) => presentesLib.has(presenteId),
+    [presentesLib],
+  );
+
+  const posicaoSegundos = useCallback<Estado["posicaoSegundos"]>(
+    (aulaId) => posicoesLocais.current.get(aulaId) ?? liberadas.get(aulaId)?.posicaoSegundos ?? 0,
+    [liberadas],
   );
 
   const percentualAssistido = useCallback<Estado["percentualAssistido"]>(
-    (aulaId) => atividade.progresso[aulaId]?.percentualAssistido ?? 0,
-    [atividade],
+    (aulaId) => {
+      const info = liberadas.get(aulaId);
+      if (!info?.duracaoSegundos) return 0;
+      const posicao = posicoesLocais.current.get(aulaId) ?? info.posicaoSegundos;
+      return Math.min(100, Math.round((posicao / info.duracaoSegundos) * 100));
+    },
+    [liberadas],
   );
 
   const curtiu = useCallback<Estado["curtiu"]>(
-    (aulaId) => atividade.curtidas.includes(aulaId),
-    [atividade],
+    (aulaId) => curtidasSet.has(aulaId),
+    [curtidasSet],
   );
 
   const alternarConcluida = useCallback<Estado["alternarConcluida"]>(
-    (aulaId) => {
-      const atual = atividade.progresso[aulaId];
-      const virouConcluida = !atual?.concluidaEm;
-      const progresso = { ...atividade.progresso };
-      progresso[aulaId] = {
-        aulaId,
-        posicaoSegundos: atual?.posicaoSegundos ?? 0,
-        percentualAssistido: atual?.percentualAssistido ?? 0,
-        concluidaEm: virouConcluida ? new Date().toISOString() : null,
-      };
-      gravarAtividade({ ...atividade, progresso });
-      return virouConcluida;
-    },
-    [atividade, gravarAtividade],
-  );
-
-  const alternarCurtida = useCallback<Estado["alternarCurtida"]>(
-    (aulaId) => {
-      const curtidas = atividade.curtidas.includes(aulaId)
-        ? atividade.curtidas.filter((x) => x !== aulaId)
-        : [...atividade.curtidas, aulaId];
-      gravarAtividade({ ...atividade, curtidas });
-    },
-    [atividade, gravarAtividade],
-  );
-
-  const registrarPosicao = useCallback<Estado["registrarPosicao"]>(
-    (aulaId, percentual, segundos) => {
-      const atual = atividade.progresso[aulaId];
-      const progresso = { ...atividade.progresso };
-      progresso[aulaId] = {
-        aulaId,
-        posicaoSegundos: segundos,
-        percentualAssistido: Math.round(percentual),
-        concluidaEm: atual?.concluidaEm ?? null,
-      };
-      gravarAtividade({ ...atividade, progresso });
-    },
-    [atividade, gravarAtividade],
-  );
-
-  const comentar = useCallback<Estado["comentar"]>(
-    (aulaId, texto, segundos) => {
-      const comentario = {
-        id: `c-${Date.now()}`,
-        aulaId,
-        autoraId: atividade.alunaId,
-        texto: texto.slice(0, 600),
-        posicaoSegundos: Math.round(segundos),
-        criadoEm: new Date().toISOString(),
-      };
-      gravarAtividade({
-        ...atividade,
-        comentarios: [comentario, ...atividade.comentarios],
+    async (aulaId) => {
+      const virou = !concluida(aulaId);
+      await api.marcarConcluida(aulaId, virou);
+      setLiberadas((atual) => {
+        const proxima = new Map(atual);
+        const info = proxima.get(aulaId);
+        if (info) proxima.set(aulaId, { ...info, concluida: virou });
+        return proxima;
       });
+      return virou;
     },
-    [atividade, gravarAtividade],
+    [concluida],
   );
 
-  const atualizarCatalogo = useCallback<Estado["atualizarCatalogo"]>((proximo) => {
-    setCatalogo(proximo);
-    salvarCatalogo(proximo);
+  const alternarCurtida = useCallback<Estado["alternarCurtida"]>(async (aulaId) => {
+    const agoraCurtida = await api.alternarCurtida(aulaId);
+    setCurtidasSet((atual) => {
+      const proxima = new Set(atual);
+      if (agoraCurtida) proxima.add(aulaId);
+      else proxima.delete(aulaId);
+      return proxima;
+    });
   }, []);
 
-  const atualizarAlunas = useCallback<Estado["atualizarAlunas"]>((proximas) => {
-    setAlunas(proximas);
-    salvarAlunas(proximas);
-  }, []);
+  /**
+   * A posição vai para o banco a cada 15 segundos de reprodução, como
+   * pede o item (H) do modelo — não a cada segundo. No pior caso perdem-se
+   * alguns segundos de posição; conclusão nunca, porque vai na hora.
+   */
+  const registrarPosicao = useCallback<Estado["registrarPosicao"]>(
+    (aulaId, segundos, duracao) => {
+      posicoesLocais.current.set(aulaId, segundos);
+      const ultimo = enviosPendentes.current.get(aulaId) ?? -Infinity;
+      if (Math.abs(segundos - ultimo) < 15) return;
+      enviosPendentes.current.set(aulaId, segundos);
+      void api.salvarPosicao(aulaId, segundos).catch(() => undefined);
+      const info = liberadas.get(aulaId);
+      if (info && !info.duracaoSegundos && duracao > 0) {
+        void api.registrarDuracao(aulaId, duracao).catch(() => undefined);
+      }
+    },
+    [liberadas],
+  );
 
-  const valor: Estado = {
-    catalogo,
-    alunas,
-    aluna,
-    atividade,
-    semTurma,
-    entrar,
-    sair,
-    aulaLiberada,
-    aulaBloqueada,
-    moduloLiberado,
-    presenteLiberado,
-    concluida,
-    percentualAssistido,
-    curtiu,
-    alternarConcluida,
-    alternarCurtida,
-    registrarPosicao,
-    comentar,
-    atualizarCatalogo,
-    atualizarAlunas,
-  };
+  const valor = useMemo<Estado>(
+    () => ({
+      carregando,
+      erro,
+      aluna,
+      catalogo,
+      entrar,
+      sair,
+      recarregar: carregarTudo,
+      aulaLiberada,
+      aulaBloqueada,
+      moduloLiberado,
+      presenteLiberado,
+      concluida,
+      percentualAssistido,
+      posicaoSegundos,
+      curtiu,
+      alternarConcluida,
+      alternarCurtida,
+      registrarPosicao,
+    }),
+    [
+      carregando,
+      erro,
+      aluna,
+      catalogo,
+      entrar,
+      sair,
+      carregarTudo,
+      aulaLiberada,
+      aulaBloqueada,
+      moduloLiberado,
+      presenteLiberado,
+      concluida,
+      percentualAssistido,
+      posicaoSegundos,
+      curtiu,
+      alternarConcluida,
+      alternarCurtida,
+      registrarPosicao,
+    ],
+  );
 
   return <Contexto.Provider value={valor}>{children}</Contexto.Provider>;
 }

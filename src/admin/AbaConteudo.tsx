@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from "react";
-import { useEstado } from "@/data/estado";
-import type { Aula, Catalogo, Modulo } from "@/data/tipos";
+import type { Aula, Modulo } from "@/data/tipos";
 import { cores } from "@/design/tokens";
 import type { PedidoConfirmacao } from "./Confirmacao";
-import { aba, botaoNeutro, botaoOuro, botaoRemover, campo } from "./estilos";
+import * as dados from "./dados";
+import { botaoNeutro, botaoOuro, botaoRemover, campo } from "./estilos";
+import type { Painel } from "./usePainel";
 
 const BOTAO_LINHA: React.CSSProperties = {
   minHeight: 32,
@@ -16,15 +17,40 @@ const BOTAO_LINHA: React.CSSProperties = {
   cursor: "pointer",
 };
 
-/** Subaba Mentoria: módulos, aulas e o conteúdo anexado a cada aula. */
+/** Extrai o identificador do vídeo a partir de um link ou do próprio id. */
+export function idDoVideo(entrada: string): string {
+  const s = String(entrada).trim();
+  if (!s) return "";
+  const comQuery = s.match(/[?&]v=([\w-]{6,})/);
+  if (comQuery) return comQuery[1];
+  const curto =
+    s.match(/youtu\.be\/([\w-]{6,})/) ??
+    s.match(/embed\/([\w-]{6,})/) ??
+    s.match(/videodelivery\.net\/([\w-]{6,})/) ??
+    s.match(/cloudflarestream\.com\/([\w-]{6,})/);
+  if (curto) return curto[1];
+  if (/^[\w-]{6,}$/.test(s)) return s;
+  return "";
+}
+
+/** O provedor é deduzido do link. Sem link reconhecível, Cloudflare Stream. */
+function provedorDoLink(entrada: string): string {
+  const s = entrada.toLowerCase();
+  if (s.includes("youtu")) return "youtube";
+  if (s.includes("vimeo")) return "vimeo";
+  return "stream";
+}
+
 export function AbaConteudo({
+  painel,
   pedirConfirmacao,
   avisar,
 }: {
+  painel: Painel;
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
-  const { catalogo, atualizarCatalogo } = useEstado();
+  const { catalogo, midiaAulas, executar } = painel;
   const [expandido, setExpandido] = useState(true);
   const [novoModulo, setNovoModulo] = useState("");
   const [novaAulaEm, setNovaAulaEm] = useState("");
@@ -34,27 +60,10 @@ export function AbaConteudo({
   const [conteudoDe, setConteudoDe] = useState("");
   const [video, setVideo] = useState("");
   const [capa, setCapa] = useState("");
-  const [material, setMaterial] = useState("");
 
   const totalAulas = catalogo.modulos.reduce((s, m) => s + m.aulas.length, 0);
 
-  function gravar(proximo: Catalogo) {
-    atualizarCatalogo(proximo);
-  }
-
-  function trocarModulos(modulos: Modulo[]) {
-    gravar({ ...catalogo, modulos });
-  }
-
-  function mapearModulo(moduloId: string, fn: (m: Modulo) => Modulo) {
-    trocarModulos(catalogo.modulos.map((m) => (m.id === moduloId ? fn(m) : m)));
-  }
-
-  function renumerar(aulas: Aula[]): Aula[] {
-    return aulas.map((a, i) => ({ ...a, numero: i + 1, ordem: i }));
-  }
-
-  function adicionarModulo(e: FormEvent) {
+  async function adicionarModulo(e: FormEvent) {
     e.preventDefault();
     if (!novoModulo.trim()) {
       avisar("Informe o nome do módulo.");
@@ -63,20 +72,26 @@ export function AbaConteudo({
     const numero = catalogo.modulos.length
       ? Math.max(...catalogo.modulos.map((m) => m.numero)) + 1
       : 0;
-    trocarModulos([
-      ...catalogo.modulos,
-      {
-        id: `modulo-${numero}-${Date.now()}`,
-        numero,
-        titulo: novoModulo.trim().toUpperCase(),
-        intro: "",
-        ordem: catalogo.modulos.length,
-        bloqueadoGeral: false,
-        aulas: [],
-      },
-    ]);
-    setNovoModulo("");
-    avisar("Módulo criado.");
+    const falha = await executar(() =>
+      dados.criarModulo(novoModulo.trim(), numero, catalogo.modulos.length),
+    );
+    if (!falha) setNovoModulo("");
+    avisar(falha ?? "Módulo criado.");
+  }
+
+  async function mover(modulo: Modulo, aula: Aula, passo: number) {
+    const destino = modulo.aulas[aula.ordem + passo];
+    if (!destino) {
+      avisar(passo < 0 ? "Esta já é a primeira aula." : "Esta já é a última aula.");
+      return;
+    }
+    const falha = await executar(() =>
+      dados.trocarOrdemDasAulas(
+        { id: aula.id, numero: aula.numero, ordem: aula.ordem },
+        { id: destino.id, numero: destino.numero, ordem: destino.ordem },
+      ),
+    );
+    if (falha) avisar(falha);
   }
 
   return (
@@ -178,11 +193,14 @@ export function AbaConteudo({
                       {novaAulaEm === modulo.id ? "Fechar" : "Adicionar aula"}
                     </button>
                     <button
-                      onClick={() =>
-                        mapearModulo(modulo.id, (m) => ({
-                          ...m,
-                          bloqueadoGeral: !m.bloqueadoGeral,
-                        }))
+                      onClick={async () =>
+                        avisar(
+                          (await executar(() =>
+                            dados.atualizarModulo(modulo.id, {
+                              bloqueado_geral: !modulo.bloqueadoGeral,
+                            }),
+                          )) ?? "Estado do módulo atualizado.",
+                        )
                       }
                       style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
                     >
@@ -192,13 +210,12 @@ export function AbaConteudo({
                       onClick={() =>
                         pedirConfirmacao({
                           titulo: `Remover o Módulo ${modulo.numero}?`,
-                          mensagem: `As ${modulo.aulas.length} aulas dele saem do curso para todas as alunas.`,
-                          executar: () => {
-                            trocarModulos(
-                              catalogo.modulos.filter((m) => m.id !== modulo.id),
-                            );
-                            avisar("Módulo removido.");
-                          },
+                          mensagem: `As ${modulo.aulas.length} aulas dele saem do curso para todas as alunas, junto com o progresso e os comentários delas.`,
+                          executar: async () =>
+                            avisar(
+                              (await executar(() => dados.removerModulo(modulo.id))) ??
+                                "Módulo removido.",
+                            ),
                         })
                       }
                       style={{ ...botaoRemover, minHeight: 36, padding: "0 13px" }}
@@ -210,18 +227,19 @@ export function AbaConteudo({
 
                 {editando === `m:${modulo.id}` ? (
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
                       if (!textoEdicao.trim()) {
                         avisar("Informe o nome do módulo.");
                         return;
                       }
-                      mapearModulo(modulo.id, (m) => ({
-                        ...m,
-                        titulo: textoEdicao.trim().toUpperCase(),
-                      }));
-                      setEditando("");
-                      avisar("Nome do módulo atualizado.");
+                      const falha = await executar(() =>
+                        dados.atualizarModulo(modulo.id, {
+                          titulo: textoEdicao.trim().toUpperCase(),
+                        }),
+                      );
+                      if (!falha) setEditando("");
+                      avisar(falha ?? "Nome do módulo atualizado.");
                     }}
                     className="mt-3 flex flex-wrap gap-2"
                   >
@@ -243,33 +261,22 @@ export function AbaConteudo({
 
                 {novaAulaEm === modulo.id ? (
                   <form
-                    onSubmit={(e) => {
+                    onSubmit={async (e) => {
                       e.preventDefault();
                       if (!novaAula.trim()) {
                         avisar("Informe o nome da aula.");
                         return;
                       }
-                      mapearModulo(modulo.id, (m) => ({
-                        ...m,
-                        aulas: renumerar([
-                          ...m.aulas,
-                          {
-                            id: `aula-${m.numero}-${Date.now()}`,
-                            moduloId: m.id,
-                            numero: m.aulas.length + 1,
-                            titulo: novaAula.trim(),
-                            ordem: m.aulas.length,
-                            duracaoSegundos: null,
-                            videoProvider: null,
-                            videoRef: null,
-                            materialPath: null,
-                            capaPath: null,
-                            bloqueadoGeral: false,
-                          },
-                        ]),
-                      }));
-                      setNovaAula("");
-                      avisar("Aula adicionada.");
+                      const falha = await executar(() =>
+                        dados.criarAula(
+                          modulo.id,
+                          novaAula.trim(),
+                          modulo.aulas.length + 1,
+                          modulo.aulas.length,
+                        ),
+                      );
+                      if (!falha) setNovaAula("");
+                      avisar(falha ?? "Aula adicionada.");
                     }}
                     className="mt-3 flex flex-wrap gap-2"
                   >
@@ -292,26 +299,11 @@ export function AbaConteudo({
 
                 <div className="mt-[10px] flex flex-col">
                   {modulo.aulas.map((aula) => {
+                    const midia = midiaAulas.get(aula.id);
                     const anexos = [
-                      aula.videoRef ? "vídeo" : null,
+                      midia ? `vídeo (${midia.provider})` : null,
                       aula.capaPath ? "capa" : null,
-                      aula.materialPath ? "material" : null,
                     ].filter(Boolean);
-
-                    function mover(passo: number) {
-                      const destino = aula.ordem + passo;
-                      if (destino < 0 || destino >= modulo.aulas.length) {
-                        avisar(
-                          passo < 0
-                            ? "Esta já é a primeira aula."
-                            : "Esta já é a última aula.",
-                        );
-                        return;
-                      }
-                      const lista = [...modulo.aulas];
-                      [lista[aula.ordem], lista[destino]] = [lista[destino], lista[aula.ordem]];
-                      mapearModulo(modulo.id, (m) => ({ ...m, aulas: renumerar(lista) }));
-                    }
 
                     return (
                       <div key={aula.id}>
@@ -336,7 +328,7 @@ export function AbaConteudo({
                           </span>
 
                           <button
-                            onClick={() => mover(-1)}
+                            onClick={() => void mover(modulo, aula, -1)}
                             aria-label="Mover para cima"
                             className="grid h-8 w-8 place-items-center rounded-full bg-transparent text-[14px]"
                             style={{
@@ -348,7 +340,7 @@ export function AbaConteudo({
                             ↑
                           </button>
                           <button
-                            onClick={() => mover(1)}
+                            onClick={() => void mover(modulo, aula, 1)}
                             aria-label="Mover para baixo"
                             className="grid h-8 w-8 place-items-center rounded-full bg-transparent text-[14px]"
                             style={{
@@ -363,9 +355,8 @@ export function AbaConteudo({
                             onClick={() => {
                               const aberto = conteudoDe === aula.id;
                               setConteudoDe(aberto ? "" : aula.id);
-                              setVideo(aula.videoRef ?? "");
+                              setVideo(midia?.ref ?? "");
                               setCapa(aula.capaPath ?? "");
-                              setMaterial(aula.materialPath ?? "");
                             }}
                             style={{
                               ...BOTAO_LINHA,
@@ -386,15 +377,14 @@ export function AbaConteudo({
                             {editando === `a:${aula.id}` ? "Cancelar" : "Editar"}
                           </button>
                           <button
-                            onClick={() =>
-                              mapearModulo(modulo.id, (m) => ({
-                                ...m,
-                                aulas: m.aulas.map((x) =>
-                                  x.id === aula.id
-                                    ? { ...x, bloqueadoGeral: !x.bloqueadoGeral }
-                                    : x,
-                                ),
-                              }))
+                            onClick={async () =>
+                              avisar(
+                                (await executar(() =>
+                                  dados.atualizarAula(aula.id, {
+                                    bloqueado_geral: !aula.bloqueadoGeral,
+                                  }),
+                                )) ?? "Estado da aula atualizado.",
+                              )
                             }
                             style={BOTAO_LINHA}
                           >
@@ -404,16 +394,12 @@ export function AbaConteudo({
                             onClick={() =>
                               pedirConfirmacao({
                                 titulo: `Remover a Aula ${aula.numero}?`,
-                                mensagem: `"${aula.titulo}" sai do curso para todas as alunas.`,
-                                executar: () => {
-                                  mapearModulo(modulo.id, (m) => ({
-                                    ...m,
-                                    aulas: renumerar(
-                                      m.aulas.filter((x) => x.id !== aula.id),
-                                    ),
-                                  }));
-                                  avisar("Aula removida.");
-                                },
+                                mensagem: `"${aula.titulo}" sai do curso para todas as alunas, junto com o progresso e os comentários dela.`,
+                                executar: async () =>
+                                  avisar(
+                                    (await executar(() => dados.removerAula(aula.id))) ??
+                                      "Aula removida.",
+                                  ),
                               })
                             }
                             style={{
@@ -428,45 +414,39 @@ export function AbaConteudo({
 
                         {conteudoDe === aula.id ? (
                           <form
-                            onSubmit={(e) => {
+                            onSubmit={async (e) => {
                               e.preventDefault();
-                              mapearModulo(modulo.id, (m) => ({
-                                ...m,
-                                aulas: m.aulas.map((x) =>
-                                  x.id === aula.id
-                                    ? {
-                                        ...x,
-                                        videoRef: idDoVideo(video) || null,
-                                        videoProvider: idDoVideo(video) ? "youtube" : null,
-                                        capaPath: capa.trim() || null,
-                                        materialPath: material.trim() || null,
-                                      }
-                                    : x,
-                                ),
-                              }));
-                              setConteudoDe("");
-                              avisar("Conteúdo da aula salvo.");
+                              const ref = idDoVideo(video);
+                              const falha =
+                                (await executar(() =>
+                                  dados.definirMidiaDaAula(
+                                    aula.id,
+                                    provedorDoLink(video),
+                                    ref,
+                                  ),
+                                )) ??
+                                (await executar(() =>
+                                  dados.atualizarAula(aula.id, {
+                                    capa_path: capa.trim() || null,
+                                  }),
+                                ));
+                              if (!falha) setConteudoDe("");
+                              avisar(falha ?? "Conteúdo da aula salvo.");
                             }}
                             className="flex flex-col gap-2 pb-[14px] pt-[6px]"
                           >
                             {[
                               {
-                                rotulo: "Link do vídeo (YouTube)",
+                                rotulo: "Vídeo — link ou identificador (Cloudflare Stream)",
                                 valor: video,
                                 mudar: setVideo,
-                                dica: "https://www.youtube.com/watch?v=...",
+                                dica: "https://iframe.videodelivery.net/<uid>  ou só o uid",
                               },
                               {
-                                rotulo: "Capa da aula (arquivo 16:9)",
+                                rotulo: "Capa da aula — arquivo no depósito `capas`",
                                 valor: capa,
                                 mudar: setCapa,
-                                dica: `/assets/capas/modulo-${modulo.numero}-aula-${aula.numero}.png`,
-                              },
-                              {
-                                rotulo: "Material da aula (PDF)",
-                                valor: material,
-                                mudar: setMaterial,
-                                dica: `/assets/materiais/modulo-${modulo.numero}-aula-${aula.numero}.pdf`,
+                                dica: `modulo-${modulo.numero}-aula-${aula.numero}.png`,
                               },
                             ].map((linha) => (
                               <label key={linha.rotulo} className="flex flex-col gap-2">
@@ -507,20 +487,17 @@ export function AbaConteudo({
 
                         {editando === `a:${aula.id}` ? (
                           <form
-                            onSubmit={(e) => {
+                            onSubmit={async (e) => {
                               e.preventDefault();
                               if (!textoEdicao.trim()) {
                                 avisar("Informe o nome da aula.");
                                 return;
                               }
-                              mapearModulo(modulo.id, (m) => ({
-                                ...m,
-                                aulas: m.aulas.map((x) =>
-                                  x.id === aula.id ? { ...x, titulo: textoEdicao.trim() } : x,
-                                ),
-                              }));
-                              setEditando("");
-                              avisar("Nome da aula atualizado.");
+                              const falha = await executar(() =>
+                                dados.atualizarAula(aula.id, { titulo: textoEdicao.trim() }),
+                              );
+                              if (!falha) setEditando("");
+                              avisar(falha ?? "Nome da aula atualizado.");
                             }}
                             className="flex flex-wrap gap-2 pb-3 pt-1"
                           >
@@ -556,17 +533,3 @@ export function AbaConteudo({
     </section>
   );
 }
-
-/** Extrai o id do vídeo de um link do YouTube, como no protótipo. */
-export function idDoVideo(entrada: string): string {
-  const s = String(entrada).trim();
-  if (!s) return "";
-  const comQuery = s.match(/[?&]v=([\w-]{6,})/);
-  if (comQuery) return comQuery[1];
-  const curto = s.match(/youtu\.be\/([\w-]{6,})/) ?? s.match(/embed\/([\w-]{6,})/);
-  if (curto) return curto[1];
-  if (/^[\w-]{6,}$/.test(s)) return s;
-  return "";
-}
-
-export { aba };

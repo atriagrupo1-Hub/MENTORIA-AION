@@ -1,63 +1,53 @@
 import { useState, type FormEvent } from "react";
-import { useEstado } from "@/data/estado";
-import type { Aluna } from "@/data/tipos";
 import { cores } from "@/design/tokens";
 import type { PedidoConfirmacao } from "./Confirmacao";
+import * as dados from "./dados";
 import { botaoNeutro, botaoOuro, botaoRemover, campo } from "./estilos";
+import type { Painel } from "./usePainel";
 
 export function AbaAlunas({
+  painel,
   pedirConfirmacao,
   avisar,
 }: {
+  painel: Painel;
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
-  const { alunas, atualizarAlunas, catalogo } = useEstado();
+  const { catalogo, alunas, executar, recarregar } = painel;
   const [nome, setNome] = useState("");
   const [login, setLogin] = useState("");
   const [codigo, setCodigo] = useState("");
   const [abertaId, setAbertaId] = useState("");
   const [rascunho, setRascunho] = useState<string[] | null>(null);
-  const [moduloAberto, setModuloAberto] = useState(-1);
+  const [moduloAberto, setModuloAberto] = useState("");
+  const [salvando, setSalvando] = useState(false);
 
   const totalAulas = catalogo.modulos.reduce((s, m) => s + m.aulas.length, 0);
 
-  function cadastrar(e: FormEvent) {
+  async function cadastrar(e: FormEvent) {
     e.preventDefault();
     if (!nome.trim()) {
       avisar("Informe o nome da aluna.");
       return;
     }
-    const nova: Aluna = {
-      id: String(Date.now()),
-      nome: nome.trim(),
-      login: (login.trim() || nome.trim().toLowerCase().replace(/\s+/g, ".")).toLowerCase(),
-      codigo: codigo.trim() || "0000",
-      status: "ativa",
-      acessos: [],
-      acessosPresentes: [],
-    };
-    atualizarAlunas([...alunas, nova]);
+    if (!/^[0-9]{4,6}$/.test(codigo.trim())) {
+      avisar("O código tem 4 números.");
+      return;
+    }
+    setSalvando(true);
+    const acesso = login.trim() || nome.trim().toLowerCase().replace(/\s+/g, ".");
+    const r = await dados.cadastrarAluna(nome.trim(), acesso, codigo.trim());
+    setSalvando(false);
+    if (!r.ok) {
+      avisar(r.mensagem);
+      return;
+    }
     setNome("");
     setLogin("");
     setCodigo("");
-    avisar(`${nova.nome} foi cadastrada.`);
-  }
-
-  function atualizar(id: string, patch: Partial<Aluna>) {
-    atualizarAlunas(alunas.map((a) => (a.id === id ? { ...a, ...patch } : a)));
-  }
-
-  function abrirAcessos(aluna: Aluna) {
-    if (abertaId === aluna.id) {
-      setAbertaId("");
-      setRascunho(null);
-      setModuloAberto(-1);
-      return;
-    }
-    setAbertaId(aluna.id);
-    setRascunho([...aluna.acessos]);
-    setModuloAberto(-1);
+    await recarregar();
+    avisar(`${nome.trim()} foi cadastrada.`);
   }
 
   return (
@@ -95,8 +85,12 @@ export function AbaAlunas({
           inputMode="numeric"
           style={{ ...campo, flex: "1 1 150px" }}
         />
-        <button type="submit" style={{ ...botaoOuro, flex: "0 0 auto" }}>
-          Cadastrar aluna
+        <button
+          type="submit"
+          disabled={salvando}
+          style={{ ...botaoOuro, flex: "0 0 auto", opacity: salvando ? 0.7 : 1 }}
+        >
+          {salvando ? "Cadastrando..." : "Cadastrar aluna"}
         </button>
       </form>
 
@@ -167,16 +161,32 @@ export function AbaAlunas({
                   {bloqueada ? "Bloqueada" : "Ativa"}
                 </span>
                 <span className="flex flex-wrap gap-2">
-                  <button onClick={() => abrirAcessos(aluna)} style={botaoNeutro}>
+                  <button
+                    onClick={() => {
+                      if (aberta) {
+                        setAbertaId("");
+                        setRascunho(null);
+                        setModuloAberto("");
+                        return;
+                      }
+                      setAbertaId(aluna.id);
+                      setRascunho([...aluna.acessos]);
+                      setModuloAberto("");
+                    }}
+                    style={botaoNeutro}
+                  >
                     {aberta ? "Fechar acessos" : "Definir acessos"}
                   </button>
                   <button
-                    onClick={() => {
-                      atualizar(aluna.id, { status: bloqueada ? "ativa" : "bloqueada" });
+                    onClick={async () => {
+                      const falha = await executar(() =>
+                        dados.definirStatus(aluna.id, bloqueada ? "ativa" : "bloqueada"),
+                      );
                       avisar(
-                        bloqueada
-                          ? `${aluna.nome} foi desbloqueada.`
-                          : `${aluna.nome} foi bloqueada.`,
+                        falha ??
+                          (bloqueada
+                            ? `${aluna.nome} foi desbloqueada.`
+                            : `${aluna.nome} foi bloqueada.`),
                       );
                     }}
                     style={botaoNeutro}
@@ -188,12 +198,12 @@ export function AbaAlunas({
                       pedirConfirmacao({
                         titulo: `Remover ${aluna.nome}?`,
                         mensagem:
-                          "A aluna perde o acesso e o registro de liberações dela é apagado.",
-                        executar: () => {
-                          atualizarAlunas(alunas.filter((a) => a.id !== aluna.id));
+                          "A aluna perde o acesso, e o progresso, as curtidas e os comentários dela são apagados junto.",
+                        executar: async () => {
+                          const falha = await executar(() => dados.removerAluna(aluna.id));
                           setAbertaId("");
                           setRascunho(null);
-                          avisar(`${aluna.nome} foi removida.`);
+                          avisar(falha ?? `${aluna.nome} foi removida.`);
                         },
                       })
                     }
@@ -219,9 +229,7 @@ export function AbaAlunas({
                   <div className="mb-4 flex flex-wrap gap-2">
                     <button
                       onClick={() => {
-                        setRascunho(
-                          catalogo.modulos.flatMap((m) => m.aulas.map((a) => a.id)),
-                        );
+                        setRascunho(catalogo.modulos.flatMap((m) => m.aulas.map((a) => a.id)));
                         avisar("Curso inteiro marcado. Salve para aplicar.");
                       }}
                       className="min-h-[40px] rounded-pilula border-none px-4 text-[13px]"
@@ -257,7 +265,7 @@ export function AbaAlunas({
                       const marcadas = ids.filter((id) => rascunho.includes(id)).length;
                       const todas = marcadas === ids.length && ids.length > 0;
                       const parcial = marcadas > 0 && !todas;
-                      const expandido = moduloAberto === modulo.numero;
+                      const expandido = moduloAberto === modulo.id;
 
                       return (
                         <div
@@ -314,9 +322,7 @@ export function AbaAlunas({
                             </span>
 
                             <button
-                              onClick={() =>
-                                setModuloAberto(expandido ? -1 : modulo.numero)
-                              }
+                              onClick={() => setModuloAberto(expandido ? "" : modulo.id)}
                               className="min-h-[34px] flex-none rounded-pilula bg-transparent px-3 text-[12px]"
                               style={{
                                 color: "rgba(243,236,225,.75)",
@@ -364,9 +370,7 @@ export function AbaAlunas({
                                     <span
                                       className="min-w-0 flex-1 text-[13px]"
                                       style={{
-                                        color: marcada
-                                          ? "#ffffff"
-                                          : "rgba(243,236,225,.6)",
+                                        color: marcada ? "#ffffff" : "rgba(243,236,225,.6)",
                                       }}
                                     >
                                       Aula {aula.numero} — {aula.titulo}
@@ -389,7 +393,7 @@ export function AbaAlunas({
                       onClick={() => {
                         setAbertaId("");
                         setRascunho(null);
-                        setModuloAberto(-1);
+                        setModuloAberto("");
                         if (alterado) avisar("Alterações descartadas.");
                       }}
                       style={{ ...botaoNeutro, minHeight: 44, padding: "0 20px", fontSize: 14 }}
@@ -397,13 +401,15 @@ export function AbaAlunas({
                       Cancelar
                     </button>
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         if (!alterado) return;
-                        atualizar(aluna.id, { acessos: [...rascunho] });
+                        const falha = await executar(() =>
+                          dados.salvarAcessos(aluna.id, [...rascunho]),
+                        );
                         setAbertaId("");
                         setRascunho(null);
-                        setModuloAberto(-1);
-                        avisar(`Acessos de ${aluna.nome} atualizados.`);
+                        setModuloAberto("");
+                        avisar(falha ?? `Acessos de ${aluna.nome} atualizados.`);
                       }}
                       className="min-h-[44px] rounded-pilula border-none px-6 text-[14px] font-bold"
                       style={{
