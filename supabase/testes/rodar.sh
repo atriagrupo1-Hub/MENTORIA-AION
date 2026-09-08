@@ -17,6 +17,10 @@ export PGHOST=/tmp PGPORT=$PORTA PGUSER=postgres
 limpar() { su postgres -c "$BIN/pg_ctl -D $PGDATA stop -m immediate" >/dev/null 2>&1 || true; }
 trap limpar EXIT
 
+# Derruba qualquer instancia anterior que ainda segure o socket.
+limpar
+rm -f "/tmp/.s.PGSQL.$PORTA" "/tmp/.s.PGSQL.$PORTA.lock"
+
 rm -rf "$PGDATA"; mkdir -p "$PGDATA"; chown postgres:postgres "$PGDATA"
 su postgres -c "$BIN/initdb -D $PGDATA -U postgres --auth=trust" >/dev/null
 # Só socket unix: evita brigar por porta TCP com qualquer outra instância.

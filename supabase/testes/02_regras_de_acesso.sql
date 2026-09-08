@@ -154,3 +154,53 @@ select numero, titulo from modulos order by numero;
 \echo ''
 \echo '=== 22. Duplicata de verdade continua barrada ==='
 insert into modulos (numero, titulo, ordem) values (0, 'DUPLICADO', 9);
+
+\echo ''
+\echo '=========================================================='
+\echo 'ANONIMATO POR PRIVILEGIO DE COLUNA (migration 0003)'
+\echo '=========================================================='
+\pset border 2
+\set ON_ERROR_STOP off
+insert into comentarios (aula_id, autora_id, texto, posicao_segundos)
+values ('a0a00000-0000-0000-0000-000000000001', '22222222-2222-2222-2222-222222222222', 'Comentario da Maria', 272);
+
+set role authenticated;
+set request.jwt.claim.sub = '33333333-3333-3333-3333-333333333333';
+\echo '-- 23. ANA tenta ler a coluna da autoria (deve ser negado):'
+select autora_id from comentarios;
+\echo '-- 24. ANA tenta select * (inclui a coluna proibida):'
+select * from comentarios;
+reset role; reset request.jwt.claim.sub;
+
+set role authenticated;
+set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+\echo '-- 25. MARIA acha os proprios comentarios pela funcao:'
+select texto, status from meus_comentarios();
+\echo '-- 26. MARIA edita pelo id:'
+select editar_meu_comentario((select id from meus_comentarios() limit 1), 'texto editado pela Maria');
+select texto from meus_comentarios();
+\echo '-- 27. A colega ve o texto novo, sem autoria:'
+select texto from comentarios_publicos;
+reset role; reset request.jwt.claim.sub;
+
+set role authenticated;
+set request.jwt.claim.sub = '33333333-3333-3333-3333-333333333333';
+\echo '-- 28. ANA tenta editar o comentario da MARIA pelo id real (nao deve mudar nada):'
+select editar_meu_comentario((select id from comentarios limit 1), 'INVASAO');
+reset role; reset request.jwt.claim.sub;
+select texto from comentarios;
+
+set role authenticated;
+set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
+\echo '-- 29. ADMINISTRADORA le autoria pela funcao de moderacao:'
+select autora_nome, modulo_numero, aula_numero, texto, status from comentarios_para_moderacao();
+\echo '-- 30. ADMINISTRADORA oculta o comentario:'
+select moderar_comentario((select id from comentarios_para_moderacao() limit 1), 'oculto');
+select autora_nome, status from comentarios_para_moderacao();
+reset role; reset request.jwt.claim.sub;
+
+set role authenticated;
+set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+\echo '-- 31. Depois de oculto, some da view publica:'
+select count(*) as visiveis from comentarios_publicos;
+reset role;
