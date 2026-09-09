@@ -465,7 +465,7 @@ export function AbaConteudo({
                                 rotulo: "Capa da aula — arquivo no depósito `capas`",
                                 valor: capa,
                                 mudar: setCapa,
-                                dica: `modulo-${modulo.numero}-aula-${aula.numero}.png`,
+                                dica: `modulo-${modulo.numero}-aula-${aula.numero}.webp`,
                               },
                             ].map((linha) => (
                               <label key={linha.rotulo} className="flex flex-col gap-2">

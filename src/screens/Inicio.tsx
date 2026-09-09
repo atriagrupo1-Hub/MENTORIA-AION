@@ -37,8 +37,17 @@ export function Inicio() {
 
   return (
     <main className="rise-in mx-auto max-w-[1360px] px-7 pb-[90px] pt-[22px] cel-sm:px-[18px]">
+      {/*
+        O bloco de retomada tem largura própria.
+        A página vai a 1360px, o que serve para a fileira de módulos.
+        Para uma capa 16:9, porém, 1360 dão 765px de altura: a aluna
+        abriria o site e veria uma imagem gigante antes de qualquer
+        outra coisa, tendo de rolar para achar os módulos. 820px é a
+        largura em que a capa continua imponente e o resto da jornada
+        cabe na mesma tela.
+      */}
       {retomada ? (
-        <section className="mt-1">
+        <section className="mx-auto mt-1 max-w-[820px]">
           <div
             className="relative overflow-hidden rounded-botao"
             style={{
