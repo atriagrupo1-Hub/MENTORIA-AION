@@ -215,7 +215,14 @@ export function TelaAula() {
       data-saindo={saindo ? "1" : "0"}
       className="tela-aula mx-auto max-w-[1080px] pb-[90px]"
     >
-      {tocando ? (
+      {/*
+        O escurecimento da tela inteira vinha do protótipo, onde não
+        havia vídeo: servia para dar clima à demonstração. Com o player
+        do Cloudflare na tela ele só atrapalha — some tudo em volta e a
+        aula fica flutuando no preto. Fica apenas onde ainda não há
+        vídeo cadastrado.
+      */}
+      {tocando && !video ? (
         <div
           className="rise-in pointer-events-none fixed inset-0 z-[45]"
           style={{ background: "rgba(0,0,0,.9)" }}
@@ -280,11 +287,15 @@ export function TelaAula() {
           </button>
         ) : null}
 
-        {/* Um player só: com o do Cloudflare na tela, a barra do app sai. */}
-        <div
-          className="absolute inset-x-[6px] bottom-[6px] z-[5] flex h-3 items-center"
-          hidden={Boolean(tocando && video)}
-        >
+        {/*
+          Um player só: com o do Cloudflare na tela, a barra do app sai.
+
+          Sai do DOM, e não por `hidden`: a classe `flex` declara
+          `display:flex`, que vence o atributo. Escondido assim, ele
+          continuava aparecendo.
+        */}
+        {tocando && video ? null : (
+        <div className="absolute inset-x-[6px] bottom-[6px] z-[5] flex h-3 items-center">
           <div className="relative h-[3px] w-full" style={{ background: "rgba(255,255,255,.3)" }}>
             <div
               className="h-full"
@@ -300,6 +311,7 @@ export function TelaAula() {
             />
           </div>
         </div>
+        )}
       </div>
 
       <div className="relative z-20 bg-black px-4 pt-[14px]">
@@ -310,6 +322,13 @@ export function TelaAula() {
           >
             {aula.numero}. {aula.titulo}
           </h1>
+          {/*
+            Velocidade e resolução do app nunca tocaram no vídeo: são do
+            protótipo. O player do Cloudflare traz as duas de verdade,
+            no próprio quadro. Manter as nossas seria oferecer botões
+            que não fazem nada.
+          */}
+          {video ? null : (
           <div className="relative flex-none">
             <button
               onClick={() => setMenuAberto((v) => !v)}
@@ -359,6 +378,7 @@ export function TelaAula() {
               </div>
             ) : null}
           </div>
+          )}
         </div>
 
         <p className="mb-0 mt-1 text-[14px] text-white/55">
