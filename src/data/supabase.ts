@@ -31,4 +31,5 @@ export const supabase = createClient(URL_SUPABASE, CHAVE_PUBLICA, {
 });
 
 export const enderecoEntrar = `${URL_SUPABASE}/functions/v1/entrar`;
+export const enderecoVideoAssinado = `${URL_SUPABASE}/functions/v1/video-assinado`;
 export const chavePublica = CHAVE_PUBLICA;

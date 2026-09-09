@@ -1,4 +1,9 @@
-import { chavePublica, enderecoEntrar, supabase } from "./supabase";
+import {
+  chavePublica,
+  enderecoEntrar,
+  enderecoVideoAssinado,
+  supabase,
+} from "./supabase";
 import type { Catalogo, Categoria, Modulo, Presente } from "./tipos";
 
 /**
@@ -438,32 +443,46 @@ export async function registrarDuracao(aulaId: string, segundos: number): Promis
 export type Video = { provider: string; ref: string };
 
 /**
- * Endereço do vídeo. Só sai do servidor depois de conferida a liberação;
- * a tabela de mídia é fechada à aluna.
- */
-export async function videoDaAula(aulaId: string): Promise<Video | null> {
-  const { data, error } = await supabase.rpc("video_da_aula", { p_aula: aulaId });
-  if (error) return null;
-  const linha = Array.isArray(data) ? data[0] : data;
-  return linha ? { provider: linha.provider, ref: linha.ref } : null;
-}
-
-export async function videoDoPresente(presenteId: string): Promise<Video | null> {
-  const { data, error } = await supabase.rpc("video_do_presente", {
-    p_presente: presenteId,
-  });
-  if (error) return null;
-  const linha = Array.isArray(data) ? data[0] : data;
-  return linha ? { provider: linha.provider, ref: linha.ref } : null;
-}
-
-/**
- * Endereço para embutir o player, a partir do par provedor + referência.
+ * Endereço do vídeo.
  *
- * Trocar de serviço é trocar o `video_provider` das linhas de mídia — o
- * resto do aplicativo não muda. `stream` é o Cloudflare Stream, que é a
- * hospedagem decidida; `youtube` só existe para conteúdo herdado.
+ * Passa pela Edge Function `video-assinado`, e não pela função do banco
+ * direto. O motivo: sem assinatura, o endereço do Cloudflare Stream é
+ * permanente — a aluna copia o link, manda no WhatsApp, e quem receber
+ * assiste sem login e sem liberação. A função devolve um token de curta
+ * duração no lugar do identificador.
+ *
+ * A autoridade continua no banco: a função chama `video_da_aula()` com
+ * o token da própria aluna, então todas as regras já provadas valem.
+ *
+ * Enquanto a chave de assinatura não estiver configurada, ela devolve o
+ * identificador sem assinar, e o vídeo toca como antes. Nada quebra no
+ * meio do caminho.
  */
+async function pedirVideo(corpo: Record<string, string>): Promise<Video | null> {
+  const { data: sessao } = await supabase.auth.getSession();
+  const token = sessao.session?.access_token;
+  if (!token) return null;
+
+  const r = await fetch(enderecoVideoAssinado, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      apikey: chavePublica,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(corpo),
+  });
+
+  if (!r.ok) return null;
+  const resposta = await r.json();
+  if (!resposta?.ref) return null;
+  return { provider: String(resposta.provedor), ref: String(resposta.ref) };
+}
+
+export const videoDaAula = (aulaId: string) => pedirVideo({ aulaId });
+export const videoDoPresente = (presenteId: string) => pedirVideo({ presenteId });
+export const videoDaAoVivo = (aoVivoId: string) => pedirVideo({ aoVivoId });
+
 export function enderecoDoVideo(video: Video): string {
   const opcoes = "autoplay=1&playsinline=1";
   switch (video.provider) {
