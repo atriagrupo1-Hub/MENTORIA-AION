@@ -23,20 +23,25 @@ export function usePainel() {
   const [alunas, setAlunas] = useState<AlunaAdmin[]>([]);
   const [midiaAulas, setMidiaAulas] = useState<Map<string, Midia>>(new Map());
   const [midiaPresentes, setMidiaPresentes] = useState<Map<string, Midia>>(new Map());
+  const [configuracao, setConfiguracao] = useState<dados.Configuracao>(
+    dados.CONFIGURACAO_PADRAO,
+  );
 
   const recarregar = useCallback(async () => {
     setErro(null);
     try {
-      const [cat, lista, mAulas, mPresentes] = await Promise.all([
+      const [cat, lista, mAulas, mPresentes, cfg] = await Promise.all([
         dados.carregarCatalogo(),
         dados.listarAlunas(),
         dados.midiaDasAulas(),
         dados.midiaDosPresentes(),
+        dados.carregarConfiguracao(),
       ]);
       setCatalogo(cat);
       setAlunas(lista);
       setMidiaAulas(mAulas);
       setMidiaPresentes(mPresentes);
+      setConfiguracao(cfg);
     } catch (falha) {
       setErro(falha instanceof Error ? falha.message : "Falha ao carregar o painel.");
     } finally {
@@ -75,6 +80,7 @@ export function usePainel() {
     alunas,
     midiaAulas,
     midiaPresentes,
+    configuracao,
     recarregar,
     executar,
   };

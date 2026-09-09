@@ -4,6 +4,7 @@ import { cores } from "@/design/tokens";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
 import { botaoNeutro, botaoOuro, botaoRemover, campo } from "./estilos";
+import { RitmoDeLiberacao } from "./RitmoDeLiberacao";
 import type { Painel } from "./usePainel";
 
 const BOTAO_LINHA: React.CSSProperties = {
@@ -95,10 +96,13 @@ export function AbaConteudo({
   }
 
   return (
-    <section
-      className="rounded-cartao-lg p-4"
-      style={{ background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.1)" }}
-    >
+    <>
+      <RitmoDeLiberacao painel={painel} avisar={avisar} />
+
+      <section
+        className="rounded-cartao-lg p-4"
+        style={{ background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.1)" }}
+      >
       <div className="flex flex-wrap items-center gap-[10px]">
         <span className="flex min-w-0 flex-[1_1_220px] flex-col gap-[3px]">
           <span className="text-[11px] uppercase tracking-[.24em] text-[#a58a52]">
@@ -548,6 +552,7 @@ export function AbaConteudo({
           </div>
         </div>
       )}
-    </section>
+      </section>
+    </>
   );
 }

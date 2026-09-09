@@ -109,6 +109,54 @@ export async function estenderAcesso(alunaId: string, p: Prazo): Promise<string 
   return (data as string | null) ?? null;
 }
 
+/**
+ * Ritmo de liberação — a regra geral, uma só para todas.
+ *
+ * A contagem, essa é individual: parte de `criada_em` de cada aluna. A
+ * tabela tem linha única (a chave é um booleano que só aceita `true`),
+ * então não existe o caso "qual das configurações vale?".
+ */
+export type Ritmo = "imediato" | "por_dias" | "por_conclusao" | "aulas_por_semana";
+
+export type Configuracao = {
+  ritmo: Ritmo;
+  ritmoDias: number;
+  aulasPorSemana: number;
+};
+
+export const CONFIGURACAO_PADRAO: Configuracao = {
+  ritmo: "imediato",
+  ritmoDias: 15,
+  aulasPorSemana: 2,
+};
+
+export async function carregarConfiguracao(): Promise<Configuracao> {
+  const { data, error } = await supabase
+    .from("configuracoes")
+    .select("ritmo, ritmo_dias, aulas_por_semana")
+    .maybeSingle();
+  if (error) throw new Error(`configuração: ${error.message}`);
+  if (!data) return CONFIGURACAO_PADRAO;
+  return {
+    ritmo: data.ritmo as Ritmo,
+    ritmoDias: data.ritmo_dias,
+    aulasPorSemana: data.aulas_por_semana,
+  };
+}
+
+export async function salvarConfiguracao(c: Configuracao): Promise<void> {
+  const { error } = await supabase
+    .from("configuracoes")
+    .update({
+      ritmo: c.ritmo,
+      ritmo_dias: c.ritmoDias,
+      aulas_por_semana: c.aulasPorSemana,
+      atualizada_em: new Date().toISOString(),
+    })
+    .eq("id", true);
+  if (error) throw new Error(`configuração: ${error.message}`);
+}
+
 export async function cadastrarAluna(
   nome: string,
   login: string,
