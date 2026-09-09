@@ -115,14 +115,28 @@ export function TelaAula() {
   const segundoAtual = (pctVideo / 100) * duracaoSeg;
 
 
+  /*
+   * O avanço simulado é herança do protótipo, que não tinha vídeo: um
+   * relógio empurrava a barra para a demonstração parecer viva.
+   *
+   * Com vídeo de verdade ele não pode rodar. Primeiro porque duplicaria
+   * a barra do player do Cloudflare na tela. Segundo, e pior, porque
+   * gravaria em `progresso` uma posição inventada — e é dela que sai o
+   * "continue de onde parou". Progresso fingido é pior que progresso
+   * nenhum: leva a aluna de volta ao ponto errado.
+   *
+   * Enquanto o player real não for conduzido pelo app, quem marca a
+   * conclusão é a própria aluna, no botão.
+   */
   function alternarPlay() {
     if (tocando) {
       if (timer.current) window.clearInterval(timer.current);
       setTocando(false);
-      registrarPosicao(aula!.id, (pctVideo / 100) * duracaoSeg, duracaoSeg);
+      if (!video) registrarPosicao(aula!.id, (pctVideo / 100) * duracaoSeg, duracaoSeg);
       return;
     }
     setTocando(true);
+    if (video) return;                       // o player do Cloudflare assume
     setPctVideo((v) => (v >= 100 ? 0 : v));
     if (timer.current) window.clearInterval(timer.current);
     timer.current = window.setInterval(() => {
@@ -236,10 +250,23 @@ export function TelaAula() {
         ) : null}
 
         {/* A camada de play não intercepta cliques fora do círculo. */}
-        {!(tocando && video) ? (
+        {!video && !tocando ? (
+          <span
+            className="absolute left-1/2 top-1/2 z-[5] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-pilula px-4 py-2 text-[13px]"
+            style={{
+              color: "rgba(255,255,255,.85)",
+              background: "rgba(0,0,0,.5)",
+              border: "1px solid rgba(255,255,255,.2)",
+            }}
+          >
+            Vídeo em breve
+          </span>
+        ) : null}
+
+        {video && !tocando ? (
           <button
             onClick={alternarPlay}
-            aria-label={tocando ? "Pausar aula" : "Assistir aula"}
+            aria-label="Assistir aula"
             className="absolute left-1/2 top-1/2 z-[5] flex h-[88px] w-[88px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-transform duration-300 hover:scale-105"
             style={{
               background: "rgba(0,0,0,.3)",
@@ -253,7 +280,11 @@ export function TelaAula() {
           </button>
         ) : null}
 
-        <div className="absolute inset-x-[6px] bottom-[6px] z-[5] flex h-3 items-center">
+        {/* Um player só: com o do Cloudflare na tela, a barra do app sai. */}
+        <div
+          className="absolute inset-x-[6px] bottom-[6px] z-[5] flex h-3 items-center"
+          hidden={Boolean(tocando && video)}
+        >
           <div className="relative h-[3px] w-full" style={{ background: "rgba(255,255,255,.3)" }}>
             <div
               className="h-full"
