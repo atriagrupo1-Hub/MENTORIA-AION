@@ -3,6 +3,7 @@ import { Aviso } from "@/components/Aviso";
 import { Barra } from "@/components/Barra";
 import { Capa, capaModulo } from "@/components/Capa";
 import { Play } from "@/components/Icones";
+import { SemConteudo } from "@/components/SemConteudo";
 import { useAviso } from "@/components/useAviso";
 import { rotuloAcaoModulo, rotuloEstadoModulo } from "@/data/derivados";
 import { useJornada } from "@/data/useJornada";
@@ -28,6 +29,8 @@ export function Modulos() {
       >
         Seu caminho, etapa por etapa
       </h1>
+
+      {modulos.length === 0 ? <SemConteudo /> : null}
 
       <div className="flex flex-col gap-4">
         {modulos.map((e) => (
