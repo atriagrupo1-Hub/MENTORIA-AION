@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useEstado } from "@/data/estado";
 import type { Catalogo } from "@/data/tipos";
 import * as dados from "./dados";
 import type { AlunaAdmin } from "./dados";
@@ -13,6 +14,7 @@ export type Midia = { provider: string; ref: string };
  * que impede o painel de divergir do que a aluna enxerga.
  */
 export function usePainel() {
+  const { recarregar: recarregarSessao } = useEstado();
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [catalogo, setCatalogo] = useState<Catalogo>({
@@ -67,10 +69,35 @@ export function usePainel() {
         await recarregar();
         return null;
       } catch (falha) {
-        return falha instanceof Error ? falha.message : "Não foi possível salvar.";
+        const mensagem =
+          falha instanceof Error ? falha.message : "Não foi possível salvar.";
+
+        /*
+         * `sem_permissao` aqui quase nunca é falta de permissão de
+         * verdade: é a sessão ter deixado de ser de administradora.
+         *
+         * O navegador guarda UMA sessão. Entrando como aluna noutra aba
+         * para conferir a experiência dela, a sessão da administradora é
+         * substituída — e esta aba continua mostrando os dados de antes,
+         * mas cada gravação sai com o token da aluna. O banco recusa,
+         * corretamente, e a tela dizia apenas "sem_permissao".
+         *
+         * Reler a sessão faz o painel perceber e voltar para a entrada,
+         * em vez de deixar você clicando contra uma parede.
+         */
+        if (mensagem.includes("sem_permissao")) {
+          void recarregarSessao();
+          return (
+            "Sua sessão de administradora foi substituída — este navegador entrou " +
+            "como aluna. Entre de novo para continuar. Para ver a área da aluna sem " +
+            "perder o painel, use uma janela anônima."
+          );
+        }
+
+        return mensagem;
       }
     },
-    [recarregar],
+    [recarregar, recarregarSessao],
   );
 
   return {
