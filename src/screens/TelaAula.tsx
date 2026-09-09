@@ -182,17 +182,23 @@ export function TelaAula() {
     navegar(`/aula/${seguinte.numero}/0`);
   }
 
+  /*
+   * Concluir uma aula não libera nada.
+   *
+   * No protótipo liberava: terminar a aula abria a próxima, e terminar
+   * o módulo abria o seguinte. Com o cronograma por aluna, quem abre é
+   * a data que a administradora marcou — a conclusão só registra que a
+   * aluna assistiu.
+   *
+   * O aviso antigo prometia uma liberação que não ia acontecer. A aluna
+   * concluía, ia procurar a próxima aula e encontrava a data.
+   */
   async function marcarConcluida() {
     const virou = await alternarConcluida(aula!.id);
     if (!virou) return;
-    const temProxima = ordem + 1 < modulo!.aulas.length;
-    const seguinte = catalogo.modulos.find((m) => m.numero === numeroModulo + 1);
+    const ultimaDoModulo = ordem + 1 >= modulo!.aulas.length;
     aviso.mostrar(
-      temProxima
-        ? "Aula concluída. A próxima aula já está liberada para você."
-        : seguinte
-          ? `Módulo concluído. O Módulo ${seguinte.numero} acaba de ser liberado.`
-          : "Você concluiu a última aula da mentoria.",
+      ultimaDoModulo ? "Módulo concluído." : "Aula concluída.",
     );
   }
 
