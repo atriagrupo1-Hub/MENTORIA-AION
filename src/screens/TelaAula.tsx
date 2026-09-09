@@ -45,6 +45,7 @@ export function TelaAula() {
     registrarPosicao,
     aulaBloqueada,
     moduloLiberado,
+    moduloVisivel,
   } = estado;
 
   const [tocando, setTocando] = useState(false);
@@ -94,7 +95,19 @@ export function TelaAula() {
 
   useEffect(() => () => { if (timer.current) window.clearInterval(timer.current); }, []);
 
-  if (!modulo || !aula) return <main className="p-8">Aula não encontrada.</main>;
+  /*
+   * Aula que não é dela responde igual a aula que não existe.
+   *
+   * A interface já não deixa clicar, e o vídeo já não sai do servidor —
+   * mas digitando o endereço na barra a tela abria assim mesmo, com
+   * título, descrição e comentários de uma aula que ela não tem. Não é
+   * vazamento de conteúdo pago, e o vídeo continuava sem tocar; é
+   * apenas que não se confirma a ninguém o que existe do outro lado da
+   * porta. É a mesma resposta que a página de módulo já dava.
+   */
+  if (!modulo || !aula || !moduloVisivel(modulo) || aulaBloqueada(modulo, aula)) {
+    return <main className="p-8">Aula não encontrada.</main>;
+  }
 
   const cor = paleta(modulo.numero);
   const feita = concluida(aula.id);
