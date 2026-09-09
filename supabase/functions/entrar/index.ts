@@ -14,6 +14,9 @@
  *
  * A primeira protege uma aluna. A segunda impede varrer muitas contas em
  * paralelo, que é o ataque real contra um código de 4 dígitos.
+ *
+ * `verify_jwt` fica desligado de propósito: é o endpoint de login, quem
+ * chama ainda não tem sessão. A autenticação é a própria função.
  */
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
