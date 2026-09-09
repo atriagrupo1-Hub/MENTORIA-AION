@@ -23,14 +23,25 @@ export function Capa({
       role="img"
       aria-label={alt}
       className={`absolute inset-0 ${className}`}
+      /*
+       * `...style` vem PRIMEIRO, de propósito.
+       *
+       * Vindo por último, uma tela que passasse `background: <degradê>`
+       * apagaria a capa: `background` é abreviada e reescreve
+       * `background-image` inteira. Foi o que aconteceu no bloco de
+       * retomada da tela Início — o maior da tela — que ficou exibindo
+       * só o fundo de reserva.
+       *
+       * Nesta ordem, a capa sempre ganha, e o que a tela passar serve de
+       * base atrás dela.
+       */
       style={{
+        ...style,
         backgroundImage: caminhos.map((p) => `url("${p}")`).join(", "),
         backgroundSize: "cover",
         backgroundPosition: "center",
-        backgroundColor: "transparent",
         opacity: opacidade,
         transition: "opacity .8s ease",
-        ...style,
       }}
     />
   );

@@ -35,7 +35,10 @@ export function Inicio() {
         <section className="mt-1">
           <div
             className="relative overflow-hidden rounded-botao"
-            style={{ border: "1px solid rgba(255,255,255,.1)" }}
+            style={{
+              border: "1px solid rgba(255,255,255,.1)",
+              background: cores.placeholderCapa,
+            }}
           >
             <Capa
               caminhos={[
@@ -43,7 +46,6 @@ export function Inicio() {
                 capaModulo(retomada.modulo.numero),
               ]}
               alt="Capa da aula em andamento"
-              style={{ background: cores.placeholderCapa }}
             />
             <div className="aspect-video" />
           </div>
