@@ -161,6 +161,14 @@ begin;
 commit;
 select numero, titulo from aulas where modulo_id = (select id from modulos where numero=0) order by numero;
 
+-- Desfaz, como o teste 21 já fazia com os módulos. Sem isto o módulo 0
+-- fica com os números trocados para todo arquivo que rodar depois, e o
+-- teste seguinte procura a aula 1 e encontra a outra.
+begin;
+  update aulas set numero = 1 where id = :'aula_um';
+  update aulas set numero = 2 where id = :'aula_dois';
+commit;
+
 \echo ''
 \echo '=== 21. Trocar dois módulos de número na mesma transação ==='
 select id as mod_zero from modulos where numero=0 \gset

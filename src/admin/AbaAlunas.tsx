@@ -3,6 +3,8 @@ import { cores } from "@/design/tokens";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
 import { botaoNeutro, botaoOuro, botaoRemover, campo } from "./estilos";
+import { estadoDoPrazo } from "./prazo";
+import { PrazoDaAluna } from "./PrazoDaAluna";
 import type { Painel } from "./usePainel";
 
 export function AbaAlunas({
@@ -21,6 +23,7 @@ export function AbaAlunas({
   const [abertaId, setAbertaId] = useState("");
   const [rascunho, setRascunho] = useState<string[] | null>(null);
   const [moduloAberto, setModuloAberto] = useState("");
+  const [prazoId, setPrazoId] = useState("");
   const [salvando, setSalvando] = useState(false);
 
   const totalAulas = catalogo.modulos.reduce((s, m) => s + m.aulas.length, 0);
@@ -118,6 +121,8 @@ export function AbaAlunas({
                 JSON.stringify([...aluna.acessos].sort())
               : false;
           const bloqueada = aluna.status === "bloqueada";
+          const prazo = estadoDoPrazo(aluna.acessoAte);
+          const prazoAberto = prazoId === aluna.id;
 
           return (
             <div
@@ -160,6 +165,27 @@ export function AbaAlunas({
                 >
                   {bloqueada ? "Bloqueada" : "Ativa"}
                 </span>
+                {prazo.semPrazo ? null : (
+                  <span
+                    className="flex-none rounded-pilula px-3 py-[6px] text-[11px] uppercase tracking-[.12em]"
+                    style={{
+                      color: prazo.vencido
+                        ? cores.alerta
+                        : prazo.perto
+                          ? cores.ouro
+                          : "rgba(243,236,225,.6)",
+                      border: `1px solid ${
+                        prazo.vencido
+                          ? cores.alerta
+                          : prazo.perto
+                            ? cores.ouro
+                            : "rgba(255,255,255,.18)"
+                      }`,
+                    }}
+                  >
+                    {prazo.rotulo}
+                  </span>
+                )}
                 <span className="flex flex-wrap gap-2">
                   <button
                     onClick={() => {
@@ -176,6 +202,12 @@ export function AbaAlunas({
                     style={botaoNeutro}
                   >
                     {aberta ? "Fechar acessos" : "Definir acessos"}
+                  </button>
+                  <button
+                    onClick={() => setPrazoId(prazoAberto ? "" : aluna.id)}
+                    style={botaoNeutro}
+                  >
+                    {prazoAberto ? "Fechar prazo" : "Prazo de acesso"}
                   </button>
                   <button
                     onClick={async () => {
@@ -213,6 +245,15 @@ export function AbaAlunas({
                   </button>
                 </span>
               </div>
+
+              {prazoAberto ? (
+                <PrazoDaAluna
+                  aluna={aluna}
+                  executar={executar}
+                  avisar={avisar}
+                  pedirConfirmacao={pedirConfirmacao}
+                />
+              ) : null}
 
               {aberta && rascunho ? (
                 <div

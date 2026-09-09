@@ -23,6 +23,9 @@ export type PerfilSessao = {
   papel: "aluna" | "admin";
   status: "ativa" | "bloqueada";
   primeiroAcessoEm: string | null;
+  criadaEm: string;
+  /** Fim do acesso. Nulo quer dizer sem prazo. */
+  acessoAte: string | null;
 };
 
 /** Chama a Edge Function `entrar` e guarda a sessão devolvida. */
@@ -104,6 +107,8 @@ export async function meuPerfil(): Promise<PerfilSessao | null> {
     papel: linha.papel,
     status: linha.status,
     primeiroAcessoEm: linha.primeiro_acesso_em,
+    criadaEm: linha.criada_em,
+    acessoAte: linha.acesso_ate,
   };
 }
 

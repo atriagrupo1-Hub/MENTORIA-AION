@@ -19,6 +19,10 @@ export type AlunaAdmin = {
   login: string;
   codigo: string;
   status: "ativa" | "bloqueada";
+  /** Quando a aluna foi cadastrada. É a base de contagem do prazo. */
+  criadaEm: string;
+  /** Fim do acesso. Nulo quer dizer sem prazo. */
+  acessoAte: string | null;
   acessos: string[];
 };
 
@@ -53,15 +57,56 @@ export async function listarAlunas(): Promise<AlunaAdmin[]> {
   }
 
   return (perfis.data ?? []).map(
-    (p: { id: string; nome: string; login: string; status: "ativa" | "bloqueada" }) => ({
+    (p: {
+      id: string;
+      nome: string;
+      login: string;
+      status: "ativa" | "bloqueada";
+      criada_em: string;
+      acesso_ate: string | null;
+    }) => ({
       id: p.id,
       nome: p.nome,
       login: p.login,
       codigo: codigos.get(p.id) ?? "",
       status: p.status,
+      criadaEm: p.criada_em,
+      acessoAte: p.acesso_ate,
       acessos: porAluna.get(p.id) ?? [],
     }),
   );
+}
+
+/**
+ * Prazo de acesso.
+ *
+ * As duas contas ficam no banco, não aqui: `definir` conta a partir do
+ * cadastro da aluna, `estender` soma ao prazo vigente. Feito no
+ * navegador, o segundo seria ler-modificar-gravar, e dois cliques
+ * seguidos perderiam um dos acréscimos.
+ */
+export type Prazo = { dias: number; meses: number; anos: number };
+
+export async function definirAcesso(alunaId: string, p: Prazo): Promise<string | null> {
+  const { data, error } = await supabase.rpc("definir_acesso", {
+    p_aluna: alunaId,
+    p_dias: p.dias,
+    p_meses: p.meses,
+    p_anos: p.anos,
+  });
+  if (error) throw new Error(`prazo: ${error.message}`);
+  return (data as string | null) ?? null;
+}
+
+export async function estenderAcesso(alunaId: string, p: Prazo): Promise<string | null> {
+  const { data, error } = await supabase.rpc("estender_acesso", {
+    p_aluna: alunaId,
+    p_dias: p.dias,
+    p_meses: p.meses,
+    p_anos: p.anos,
+  });
+  if (error) throw new Error(`prazo: ${error.message}`);
+  return (data as string | null) ?? null;
 }
 
 export async function cadastrarAluna(

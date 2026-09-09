@@ -48,9 +48,15 @@ export function usePainel() {
     void recarregar();
   }, [recarregar]);
 
-  /** Executa a escrita e relê. Devolve a mensagem de falha, ou null. */
+  /**
+   * Executa a escrita e relê. Devolve a mensagem de falha, ou null.
+   *
+   * `Promise<unknown>` e não `Promise<void>`: algumas escritas devolvem
+   * valor — `definir_acesso` responde com a data gravada — e o que
+   * interessa aqui é só ter esperado e relido.
+   */
   const executar = useCallback(
-    async (acao: () => Promise<void>): Promise<string | null> => {
+    async (acao: () => Promise<unknown>): Promise<string | null> => {
       try {
         await acao();
         await recarregar();
