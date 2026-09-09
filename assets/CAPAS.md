@@ -78,3 +78,31 @@ As imagens em si não são versionadas neste repositório: somam cerca de
 82 MB, o aplicativo não as lê daqui (lê do depósito `capas` do Supabase
 Storage) e o Git guardaria cada versão para sempre. O que vale versionar
 é a convenção de nomes e o inventário, que é este arquivo.
+
+---
+
+## Conversão para WebP — 2026-09-09
+
+As 56 capas foram convertidas de PNG para WebP, qualidade 85. As mesmas
+artes, sem diferença visível — conferi a área mais difícil, o texto
+dourado com serifa sobre fundo escuro, no tamanho real.
+
+| | |
+|---|---|
+| Antes | 82,8 MB |
+| Depois | 7,2 MB (9% do original) |
+| Maior arquivo | 330 KB, era 2,8 MB |
+
+As 7 capas de aula que estavam em 1672×941 desceram para 1280×720,
+igual às outras 38. As 11 de módulo continuam em 1024×1536.
+
+A convenção de nomes não mudou; só a extensão. O padrão passa a ser:
+
+| Padrão | Proporção |
+|---|---|
+| `modulo-N.webp` | vertical 2:3, 1024×1536 |
+| `modulo-N-aula-X.webp` | horizontal 16:9, 1280×720 |
+| `ao-vivo-modulo-N.webp` | horizontal 16:9 |
+| `presente-N.webp` | vertical 2:3 |
+
+Arte nova deve chegar em WebP, ou ser convertida antes de subir.

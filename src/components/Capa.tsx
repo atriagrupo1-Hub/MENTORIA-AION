@@ -48,10 +48,18 @@ export function Capa({
  */
 const nomeDaCapa = (caminho: string) => urlDaCapa(caminho) ?? "";
 
-export const capaModulo = (numero: number) => nomeDaCapa(`modulo-${numero}.png`);
+/*
+ * WebP, e não PNG.
+ *
+ * As mesmas artes, na mesma qualidade visível, pesam 9% do que pesavam:
+ * 83 MB viraram 7,2 MB nas 56 capas. Numa tela com seis delas, a aluna
+ * baixava 9 MB e passa a baixar 800 KB — que no celular em rede fraca é
+ * a diferença entre esperar e não esperar.
+ */
+export const capaModulo = (numero: number) => nomeDaCapa(`modulo-${numero}.webp`);
 export const capaAula = (numero: number, ordem: number) =>
-  nomeDaCapa(`modulo-${numero}-aula-${ordem + 1}.png`);
-export const capaAoVivo = (numero: number) => nomeDaCapa(`ao-vivo-modulo-${numero}.png`);
-export const capaPresente = (indice: number) => nomeDaCapa(`presente-${indice + 1}.png`);
+  nomeDaCapa(`modulo-${numero}-aula-${ordem + 1}.webp`);
+export const capaAoVivo = (numero: number) => nomeDaCapa(`ao-vivo-modulo-${numero}.webp`);
+export const capaPresente = (indice: number) => nomeDaCapa(`presente-${indice + 1}.webp`);
 
 export const fundoReserva = cores.placeholderCapa;
