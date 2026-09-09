@@ -4,7 +4,6 @@ import { cores } from "@/design/tokens";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
 import { botaoNeutro, botaoOuro, botaoRemover, campo } from "./estilos";
-import { RitmoDeLiberacao } from "./RitmoDeLiberacao";
 import type { Painel } from "./usePainel";
 
 const BOTAO_LINHA: React.CSSProperties = {
@@ -97,8 +96,6 @@ export function AbaConteudo({
 
   return (
     <>
-      <RitmoDeLiberacao painel={painel} avisar={avisar} />
-
       <section
         className="rounded-cartao-lg p-4"
         style={{ background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.1)" }}

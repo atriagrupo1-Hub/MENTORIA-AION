@@ -25,10 +25,14 @@ select a.id, 'stream', 'uid-secreto-modulo-' || m.numero || '-aula-' || a.numero
 from aulas a join modulos m on m.id = a.modulo_id
 where (m.numero = 0 and a.numero = 1) or (m.numero = 1 and a.numero = 1);
 
--- Maria tem só o Módulo 0. Ana não tem nada.
-insert into acessos (aluna_id, escopo, modulo_id)
-select '22222222-2222-2222-2222-222222222222', 'modulo', id
-from modulos where numero = 0;
+-- Maria tem as aulas do Módulo 0, todas abertas. Ana não tem nada.
+--
+-- A liberação é sempre por aula (migration 0010): o módulo é o retrato
+-- das aulas dela, não um registro próprio. `abre_em` nulo = já aberta.
+insert into acessos (aluna_id, escopo, aula_id)
+select '22222222-2222-2222-2222-222222222222', 'aula', a.id
+from aulas a join modulos m on m.id = a.modulo_id
+where m.numero = 0;
 
 -- Um comentário da Maria na primeira aula do Módulo 0.
 insert into comentarios (aula_id, autora_id, texto, posicao_segundos)

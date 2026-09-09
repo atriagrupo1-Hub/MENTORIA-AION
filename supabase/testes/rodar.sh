@@ -60,4 +60,4 @@ psql -q -d aion -v ON_ERROR_STOP=1 -f "$RAIZ/supabase/testes/01_semear.sql"
 echo '--- regras de acesso ---'
 psql -d aion -f "$RAIZ/supabase/testes/02_regras_de_acesso.sql"
 psql -d aion -f "$RAIZ/supabase/testes/03_validade.sql"
-psql -d aion -f "$RAIZ/supabase/testes/04_ritmo.sql"
+psql -d aion -f "$RAIZ/supabase/testes/04_cronograma.sql"

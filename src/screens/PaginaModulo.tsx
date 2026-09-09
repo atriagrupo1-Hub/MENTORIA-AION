@@ -30,19 +30,23 @@ const NAV: React.CSSProperties = {
 export function PaginaModulo() {
   const { mi } = useParams();
   const numero = Number(mi);
-  const { catalogo, moduloLiberado, aulaBloqueada, concluida } = useEstado();
+  const { catalogo, moduloLiberado, moduloVisivel, aulaBloqueada, concluida } = useEstado();
   const navegar = useNavigate();
   const aviso = useAviso();
 
   const modulo = catalogo.modulos.find((m) => m.numero === numero);
-  if (!modulo) return <main className="p-8">Módulo não encontrado.</main>;
+  // Módulo que não é dela responde igual a módulo inexistente: digitar o
+  // endereço na barra não pode revelar que ele existe.
+  if (!modulo || !moduloVisivel(modulo)) {
+    return <main className="p-8">Módulo não encontrado.</main>;
+  }
 
   const e = estadoDoModulo(modulo, moduloLiberado(modulo), concluida);
   const cor = paleta(modulo.numero);
   const aoVivo = catalogo.aoVivo[modulo.id];
 
   function irPara(destino: number) {
-    const alvo = catalogo.modulos.find((m) => m.numero === destino);
+    const alvo = catalogo.modulos.filter(moduloVisivel).find((m) => m.numero === destino);
     if (!alvo) {
       aviso.mostrar(
         destino < numero

@@ -59,6 +59,10 @@ type Estado = {
   aulaLiberada: (modulo: Modulo, aula: Aula) => boolean;
   aulaBloqueada: (modulo: Modulo, aula: Aula) => boolean;
   moduloLiberado: (modulo: Modulo) => boolean;
+  /** Falso quando a aluna não tem nenhuma aula do módulo: fica oculto. */
+  moduloVisivel: (modulo: Modulo) => boolean;
+  /** Quando a primeira aula do módulo abre. Nulo se já abriu ou se não é dela. */
+  moduloAbreEm: (modulo: Modulo) => string | null;
   presenteLiberado: (categoriaId: string, presenteId: string) => boolean;
 
   concluida: (aulaId: string) => boolean;
@@ -80,6 +84,9 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
   const [catalogo, setCatalogo] = useState<Catalogo>(CATALOGO_VAZIO);
   const [liberadas, setLiberadas] = useState<Map<string, AulaLiberada>>(new Map());
   const [presentesLib, setPresentesLib] = useState<Set<string>>(new Set());
+  const [modulosDaAluna, setModulosDaAluna] = useState<Map<string, api.ModuloDaAluna>>(
+    new Map(),
+  );
   const [curtidasSet, setCurtidasSet] = useState<Set<string>>(new Set());
 
   /** Posição do vídeo em andamento, antes de chegar ao banco. */
@@ -95,6 +102,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
         setCatalogo(CATALOGO_VAZIO);
         setLiberadas(new Map());
         setPresentesLib(new Set());
+        setModulosDaAluna(new Map());
         setCurtidasSet(new Set());
         return;
       }
@@ -112,15 +120,17 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       }
       setAluna(perfil);
 
-      const [cat, aulas, likes] = await Promise.all([
+      const [cat, aulas, likes, mods] = await Promise.all([
         api.carregarCatalogo(),
         api.minhasAulas(),
         api.curtidas(),
+        api.meusModulos(),
       ]);
 
       setCatalogo(cat);
       setLiberadas(new Map(aulas.map((a) => [a.aulaId, a])));
       setCurtidasSet(likes);
+      setModulosDaAluna(mods);
 
       const idsPresentes = cat.categorias.flatMap((c) => c.presentes.map((p) => p.id));
       setPresentesLib(await api.presentesLiberados(idsPresentes));
@@ -128,6 +138,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       // Sem resposta do banco, nada é liberado. É a regra do item 8.
       setLiberadas(new Map());
       setPresentesLib(new Set());
+      setModulosDaAluna(new Map());
       setErro(
         falha instanceof Error
           ? `Não conseguimos carregar seus dados. ${falha.message}`
@@ -158,6 +169,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
     setCatalogo(CATALOGO_VAZIO);
     setLiberadas(new Map());
     setPresentesLib(new Set());
+    setModulosDaAluna(new Map());
     setCurtidasSet(new Set());
     posicoesLocais.current.clear();
   }, []);
@@ -170,6 +182,24 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
   const moduloLiberado = useCallback<Estado["moduloLiberado"]>(
     (modulo) => modulo.aulas.some((a) => liberadas.has(a.id)),
     [liberadas],
+  );
+
+  /**
+   * O módulo é o retrato das aulas dela: sem nenhuma atribuída, some da
+   * tela. Não é bloqueio — é ausência.
+   */
+  const moduloVisivel = useCallback<Estado["moduloVisivel"]>(
+    (modulo) => modulosDaAluna.has(modulo.id),
+    [modulosDaAluna],
+  );
+
+  const moduloAbreEm = useCallback<Estado["moduloAbreEm"]>(
+    (modulo) => {
+      const info = modulosDaAluna.get(modulo.id);
+      if (!info || info.abertas > 0) return null;
+      return info.proximaAbertura;
+    },
+    [modulosDaAluna],
   );
 
   const concluida = useCallback<Estado["concluida"]>(
@@ -268,6 +298,8 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       aulaLiberada,
       aulaBloqueada,
       moduloLiberado,
+      moduloVisivel,
+      moduloAbreEm,
       presenteLiberado,
       concluida,
       percentualAssistido,
@@ -288,6 +320,8 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       aulaLiberada,
       aulaBloqueada,
       moduloLiberado,
+      moduloVisivel,
+      moduloAbreEm,
       presenteLiberado,
       concluida,
       percentualAssistido,

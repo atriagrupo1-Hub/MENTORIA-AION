@@ -23,14 +23,15 @@ export type AlunaAdmin = {
   criadaEm: string;
   /** Fim do acesso. Nulo quer dizer sem prazo. */
   acessoAte: string | null;
-  acessos: string[];
+  /** Aulas que ela tem, e quando cada uma abre. Nulo = já aberta. */
+  cronograma: Map<string, string | null>;
 };
 
 export async function listarAlunas(): Promise<AlunaAdmin[]> {
   const [perfis, credenciais, acessos] = await Promise.all([
     supabase.from("profiles").select("*").eq("papel", "aluna").order("nome"),
     supabase.from("credenciais").select("aluna_id, codigo"),
-    supabase.from("acessos").select("aluna_id, escopo, aula_id, modulo_id"),
+    supabase.from("acessos").select("aluna_id, escopo, aula_id, abre_em"),
   ]);
 
   if (perfis.error) throw new Error(`alunas: ${perfis.error.message}`);
@@ -44,16 +45,17 @@ export async function listarAlunas(): Promise<AlunaAdmin[]> {
     ]),
   );
 
-  const porAluna = new Map<string, string[]>();
+  const porAluna = new Map<string, Map<string, string | null>>();
   for (const a of (acessos.data ?? []) as Array<{
     aluna_id: string;
     escopo: string;
     aula_id: string | null;
+    abre_em: string | null;
   }>) {
     if (a.escopo !== "aula" || !a.aula_id) continue;
-    const lista = porAluna.get(a.aluna_id) ?? [];
-    lista.push(a.aula_id);
-    porAluna.set(a.aluna_id, lista);
+    const mapa = porAluna.get(a.aluna_id) ?? new Map<string, string | null>();
+    mapa.set(a.aula_id, a.abre_em);
+    porAluna.set(a.aluna_id, mapa);
   }
 
   return (perfis.data ?? []).map(
@@ -72,7 +74,7 @@ export async function listarAlunas(): Promise<AlunaAdmin[]> {
       status: p.status,
       criadaEm: p.criada_em,
       acessoAte: p.acesso_ate,
-      acessos: porAluna.get(p.id) ?? [],
+      cronograma: porAluna.get(p.id) ?? new Map<string, string | null>(),
     }),
   );
 }
@@ -110,49 +112,30 @@ export async function estenderAcesso(alunaId: string, p: Prazo): Promise<string 
 }
 
 /**
- * Ritmo de liberação — a regra geral, uma só para todas.
+ * Intervalo padrão entre aulas, em dias.
  *
- * A contagem, essa é individual: parte de `criada_em` de cada aluna. A
- * tabela tem linha única (a chave é um booleano que só aceita `true`),
- * então não existe o caso "qual das configurações vale?".
+ * Não decide acesso nenhum: é só o número que já vem preenchido no
+ * formulário quando você monta o cronograma de uma aluna. Quem decide é
+ * a data gravada em cada aula.
  */
-export type Ritmo = "imediato" | "por_dias" | "por_conclusao" | "aulas_por_semana";
+export type Configuracao = { intervaloDias: number };
 
-export type Configuracao = {
-  ritmo: Ritmo;
-  ritmoDias: number;
-  aulasPorSemana: number;
-};
-
-export const CONFIGURACAO_PADRAO: Configuracao = {
-  ritmo: "imediato",
-  ritmoDias: 15,
-  aulasPorSemana: 2,
-};
+export const CONFIGURACAO_PADRAO: Configuracao = { intervaloDias: 5 };
 
 export async function carregarConfiguracao(): Promise<Configuracao> {
   const { data, error } = await supabase
     .from("configuracoes")
-    .select("ritmo, ritmo_dias, aulas_por_semana")
+    .select("intervalo_dias")
     .maybeSingle();
   if (error) throw new Error(`configuração: ${error.message}`);
   if (!data) return CONFIGURACAO_PADRAO;
-  return {
-    ritmo: data.ritmo as Ritmo,
-    ritmoDias: data.ritmo_dias,
-    aulasPorSemana: data.aulas_por_semana,
-  };
+  return { intervaloDias: data.intervalo_dias };
 }
 
 export async function salvarConfiguracao(c: Configuracao): Promise<void> {
   const { error } = await supabase
     .from("configuracoes")
-    .update({
-      ritmo: c.ritmo,
-      ritmo_dias: c.ritmoDias,
-      aulas_por_semana: c.aulasPorSemana,
-      atualizada_em: new Date().toISOString(),
-    })
+    .update({ intervalo_dias: c.intervaloDias, atualizada_em: new Date().toISOString() })
     .eq("id", true);
   if (error) throw new Error(`configuração: ${error.message}`);
 }
@@ -205,16 +188,75 @@ export async function removerAluna(alunaId: string): Promise<void> {
  * Substitui as liberações de uma aluna pelas escolhidas no painel.
  * Apaga e reinsere: é o que mantém a lista igual ao que a tela mostra.
  */
-export async function salvarAcessos(alunaId: string, aulaIds: string[]): Promise<void> {
-  const apagou = await supabase.from("acessos").delete().eq("aluna_id", alunaId);
-  if (apagou.error) throw new Error(`acessos: ${apagou.error.message}`);
+/**
+ * Cronograma — quando cada aula abre para cada aluna.
+ *
+ * Escrever data é sempre pelo banco, nunca por `update` solto: gerar 50
+ * linhas em sequência precisa ser uma operação só, senão uma falha no
+ * meio deixaria a aluna com meio curso.
+ */
 
-  if (aulaIds.length === 0) return;
+/**
+ * Gera o cronograma inteiro: apaga o que ela tinha e escreve de novo,
+ * uma aula a cada `intervaloDias`, a partir de `inicio`.
+ *
+ * `intervaloDias = 0` abre tudo na hora. Módulo fora de `moduloIds` não
+ * recebe linha nenhuma — é assim que ele fica oculto para ela.
+ */
+export async function gerarCronograma(
+  alunaId: string,
+  moduloIds: string[],
+  intervaloDias: number,
+  inicio: Date,
+): Promise<number> {
+  const { data, error } = await supabase.rpc("gerar_cronograma", {
+    p_aluna: alunaId,
+    p_modulos: moduloIds,
+    p_intervalo: intervaloDias,
+    p_inicio: inicio.toISOString(),
+  });
+  if (error) throw new Error(`cronograma: ${error.message}`);
+  return (data as number) ?? 0;
+}
 
-  const inserir = await supabase.from("acessos").insert(
-    aulaIds.map((aulaId) => ({ aluna_id: alunaId, escopo: "aula", aula_id: aulaId })),
-  );
-  if (inserir.error) throw new Error(`acessos: ${inserir.error.message}`);
+/** O mesmo cronograma em várias alunas de uma vez — a turma. */
+export async function gerarCronogramaLote(
+  alunaIds: string[],
+  moduloIds: string[],
+  intervaloDias: number,
+  inicio: Date,
+): Promise<number> {
+  const { data, error } = await supabase.rpc("gerar_cronograma_lote", {
+    p_alunas: alunaIds,
+    p_modulos: moduloIds,
+    p_intervalo: intervaloDias,
+    p_inicio: inicio.toISOString(),
+  });
+  if (error) throw new Error(`cronograma: ${error.message}`);
+  return (data as number) ?? 0;
+}
+
+/** Ajusta uma aula: data nova, ou `null` para abrir agora. */
+export async function definirAbertura(
+  alunaId: string,
+  aulaId: string,
+  abreEm: Date | null,
+): Promise<void> {
+  const { error } = await supabase.rpc("definir_abertura", {
+    p_aluna: alunaId,
+    p_aula: aulaId,
+    p_abre_em: abreEm ? abreEm.toISOString() : null,
+  });
+  if (error) throw new Error(`abertura: ${error.message}`);
+}
+
+/** Tira a aula da aluna. Some da tela dela. */
+export async function removerAulaDaAluna(alunaId: string, aulaId: string): Promise<void> {
+  const { error } = await supabase.rpc("remover_aula_da_aluna", {
+    p_aluna: alunaId,
+    p_aula: aulaId,
+  });
+  if (error) throw new Error(`abertura: ${error.message}`);
 }
 
 // ---------------------------------------------------------------------

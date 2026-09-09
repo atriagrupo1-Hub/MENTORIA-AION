@@ -160,6 +160,40 @@ type LinhaPresente = {
  * separada, de `minhasAulas()`. Nenhum endereço de vídeo vem junto: a
  * mídia mora em tabela própria, fechada, e sai só por função.
  */
+/**
+ * Situação de cada módulo para a aluna que está logada.
+ *
+ * Só vêm os módulos em que ela tem alguma aula atribuída. Módulo
+ * ausente desta lista é módulo oculto — a tela não desenha. Com
+ * `abertas = 0` e uma `proximaAbertura`, é o "libera em breve".
+ */
+export type ModuloDaAluna = {
+  moduloId: string;
+  atribuidas: number;
+  abertas: number;
+  proximaAbertura: string | null;
+};
+
+export async function meusModulos(): Promise<Map<string, ModuloDaAluna>> {
+  const { data, error } = await supabase.rpc("meus_modulos");
+  if (error) throw new Error(`meus_modulos: ${error.message}`);
+  const mapa = new Map<string, ModuloDaAluna>();
+  for (const l of (data ?? []) as Array<{
+    modulo_id: string;
+    atribuidas: number;
+    abertas: number;
+    proxima_abertura: string | null;
+  }>) {
+    mapa.set(l.modulo_id, {
+      moduloId: l.modulo_id,
+      atribuidas: l.atribuidas,
+      abertas: l.abertas,
+      proximaAbertura: l.proxima_abertura,
+    });
+  }
+  return mapa;
+}
+
 export async function carregarCatalogo(): Promise<Catalogo> {
   const [modulos, aulas, categorias, presentes, aoVivo] = await Promise.all([
     supabase.from("modulos").select("*").order("ordem"),

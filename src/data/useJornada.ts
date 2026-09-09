@@ -10,22 +10,27 @@ import { useEstado } from "./estado";
 /** Números que as telas Início, Módulos e Perfil compartilham. */
 export function useJornada() {
   const estado = useEstado();
-  const { catalogo, moduloLiberado, aulaBloqueada, concluida } = estado;
+  const { catalogo, moduloLiberado, moduloVisivel, aulaBloqueada, concluida } = estado;
 
   return useMemo(() => {
-    const modulos: EstadoModulo[] = catalogo.modulos.map((m) =>
+    /*
+     * Só os módulos que a aluna tem.
+     *
+     * Módulo sem nenhuma aula atribuída a ela não é bloqueio: é ausência.
+     * Some da jornada inteira — Início, Módulos e Perfil — e o percentual
+     * passa a ser sobre o curso DELA. Uma aluna que entrou no Módulo 2 vê
+     * "3 de 39 aulas", e não "3 de 50", que a faria pensar que perdeu algo.
+     */
+    const meus = catalogo.modulos.filter(moduloVisivel);
+
+    const modulos: EstadoModulo[] = meus.map((m) =>
       estadoDoModulo(m, moduloLiberado(m), concluida),
     );
 
-    const totalAulas = catalogo.modulos.reduce((s, m) => s + m.aulas.length, 0);
+    const totalAulas = meus.reduce((s, m) => s + m.aulas.length, 0);
     const totalConcluidas = modulos.reduce((s, m) => s + m.concluidas, 0);
-    const retomada = pontoDeRetomada(
-      catalogo.modulos,
-      moduloLiberado,
-      aulaBloqueada,
-      concluida,
-    );
-    const moduloAtual = retomada?.modulo ?? catalogo.modulos[0];
+    const retomada = pontoDeRetomada(meus, moduloLiberado, aulaBloqueada, concluida);
+    const moduloAtual = retomada?.modulo ?? meus[0];
 
     return {
       modulos,
@@ -36,5 +41,5 @@ export function useJornada() {
       retomada,
       moduloAtual,
     };
-  }, [catalogo, moduloLiberado, aulaBloqueada, concluida]);
+  }, [catalogo, moduloLiberado, moduloVisivel, aulaBloqueada, concluida]);
 }
