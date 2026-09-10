@@ -243,6 +243,7 @@ export function AbaAlunas({
                 <CronogramaDaAluna
                   aluna={aluna}
                   catalogo={catalogo}
+                  midiaAulas={painel.midiaAulas}
                   intervaloPadrao={painel.configuracao.intervaloDias}
                   executar={executar}
                   avisar={avisar}

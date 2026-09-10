@@ -5,6 +5,7 @@ import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
 import { botaoNeutro, botaoOuro, botaoRemover, campo } from "./estilos";
 import { dataCurta } from "./prazo";
+import type { Midia } from "./usePainel";
 
 /**
  * Cronograma de uma aluna — quando cada aula abre para ela.
@@ -18,6 +19,11 @@ import { dataCurta } from "./prazo";
  *   nenhuma aula atribuída ......... oculto para a aluna
  *   atribuídas, nenhuma aberta ..... "libera em breve"
  *   ao menos uma aberta ............ aparece
+ *
+ * Data e vídeo são independentes: o banco abre a aula na data marcada
+ * tenha ela vídeo ou não. Por isso a tela mostra o que falta e avisa
+ * antes de gerar — abrir aula sem vídeo põe a aluna diante de
+ * "Vídeo em breve" no dia em que ela foi liberada.
  */
 
 const hoje = () => {
@@ -40,9 +46,25 @@ function doCampoData(v: string): Date | null {
 
 type EstadoModulo = "oculto" | "em_breve" | "aberto";
 
+type Previsao = { abremSemVideo: number; totalSemVideo: number };
+
+/** O que o cronograma escolhido abriria sem ter vídeo para mostrar. */
+function avisoDeVideo({ abremSemVideo, totalSemVideo }: Previsao): string {
+  if (abremSemVideo === 1)
+    return 'Atenção: 1 aula abre de imediato e ainda não tem vídeo — a aluna vai clicar e ver "Vídeo em breve".';
+  if (abremSemVideo > 1)
+    return `Atenção: ${abremSemVideo} aulas abrem de imediato e ainda não têm vídeo — a aluna vai clicar e ver "Vídeo em breve".`;
+  if (totalSemVideo === 1)
+    return "1 aula deste cronograma ainda não tem vídeo, mas ela não abre hoje.";
+  if (totalSemVideo > 1)
+    return `${totalSemVideo} aulas deste cronograma ainda não têm vídeo, mas nenhuma abre hoje.`;
+  return "";
+}
+
 export function CronogramaDaAluna({
   aluna,
   catalogo,
+  midiaAulas,
   intervaloPadrao,
   executar,
   avisar,
@@ -50,6 +72,7 @@ export function CronogramaDaAluna({
 }: {
   aluna: dados.AlunaAdmin;
   catalogo: Catalogo;
+  midiaAulas: Map<string, Midia>;
   intervaloPadrao: number;
   executar: (f: () => Promise<unknown>) => Promise<string | null>;
   avisar: (m: string) => void;
@@ -79,29 +102,62 @@ export function CronogramaDaAluna({
     return abertas.length > 0 ? "aberto" : "em_breve";
   }
 
+  const semVideo = (aulaId: string) => !midiaAulas.get(aulaId)?.ref;
+
   const resumo = useMemo(() => {
     let atribuidas = 0;
     let abertas = 0;
+    let abertasSemVideo = 0;
     let proxima: number | null = null;
     for (const m of catalogo.modulos) {
       for (const a of m.aulas) {
         if (!aluna.cronograma.has(a.id)) continue;
         atribuidas += 1;
         const d = aluna.cronograma.get(a.id) ?? null;
-        if (d === null || new Date(d).getTime() <= agora) abertas += 1;
-        else {
+        if (d === null || new Date(d).getTime() <= agora) {
+          abertas += 1;
+          if (!midiaAulas.get(a.id)?.ref) abertasSemVideo += 1;
+        } else {
           const t = new Date(d).getTime();
           if (proxima === null || t < proxima) proxima = t;
         }
       }
     }
-    return { atribuidas, abertas, proxima };
-  }, [aluna.cronograma, catalogo.modulos, agora]);
+    return { atribuidas, abertas, abertasSemVideo, proxima };
+  }, [aluna.cronograma, catalogo.modulos, midiaAulas, agora]);
 
   const nDias = Math.max(0, Math.min(365, Math.floor(Number(intervalo) || 0)));
   const totalMarcadas = catalogo.modulos
     .filter((m) => marcados.has(m.id))
     .reduce((s, m) => s + m.aulas.length, 0);
+
+  /**
+   * O que "Gerar cronograma" abriria sem vídeo, com o que está marcado
+   * agora. Repete a ordem do banco — módulo, depois aula — e a mesma
+   * conta de data: início mais posição vezes intervalo.
+   */
+  const previsao = useMemo<Previsao>(() => {
+    const emOrdem = catalogo.modulos
+      .filter((m) => marcados.has(m.id))
+      .flatMap((m) => m.aulas);
+    const dataInicio = doCampoData(inicio);
+    let abremSemVideo = 0;
+    let totalSemVideo = 0;
+    emOrdem.forEach((a, i) => {
+      if (midiaAulas.get(a.id)?.ref) return;
+      totalSemVideo += 1;
+      if (nDias > 0) {
+        if (!dataInicio) return;
+        const quando = new Date(dataInicio);
+        quando.setDate(quando.getDate() + i * nDias);
+        if (quando.getTime() > agora) return;
+      }
+      abremSemVideo += 1;
+    });
+    return { abremSemVideo, totalSemVideo };
+  }, [catalogo.modulos, marcados, midiaAulas, nDias, inicio, agora]);
+
+  const avisoVideo = avisoDeVideo(previsao);
 
   function alternarModulo(id: string) {
     const novo = new Set(marcados);
@@ -129,7 +185,8 @@ export function CronogramaDaAluna({
           : `uma a cada ${nDias} ${nDias === 1 ? "dia" : "dias"} a partir de ${dataCurta(
               dataInicio.toISOString(),
             )}.`) +
-        " As datas que você tiver ajustado à mão se perdem.",
+        " As datas que você tiver ajustado à mão se perdem." +
+        (avisoVideo ? ` ${avisoVideo}` : ""),
       executar: async () => {
         const falha = await executar(() =>
           dados.gerarCronograma(aluna.id, [...marcados], nDias, dataInicio),
@@ -157,6 +214,11 @@ export function CronogramaDaAluna({
       >
         <Dado rotulo="Aulas atribuídas" valor={`${resumo.atribuidas} de 50`} />
         <Dado rotulo="Já abertas" valor={String(resumo.abertas)} />
+        <Dado
+          rotulo="Abertas sem vídeo"
+          valor={String(resumo.abertasSemVideo)}
+          cor={resumo.abertasSemVideo > 0 ? cores.alerta : undefined}
+        />
         <Dado
           rotulo="Próxima abre em"
           valor={resumo.proxima ? dataCurta(new Date(resumo.proxima).toISOString()) : "—"}
@@ -188,6 +250,7 @@ export function CronogramaDaAluna({
           const marcado = marcados.has(m.id);
           const estado = estadoDoModulo(m);
           const suas = m.aulas.filter((a) => aluna.cronograma.has(a.id));
+          const suasSemVideo = suas.filter((a) => semVideo(a.id)).length;
           const aberto = expandido === m.id;
 
           return (
@@ -225,6 +288,12 @@ export function CronogramaDaAluna({
                     {suas.length === 0
                       ? "nenhuma aula atribuída"
                       : `${suas.length} atribuídas a ela`}
+                    {suasSemVideo > 0 ? (
+                      <span style={{ color: cores.alerta }}>
+                        {" · "}
+                        {suasSemVideo} sem vídeo
+                      </span>
+                    ) : null}
                   </span>
                 </span>
 
@@ -251,6 +320,7 @@ export function CronogramaDaAluna({
                       titulo={`${a.numero}. ${a.titulo}`}
                       abreEm={aluna.cronograma.get(a.id) ?? null}
                       atribuida={aluna.cronograma.has(a.id)}
+                      temVideo={!semVideo(a.id)}
                       executar={executar}
                       avisar={avisar}
                     />
@@ -301,6 +371,15 @@ export function CronogramaDaAluna({
               : `${totalMarcadas} aulas em ${Math.round(((totalMarcadas - 1) * nDias) / 30)} meses`}
         </span>
       </div>
+
+      {avisoVideo ? (
+        <p
+          className="mb-3 mt-0 text-[13px] leading-[1.6]"
+          style={{ color: cores.alerta }}
+        >
+          {avisoVideo}
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
         <button
@@ -365,6 +444,7 @@ function LinhaAula({
   titulo,
   abreEm,
   atribuida,
+  temVideo,
   executar,
   avisar,
 }: {
@@ -374,6 +454,7 @@ function LinhaAula({
   titulo: string;
   abreEm: string | null;
   atribuida: boolean;
+  temVideo: boolean;
   executar: (f: () => Promise<unknown>) => Promise<string | null>;
   avisar: (m: string) => void;
 }) {
@@ -397,6 +478,15 @@ function LinhaAula({
       >
         {titulo}
       </span>
+
+      {temVideo ? null : (
+        <span
+          className="flex-none rounded-pilula px-[9px] py-[3px] text-[10px] uppercase tracking-[.12em]"
+          style={{ color: cores.alerta, border: `1px solid ${cores.alerta}` }}
+        >
+          sem vídeo
+        </span>
+      )}
 
       {atribuida ? (
         <>
@@ -454,13 +544,23 @@ function LinhaAula({
   );
 }
 
-function Dado({ rotulo, valor }: { rotulo: string; valor: string }) {
+function Dado({
+  rotulo,
+  valor,
+  cor,
+}: {
+  rotulo: string;
+  valor: string;
+  cor?: string;
+}) {
   return (
     <span className="flex flex-col gap-[3px]">
       <span className="text-[11px] uppercase tracking-[.14em] text-[rgba(243,236,225,.45)]">
         {rotulo}
       </span>
-      <span className="text-[15px] font-bold text-white">{valor}</span>
+      <span className="text-[15px] font-bold" style={{ color: cor ?? "#fff" }}>
+        {valor}
+      </span>
     </span>
   );
 }
