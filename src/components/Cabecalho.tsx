@@ -56,6 +56,7 @@ export function Cabecalho({ percentualGeral }: { percentualGeral: number }) {
       <button
         onClick={() => navegar("/inicio")}
         className="flex flex-col gap-1 border-none bg-transparent p-0 text-left cel:flex-[1_1_100%] cel:items-center cel:text-center"
+        style={{ cursor: "pointer" }}
       >
         <span className="font-titulo text-[23px] font-semibold text-marfim cel:text-[17px]">
           Caminho do Desbloqueio
@@ -65,7 +66,8 @@ export function Cabecalho({ percentualGeral }: { percentualGeral: number }) {
         </span>
       </button>
 
-      <nav className="sem-barra ml-auto flex gap-[26px] cel:ml-0 cel:flex-[1_1_100%] cel:justify-center cel:gap-[22px] cel:overflow-x-auto cel:py-[2px]">
+      {/* No celular a navegação está no rodapé; aqui ela só existe na tela grande. */}
+      <nav className="sem-barra ml-auto flex gap-[26px] cel:hidden">
         {ABAS.map((aba) => (
           <NavLink
             key={aba.para}

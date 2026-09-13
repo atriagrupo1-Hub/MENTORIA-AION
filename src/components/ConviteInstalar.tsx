@@ -92,7 +92,8 @@ export function ConviteInstalar() {
   return (
     <div
       className="fixed inset-x-0 bottom-0 z-[90] px-3 pb-3"
-      style={{ paddingBottom: "calc(12px + env(safe-area-inset-bottom))" }}
+      // Acima da barra do rodapé, não em cima dela.
+      style={{ paddingBottom: "calc(76px + env(safe-area-inset-bottom))" }}
     >
       <div
         className="rise-in-rapido mx-auto flex max-w-[520px] items-start gap-3 rounded-cartao-lg p-4"

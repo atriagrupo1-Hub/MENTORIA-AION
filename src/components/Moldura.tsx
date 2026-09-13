@@ -2,6 +2,7 @@ import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useEstado } from "@/data/estado";
 import { useJornada } from "@/data/useJornada";
 import { cores, fundoApp } from "@/design/tokens";
+import { BarraInferior, ESPACO_DA_BARRA } from "./BarraInferior";
 import { Cabecalho } from "./Cabecalho";
 import { ConviteInstalar } from "./ConviteInstalar";
 
@@ -67,12 +68,13 @@ export function Moldura() {
 
   return (
     <div
-      className="min-h-screen"
+      className={`min-h-screen ${naAula ? "" : ESPACO_DA_BARRA}`}
       style={{ background: naAula ? "#000000" : fundoApp(moduloAtual?.numero ?? 0) }}
     >
       {naAula ? null : <Cabecalho percentualGeral={percentualGeral} />}
       <Outlet />
       {naAula ? null : <ConviteInstalar />}
+      {naAula ? null : <BarraInferior />}
     </div>
   );
 }
