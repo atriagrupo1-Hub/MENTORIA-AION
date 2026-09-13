@@ -59,10 +59,18 @@ export const PALETA: Record<number, CorModulo> = {
   10: { destaque: "#f5c96a", rgb: "143,90,28" },
 };
 
-const NEUTRO: CorModulo = { destaque: "#c9b795", rgb: "180,160,125" };
+/*
+ * Um acento só, branco, para todos os módulos.
+ *
+ * As onze cores continuam na tabela acima como registro da identidade,
+ * mas a interface não as usa mais: estado, progresso e número são
+ * informação, não enfeite, e ficam legíveis em branco sobre preto sem
+ * competir com a arte da capa.
+ */
+const NEUTRO: CorModulo = { destaque: "#ffffff", rgb: "255,255,255" };
 
-export function paleta(numeroModulo: number): CorModulo {
-  return PALETA[numeroModulo] ?? NEUTRO;
+export function paleta(_numeroModulo: number): CorModulo {
+  return NEUTRO;
 }
 
 /*
@@ -73,8 +81,19 @@ export function paleta(numeroModulo: number): CorModulo {
  * não exige mais mexer neste arquivo nem publicar de novo.
  */
 
-/** Degradê do topo, com a cor do módulo em que a aluna está. */
-export function fundoApp(numeroModulo: number): string {
-  const c = paleta(numeroModulo).rgb;
-  return `linear-gradient(180deg, rgba(${c},.95) 0px, rgba(${c},.5) 190px, rgba(0,0,0,.55) 340px, #000000 520px) no-repeat, #000000`;
+/**
+ * O fundo do aplicativo. Um só, preto, em toda tela.
+ *
+ * Antes cada módulo pintava o topo com a própria cor — onze fundos
+ * diferentes. É o que fazia o app parecer amador: numa tela de conteúdo,
+ * quem tem direito à cor é a arte, e mais nada. Netflix, Apple TV e
+ * Spotify fazem assim, e não por falta de imaginação: a interface some
+ * para o conteúdo aparecer.
+ *
+ * A função continua existindo, e recebendo o módulo, porque é chamada de
+ * três telas. Ela apenas não pinta mais nada.
+ */
+export function fundoApp(_numeroModulo: number): string {
+  return "#000000";
 }
+

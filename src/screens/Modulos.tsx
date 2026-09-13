@@ -20,7 +20,7 @@ export function Modulos() {
 
   return (
     <main className="rise-in mx-auto max-w-[1100px] px-7 pb-[90px] pt-[22px] cel-sm:px-[18px]">
-      <p className="mb-[6px] mt-0 text-[11px] uppercase tracking-[.22em] text-[#a58a52]">
+      <p className="mb-[6px] mt-0 text-[11px] uppercase tracking-[.22em] text-[rgba(255,255,255,.4)]">
         Minha jornada
       </p>
       <h1

@@ -60,7 +60,7 @@ export function PaginaPresente() {
         </p>
       </div>
 
-      <p className="mb-2 mt-0 text-[13px] uppercase tracking-[.3em] text-[#a58a52]">
+      <p className="mb-2 mt-0 text-[13px] uppercase tracking-[.3em] text-[rgba(255,255,255,.4)]">
         Presente {indice + 1}
       </p>
       <h1

@@ -24,7 +24,7 @@ export function Presentes() {
 
   return (
     <main className="rise-in mx-auto max-w-[1360px] px-7 pb-[90px] pt-[22px] cel-sm:px-[18px]">
-      <p className="mb-[10px] mt-0 text-[13px] uppercase tracking-[.3em] text-[#a58a52]">
+      <p className="mb-[10px] mt-0 text-[13px] uppercase tracking-[.3em] text-[rgba(255,255,255,.4)]">
         Acervo
       </p>
       <h1

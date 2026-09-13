@@ -1,15 +1,23 @@
 import { NavLink, useNavigate } from "react-router-dom";
 
+/*
+ * Aba de texto, não pílula contornada.
+ *
+ * Quatro cápsulas com borda lado a lado é desenho de site, não de
+ * aplicativo — e é o que mais entregava amadorismo no alto da tela.
+ * Aqui a aba é só a palavra: apagada quando não está na tela atual,
+ * branca e sublinhada quando está. É o que Netflix, Apple TV e Spotify
+ * fazem, pela mesma razão: a navegação não deve competir com o conteúdo.
+ */
 const PILULA: React.CSSProperties = {
-  minHeight: 44,
-  padding: "0 20px",
+  minHeight: 40,
+  padding: "0 2px",
   fontSize: 15,
-  color: "#ffffff",
-  background: "rgba(255,255,255,.1)",
-  backdropFilter: "blur(12px)",
-  WebkitBackdropFilter: "blur(12px)",
-  border: "1px solid rgba(255,255,255,.4)",
-  borderRadius: 99,
+  color: "rgba(255,255,255,.5)",
+  background: "transparent",
+  border: "none",
+  borderBottom: "2px solid transparent",
+  borderRadius: 0,
   cursor: "pointer",
   whiteSpace: "nowrap",
   display: "flex",
@@ -52,12 +60,12 @@ export function Cabecalho({ percentualGeral }: { percentualGeral: number }) {
         <span className="font-titulo text-[23px] font-semibold text-marfim cel:text-[17px]">
           Caminho do Desbloqueio
         </span>
-        <span className="text-[11px] uppercase tracking-[.28em] text-[#a58a52] cel:text-[9px] cel:tracking-[.22em]">
+        <span className="text-[11px] uppercase tracking-[.28em] text-[rgba(255,255,255,.4)] cel:text-[9px] cel:tracking-[.22em]">
           Bênçãos Ilimitadas
         </span>
       </button>
 
-      <nav className="sem-barra ml-auto flex gap-[10px] cel:ml-0 cel:flex-[1_1_100%] cel:justify-center cel:gap-2 cel:overflow-x-auto cel:py-[2px]">
+      <nav className="sem-barra ml-auto flex gap-[26px] cel:ml-0 cel:flex-[1_1_100%] cel:justify-center cel:gap-[22px] cel:overflow-x-auto cel:py-[2px]">
         {ABAS.map((aba) => (
           <NavLink
             key={aba.para}
@@ -65,15 +73,10 @@ export function Cabecalho({ percentualGeral }: { percentualGeral: number }) {
             style={({ isActive }) => ({
               ...PILULA,
               ...(isActive
-                ? {
-                    background: "rgba(255,255,255,.18)",
-                    borderColor: "rgba(255,255,255,.75)",
-                    boxShadow:
-                      "inset 0 -14px 26px -14px rgba(255,226,160,.4), 0 18px 36px -20px rgba(200,155,70,.6)",
-                  }
+                ? { color: "#ffffff", fontWeight: 600, borderBottomColor: "#ffffff" }
                 : null),
             })}
-            className="shrink-0 hover:!bg-white/[.18]"
+            className="shrink-0 hover:!text-white"
           >
             {aba.rotulo}
           </NavLink>
