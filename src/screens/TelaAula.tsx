@@ -4,7 +4,6 @@ import { Aviso } from "@/components/Aviso";
 import { Capa, capaAula, capaModulo } from "@/components/Capa";
 import { Play } from "@/components/Icones";
 import { useAviso } from "@/components/useAviso";
-import { tituloEmFrase } from "@/data/derivados";
 import * as api from "@/data/api";
 import type { ComentarioPublico } from "@/data/api";
 import { minutosDaAula, relogio, rotuloDuracao, useEstado } from "@/data/estado";
@@ -53,7 +52,7 @@ export function TelaAula() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [velocidade, setVelocidade] = useState(2);
   const [resolucao, setResolucao] = useState(0);
-  const [painel, setPainel] = useState<"" | "material" | "exercicio">("");
+  const [painel, setPainel] = useState<"" | "material">("");
   const [comentariosAbertos, setComentariosAbertos] = useState(true);
   const [rascunho, setRascunho] = useState("");
   const [saindo, setSaindo] = useState(false);
@@ -398,39 +397,8 @@ export function TelaAula() {
         </div>
 
         <p className="mb-0 mt-1 text-[14px] text-white/55">
-          Módulo {modulo.numero} • Aula {aula.numero} • {rotuloDuracao(modulo, aula)} •{" "}
-          {feita ? "Aula concluída" : tocando || pctVideo > 0 ? "Aula em andamento" : "Disponível"}
+          Módulo {modulo.numero} • Aula {aula.numero}
         </p>
-
-        <div className="flex items-center gap-3 pb-1 pt-[14px]">
-          <span
-            className="relative h-[46px] flex-[0_0_46px] overflow-hidden rounded-full"
-            style={{ background: cores.placeholderCapa }}
-          >
-            <Capa
-              caminhos={[capaModulo(modulo.numero)]}
-              alt={`Capa do Módulo ${modulo.numero}`}
-            />
-          </span>
-          <span className="flex min-w-0 flex-1 flex-col gap-[2px]">
-            <span className="text-[16px] font-bold text-white">Módulo {modulo.numero}</span>
-            <span className="truncate text-[14px] text-white/55">
-              {tituloEmFrase(modulo.titulo)}
-            </span>
-          </span>
-          <button
-            onClick={marcarConcluida}
-            className="min-h-[36px] flex-none whitespace-nowrap rounded-pilula px-[14px] py-[9px] text-[12px]"
-            style={{
-              color: feita ? "#8fe0ac" : "rgba(255,255,255,.65)",
-              background: feita ? cores.concluidoSelo : "transparent",
-              border: `1px solid ${feita ? cores.concluidoSelo : "rgba(255,255,255,.22)"}`,
-              cursor: "pointer",
-            }}
-          >
-            {feita ? "Aula concluída" : "Marcar concluída"}
-          </button>
-        </div>
 
         <div className="sem-barra flex items-stretch overflow-x-auto pb-1 pt-3">
           {[
@@ -443,7 +411,12 @@ export function TelaAula() {
               cor: curtiu(aula.id) ? cores.ouroMedio : "rgba(255,255,255,.72)",
             },
             { rotulo: "Material", glifo: "▤", acao: () => setPainel("material") },
-            { rotulo: "Exercício", glifo: "✎", acao: () => setPainel("exercicio") },
+            {
+              rotulo: "Concluída",
+              glifo: "✓",
+              acao: marcarConcluida,
+              cor: feita ? cores.concluidoSelo : "rgba(255,255,255,.72)",
+            },
           ].map((item, i) => (
             <span key={item.rotulo} className="contents">
               {i > 0 ? (
@@ -474,7 +447,7 @@ export function TelaAula() {
           <div className="mt-[10px] rounded-botao p-4" style={{ background: "#141414" }}>
             <div className="mb-[10px] flex items-center gap-[10px]">
               <h3 className="m-0 flex-1 text-[15px] font-bold text-white">
-                {painel === "material" ? "Material complementar" : "Exercício da aula"}
+                Material complementar
               </h3>
               <button
                 onClick={() => setPainel("")}
@@ -486,8 +459,7 @@ export function TelaAula() {
               </button>
             </div>
 
-            {painel === "material" ? (
-              <div className="flex flex-col">
+            <div className="flex flex-col">
                 <a
                   href={
                     aula.materialPath ??
@@ -503,13 +475,10 @@ export function TelaAula() {
                   </span>
                   <span className="text-[14px]">Guia da aula</span>
                 </a>
-              </div>
-            ) : null}
+            </div>
 
             <p className="mb-0 mt-[10px] text-[14px] leading-[1.6] text-white/70">
-              {painel === "material"
-                ? "O material desta aula será disponibilizado aqui."
-                : `Escreva o que esta aula revelou a você sobre: ${aula.titulo}.`}
+              O material desta aula será disponibilizado aqui.
             </p>
           </div>
         ) : null}
