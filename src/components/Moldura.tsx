@@ -55,7 +55,7 @@ export function Moldura() {
         <button
           onClick={() => void recarregar()}
           className="min-h-[52px] rounded-pilula border-none px-7 text-[16px] font-bold"
-          style={{ color: cores.ouroTexto, background: cores.botaoOuro, cursor: "pointer" }}
+          style={{ color: "#000000", background: "#ffffff", cursor: "pointer" }}
         >
           Tentar de novo
         </button>

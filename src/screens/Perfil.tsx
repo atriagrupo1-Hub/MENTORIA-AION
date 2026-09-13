@@ -88,8 +88,8 @@ export function Perfil() {
           }}
           className="min-h-[56px] flex-[1_1_220px] rounded-botao bg-transparent px-5 py-4 text-[15px] font-bold transition-colors hover:text-white"
           style={{
-            color: "#f4e0b0",
-            border: "1px solid rgba(212,177,112,.5)",
+            color: "#ffffff",
+            border: "1px solid rgba(255,255,255,.5)",
             cursor: "pointer",
           }}
         >

@@ -45,7 +45,7 @@ export function Presentes() {
         <section key={categoria.id} className="mt-[34px]">
           <h2
             className="mb-[14px] mt-0 text-[12px] font-bold uppercase tracking-[.22em]"
-            style={{ color: cores.ouro }}
+            style={{ color: "#ffffff" }}
           >
             {categoria.titulo}
           </h2>
@@ -82,7 +82,7 @@ export function Presentes() {
                     className="relative block aspect-[2/3] w-full overflow-hidden rounded-botao transition-transform duration-500 ease-suave hover:-translate-y-[5px]"
                     style={{
                       background: cores.placeholderCapa,
-                      border: "1px solid rgba(212,177,112,.18)",
+                      border: "1px solid rgba(255,255,255,.18)",
                       boxShadow: "0 16px 34px -26px rgba(0,0,0,.9)",
                     }}
                   >

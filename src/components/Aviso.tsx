@@ -29,7 +29,7 @@ export function Aviso({
         style={{
           color: "#f6efe3",
           background: "linear-gradient(135deg, rgba(22,32,55,.97), rgba(7,10,20,.97))",
-          border: "1px solid rgba(212,177,112,.45)",
+          border: "1px solid rgba(255,255,255,.45)",
           boxShadow: "0 30px 70px rgba(0,0,0,.7)",
         }}
       >

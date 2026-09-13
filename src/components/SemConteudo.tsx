@@ -20,7 +20,7 @@ export function SemConteudo() {
       }}
     >
       <span className="mb-[14px] inline-flex">
-        <Cadeado largura={28} cor="rgba(226,196,133,.4)" corArco="rgba(226,196,133,.5)" />
+        <Cadeado largura={28} cor="rgba(255,255,255,.4)" corArco="rgba(255,255,255,.5)" />
       </span>
       <p
         className="m-0 font-titulo leading-[1.25] text-marfim"

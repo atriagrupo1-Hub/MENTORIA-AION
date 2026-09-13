@@ -98,7 +98,7 @@ export function ConviteInstalar() {
         className="rise-in-rapido mx-auto flex max-w-[520px] items-start gap-3 rounded-cartao-lg p-4"
         style={{
           background: "linear-gradient(170deg, rgba(16,24,42,.98), rgba(6,9,18,.99))",
-          border: "1px solid rgba(212,177,112,.34)",
+          border: "1px solid rgba(255,255,255,.34)",
           boxShadow: "0 24px 60px rgba(0,0,0,.65)",
         }}
       >
@@ -142,7 +142,7 @@ export function ConviteInstalar() {
               <button
                 onClick={() => void instalar()}
                 className="min-h-[42px] rounded-pilula border-none px-5 text-[14px] font-bold"
-                style={{ color: cores.ouroTexto, background: cores.botaoOuro, cursor: "pointer" }}
+                style={{ color: "#000000", background: "#ffffff", cursor: "pointer" }}
               >
                 Instalar
               </button>
@@ -192,7 +192,7 @@ function IconeCompartilhar() {
       width={14}
       height={14}
       fill="none"
-      stroke={cores.ouro}
+      stroke={"#ffffff"}
       strokeWidth={2}
       strokeLinecap="round"
       strokeLinejoin="round"

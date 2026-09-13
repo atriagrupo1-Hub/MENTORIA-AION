@@ -11,7 +11,7 @@ const CAMPO: React.CSSProperties = {
   fontSize: 16,
   color: cores.textoCorpo,
   background: "rgba(8,12,24,.85)",
-  border: "1px solid rgba(212,177,112,.24)",
+  border: "1px solid rgba(255,255,255,.24)",
   borderRadius: 12,
   outline: "none",
 };
@@ -52,7 +52,7 @@ export function Login() {
 
   const foco = (campo: string): React.CSSProperties =>
     focado === campo
-      ? { borderColor: cores.ouro, boxShadow: "0 0 0 3px rgba(212,177,112,.16)" }
+      ? { borderColor: "#ffffff", boxShadow: "0 0 0 3px rgba(255,255,255,.16)" }
       : {};
 
   return (
@@ -64,8 +64,8 @@ export function Login() {
               className="absolute inset-0 flex flex-col items-center justify-center gap-[7px] overflow-hidden rounded-full"
               style={{
                 background: cores.placeholderCapa,
-                border: "2px solid rgba(212,177,112,.75)",
-                boxShadow: "0 0 44px -12px rgba(212,177,112,.6)",
+                border: "2px solid rgba(255,255,255,.75)",
+                boxShadow: "0 0 44px -12px rgba(255,255,255,.6)",
               }}
             >
               <span aria-hidden="true" className="flex flex-col items-center gap-[3px]">
@@ -73,7 +73,7 @@ export function Login() {
                   style={{
                     width: 22,
                     height: 22,
-                    border: "2px solid rgba(226,196,133,.5)",
+                    border: "2px solid rgba(255,255,255,.5)",
                     borderRadius: "50%",
                   }}
                 />
@@ -81,7 +81,7 @@ export function Login() {
                   style={{
                     width: 40,
                     height: 18,
-                    border: "2px solid rgba(226,196,133,.5)",
+                    border: "2px solid rgba(255,255,255,.5)",
                     borderBottom: "none",
                     borderRadius: "99px 99px 0 0",
                   }}
@@ -89,7 +89,7 @@ export function Login() {
               </span>
               <span
                 className="font-mono text-[9px] tracking-[.1em]"
-                style={{ color: "rgba(226,196,133,.6)" }}
+                style={{ color: "rgba(255,255,255,.6)" }}
               >
                 foto da mentora
               </span>
@@ -107,13 +107,13 @@ export function Login() {
           <p className="mb-2 mt-0 text-[11px] uppercase tracking-[.3em] text-marfim">Mentoria</p>
           <p
             className="m-0 font-titulo font-semibold leading-[1.15] tracking-[.1em]"
-            style={{ fontSize: tipografia.marcaLogin, color: cores.ouroSuave }}
+            style={{ fontSize: tipografia.marcaLogin, color: "#ffffff" }}
           >
             CAMINHO DO DESBLOQUEIO
           </p>
           <p
             className="mb-0 mt-[5px] font-titulo font-semibold leading-[1.15] tracking-[.1em]"
-            style={{ fontSize: tipografia.marcaLogin, color: cores.ouroSuave }}
+            style={{ fontSize: tipografia.marcaLogin, color: "#ffffff" }}
           >
             PARA BÊNÇÃOS ILIMITADAS
           </p>
@@ -124,9 +124,9 @@ export function Login() {
           className="rounded-[22px] px-[22px] pb-6 pt-[26px]"
           style={{
             background: cores.cartaoForte,
-            border: "1px solid rgba(212,177,112,.2)",
+            border: "1px solid rgba(255,255,255,.2)",
             boxShadow:
-              "0 40px 90px -50px rgba(212,177,112,.35), 0 20px 60px rgba(0,0,0,.6)",
+              "0 40px 90px -50px rgba(255,255,255,.35), 0 20px 60px rgba(0,0,0,.6)",
           }}
         >
           <h1
@@ -203,7 +203,7 @@ export function Login() {
               aria-label={mostrarCodigo ? "Ocultar código" : "Mostrar código"}
               title={mostrarCodigo ? "Ocultar código" : "Mostrar código"}
               className="absolute right-[6px] top-1/2 grid h-[42px] w-[42px] -translate-y-1/2 place-items-center border-none bg-transparent text-[17px]"
-              style={{ color: "rgba(226,196,133,.8)", cursor: "pointer" }}
+              style={{ color: "rgba(255,255,255,.8)", cursor: "pointer" }}
             >
               {mostrarCodigo ? "◎" : "◉"}
             </button>
@@ -220,8 +220,8 @@ export function Login() {
             disabled={entrando}
             className="relative mt-[22px] flex min-h-[56px] w-full items-center justify-center rounded-pilula border-none px-[54px] py-4 text-[17px] font-bold transition-opacity hover:opacity-90"
             style={{
-              color: cores.ouroTexto,
-              background: cores.botaoOuro,
+              color: "#000000",
+              background: "#ffffff",
               cursor: entrando ? "wait" : "pointer",
               opacity: entrando ? 0.7 : 1,
             }}
@@ -230,7 +230,7 @@ export function Login() {
             <span
               aria-hidden="true"
               className="absolute right-2 top-1/2 grid h-[38px] w-[38px] -translate-y-1/2 place-items-center rounded-full text-[17px]"
-              style={{ color: cores.ouroTexto, background: "rgba(26,20,8,.14)" }}
+              style={{ color: "#000000", background: "rgba(26,20,8,.14)" }}
             >
               →
             </span>
@@ -262,8 +262,8 @@ export function Login() {
               <span
                 className="grid h-[26px] w-[26px] place-items-center rounded-full text-[12px]"
                 style={{
-                  color: "rgba(226,196,133,.7)",
-                  border: "1px solid rgba(226,196,133,.35)",
+                  color: "rgba(255,255,255,.7)",
+                  border: "1px solid rgba(255,255,255,.35)",
                 }}
               >
                 {selo.glifo}

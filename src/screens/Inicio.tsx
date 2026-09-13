@@ -143,7 +143,7 @@ export function Inicio() {
                   className="h-14 w-14 rounded-full text-[22px] text-marfim-corpo"
                   style={{
                     background:
-                      "radial-gradient(150% 240% at 50% 140%, rgba(212,177,112,.24) 0%, rgba(44,34,16,.7) 38%, #0a0805 78%)",
+                      "radial-gradient(150% 240% at 50% 140%, rgba(255,255,255,.24) 0%, rgba(44,34,16,.7) 38%, #0a0805 78%)",
                     border: "1px solid rgba(180,150,95,.22)",
                     cursor: "pointer",
                   }}

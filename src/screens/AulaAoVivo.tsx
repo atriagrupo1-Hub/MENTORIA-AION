@@ -27,7 +27,7 @@ export function AulaAoVivo() {
           style={{
             fontSize: "clamp(14px, 3.8vw, 16px)",
             background:
-              "radial-gradient(150% 240% at 50% 140%, rgba(212,177,112,.24) 0%, rgba(44,34,16,.7) 38%, #0a0805 78%)",
+              "radial-gradient(150% 240% at 50% 140%, rgba(255,255,255,.24) 0%, rgba(44,34,16,.7) 38%, #0a0805 78%)",
             border: "1px solid rgba(180,150,95,.22)",
             cursor: "pointer",
           }}
@@ -41,12 +41,12 @@ export function AulaAoVivo() {
 
       <span
         className="mb-2 flex items-center text-[13px] uppercase tracking-[.28em]"
-        style={{ color: cores.ouroMedio }}
+        style={{ color: "#ffffff" }}
       >
         <span
           className="mr-[10px] h-[9px] w-[9px] flex-none rounded-full"
           style={{
-            background: cores.ouroClaro,
+            background: "#ffffff",
             boxShadow: "0 0 12px rgba(240,220,168,.9)",
             animation: "softGlow 2.8s ease-in-out infinite",
           }}
@@ -65,8 +65,8 @@ export function AulaAoVivo() {
         className="relative aspect-video w-full overflow-hidden rounded-[20px]"
         style={{
           background: "radial-gradient(700px 400px at 50% 120%, #17223c, #05080f 70%)",
-          border: "1px solid rgba(212,177,112,.26)",
-          boxShadow: "0 50px 90px -60px rgba(200,155,70,.5)",
+          border: "1px solid rgba(255,255,255,.26)",
+          boxShadow: "0 50px 90px -60px rgba(255,255,255,.5)",
         }}
       >
         <Capa
@@ -119,7 +119,7 @@ export function AulaAoVivo() {
       <div className="mt-[26px] flex flex-wrap gap-[18px]">
         <div
           className="flex-[1_1_340px] rounded-cartao-lg p-[26px]"
-          style={{ background: cores.cartao, border: "1px solid rgba(212,177,112,.2)" }}
+          style={{ background: cores.cartao, border: "1px solid rgba(255,255,255,.2)" }}
         >
           <h3 className="mb-[14px] mt-0 font-titulo text-[27px] text-marfim">
             Sobre este encontro
@@ -134,7 +134,7 @@ export function AulaAoVivo() {
         </div>
         <div
           className="flex-[1_1_260px] rounded-cartao-lg p-[26px]"
-          style={{ background: cores.cartao, border: "1px solid rgba(212,177,112,.2)" }}
+          style={{ background: cores.cartao, border: "1px solid rgba(255,255,255,.2)" }}
         >
           <h3 className="mb-[14px] mt-0 font-titulo text-[27px] text-marfim">
             Como participar

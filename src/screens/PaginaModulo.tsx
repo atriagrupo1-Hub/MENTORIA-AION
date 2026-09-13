@@ -241,7 +241,7 @@ export function PaginaModulo() {
                   </span>
                   <span
                     className="text-[13px]"
-                    style={{ color: feita ? cores.concluido : cores.ouroMedio }}
+                    style={{ color: feita ? cores.concluido : "#ffffff" }}
                   >
                     {travada ? "Bloqueada" : feita ? "Concluída" : "Disponível"}
                   </span>
@@ -315,7 +315,7 @@ export function PaginaModulo() {
               </span>
               <span
                 className="text-[13px]"
-                style={{ color: aoVivo?.liberada ? cores.ouroMedio : "rgba(255,255,255,.45)" }}
+                style={{ color: aoVivo?.liberada ? "#ffffff" : "rgba(255,255,255,.45)" }}
               >
                 {aoVivo?.liberada ? "Disponível" : "Libera em breve"}
               </span>

@@ -75,8 +75,8 @@ export function PaginaPresente() {
           className="relative aspect-video w-full overflow-hidden rounded-[20px]"
           style={{
             background: "radial-gradient(700px 400px at 50% 0%, #16203a, #05080f 70%)",
-            border: "1px solid rgba(212,177,112,.24)",
-            boxShadow: "0 50px 90px -60px rgba(212,177,112,.5)",
+            border: "1px solid rgba(255,255,255,.24)",
+            boxShadow: "0 50px 90px -60px rgba(255,255,255,.5)",
           }}
         >
           <Capa
@@ -118,7 +118,7 @@ export function PaginaPresente() {
           className="flex aspect-video w-full flex-col items-center justify-center gap-[14px] rounded-[20px]"
           style={{
             background: "linear-gradient(165deg, rgba(16,24,42,.9), rgba(6,9,18,.94))",
-            border: "1px solid rgba(212,177,112,.18)",
+            border: "1px solid rgba(255,255,255,.18)",
           }}
         >
           <Cadeado largura={32} cor="rgba(243,236,225,.26)" corArco="rgba(243,236,225,.3)" />
@@ -131,7 +131,7 @@ export function PaginaPresente() {
       <div className="mt-[26px] flex flex-wrap gap-[18px]">
         <div
           className="flex-[1_1_320px] rounded-cartao-lg p-[26px]"
-          style={{ background: cores.cartao, border: "1px solid rgba(212,177,112,.2)" }}
+          style={{ background: cores.cartao, border: "1px solid rgba(255,255,255,.2)" }}
         >
           <h3 className="mb-[14px] mt-0 font-titulo text-[27px] text-marfim">
             Sobre este presente
@@ -143,7 +143,7 @@ export function PaginaPresente() {
 
         <div
           className="flex-[1_1_260px] rounded-cartao-lg p-[26px]"
-          style={{ background: cores.cartao, border: "1px solid rgba(212,177,112,.2)" }}
+          style={{ background: cores.cartao, border: "1px solid rgba(255,255,255,.2)" }}
         >
           <h3 className="mb-[14px] mt-0 font-titulo text-[27px] text-marfim">
             Outros presentes
@@ -161,7 +161,7 @@ export function PaginaPresente() {
                   className="flex min-h-[64px] items-center gap-[14px] rounded-botao px-[14px] py-[10px] text-left"
                   style={{
                     background: selecionado
-                      ? "rgba(212,177,112,.12)"
+                      ? "rgba(255,255,255,.12)"
                       : "rgba(243,236,225,.03)",
                     border: `1px solid ${
                       selecionado ? "rgba(240,220,168,.7)" : "rgba(243,236,225,.1)"
@@ -172,8 +172,8 @@ export function PaginaPresente() {
                   <span
                     className="grid h-[34px] flex-[0_0_34px] place-items-center rounded-full text-[15px]"
                     style={{
-                      color: cores.ouroMedio,
-                      border: "1px solid rgba(212,177,112,.5)",
+                      color: "#ffffff",
+                      border: "1px solid rgba(255,255,255,.5)",
                     }}
                   >
                     {i + 1}

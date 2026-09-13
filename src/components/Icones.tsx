@@ -83,7 +83,7 @@ export function SilhuetaPessoa({ escala = 1 }: { escala?: number }) {
         style={{
           width: 8 * escala,
           height: 8 * escala,
-          border: `${1.5 * escala}px solid rgba(226,196,133,.8)`,
+          border: `${1.5 * escala}px solid rgba(255,255,255,.8)`,
           borderRadius: "50%",
         }}
       />
@@ -91,7 +91,7 @@ export function SilhuetaPessoa({ escala = 1 }: { escala?: number }) {
         style={{
           width: 15 * escala,
           height: 7 * escala,
-          border: `${1.5 * escala}px solid rgba(226,196,133,.8)`,
+          border: `${1.5 * escala}px solid rgba(255,255,255,.8)`,
           borderBottom: "none",
           borderRadius: "99px 99px 0 0",
         }}
@@ -107,13 +107,13 @@ export function SilhuetaCadeado() {
         style={{
           width: 9,
           height: 6,
-          border: "1.5px solid rgba(226,196,133,.75)",
+          border: "1.5px solid rgba(255,255,255,.75)",
           borderBottom: "none",
           borderRadius: "99px 99px 0 0",
         }}
       />
       <span
-        style={{ width: 15, height: 11, background: "rgba(226,196,133,.75)", borderRadius: 2 }}
+        style={{ width: 15, height: 11, background: "rgba(255,255,255,.75)", borderRadius: 2 }}
       />
     </span>
   );
