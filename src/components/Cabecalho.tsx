@@ -33,8 +33,13 @@ export function Cabecalho({ percentualGeral }: { percentualGeral: number }) {
 
   return (
     <header
-      className="sticky top-0 z-40 flex flex-wrap items-center gap-x-[26px] gap-y-[18px] px-7 py-4 cel-sm:px-4 cel-sm:gap-y-3"
+      className="sticky top-0 z-40 flex flex-wrap items-center gap-x-[26px] gap-y-[18px] px-7 pb-4 cel-sm:px-4 cel-sm:gap-y-3"
       style={{
+        // Instalado no celular, a página começa atrás do relógio e da
+        // bateria — é o `viewport-fit=cover` do index.html. Reservar a
+        // faixa aqui devolve o topo ao aparelho. No navegador comum a
+        // medida é zero e nada muda.
+        paddingTop: "calc(16px + env(safe-area-inset-top))",
         background: "transparent",
         backdropFilter: "blur(14px)",
         borderBottom: "1px solid rgba(255,255,255,.08)",

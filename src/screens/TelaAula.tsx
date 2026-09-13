@@ -235,89 +235,99 @@ export function TelaAula() {
         />
       ) : null}
 
-      <div className="sticky top-0 z-50 aspect-video w-full overflow-hidden bg-black">
-        <Capa
-          caminhos={[capaAula(modulo.numero, aula.ordem), capaModulo(modulo.numero)]}
-          alt={`Capa da Aula ${aula.numero} — ${aula.titulo}`}
-          opacidade={tocando ? 0.55 : 1}
-        />
-
-        <button
-          onClick={fechar}
-          aria-label="Fechar e voltar ao módulo"
-          className="absolute right-[10px] top-[10px] z-[6] flex h-10 w-10 items-center justify-center border-none bg-transparent text-[22px] leading-none text-white hover:opacity-75"
-          style={{ cursor: "pointer", textShadow: "0 1px 6px rgba(0,0,0,.8)" }}
-        >
-          ✕
-        </button>
-
-        {tocando && video ? (
-          <iframe
-            src={api.enderecoDoVideo(video)}
-            title={aula.titulo}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            referrerPolicy="strict-origin-when-cross-origin"
-            className="absolute inset-0 z-[4] h-full w-full border-0"
+      {/*
+        A faixa da barra de status, em preto, acima do vídeo — como faz
+        qualquer aplicativo de vídeo no celular. Sem ela o relógio e a
+        bateria caem em cima da arte da aula, porque o `viewport-fit=cover`
+        do index.html manda a página começar atrás deles. No navegador de
+        computador a medida é zero e a faixa não existe.
+      */}
+      <div className="sticky top-0 z-50 w-full bg-black">
+        <div style={{ height: "env(safe-area-inset-top)" }} />
+        <div className="relative aspect-video w-full overflow-hidden">
+          <Capa
+            caminhos={[capaAula(modulo.numero, aula.ordem), capaModulo(modulo.numero)]}
+            alt={`Capa da Aula ${aula.numero} — ${aula.titulo}`}
+            opacidade={tocando ? 0.55 : 1}
           />
-        ) : null}
 
-        {/* A camada de play não intercepta cliques fora do círculo. */}
-        {!video && !tocando ? (
-          <span
-            className="absolute left-1/2 top-1/2 z-[5] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-pilula px-4 py-2 text-[13px]"
-            style={{
-              color: "rgba(255,255,255,.85)",
-              background: "rgba(0,0,0,.5)",
-              border: "1px solid rgba(255,255,255,.2)",
-            }}
-          >
-            Vídeo em breve
-          </span>
-        ) : null}
-
-        {video && !tocando ? (
           <button
-            onClick={alternarPlay}
-            aria-label="Assistir aula"
-            className="absolute left-1/2 top-1/2 z-[5] flex h-[88px] w-[88px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-transform duration-300 hover:scale-105"
-            style={{
-              background: "rgba(0,0,0,.3)",
-              border: "3px solid #ffffff",
-              cursor: "pointer",
-            }}
+            onClick={fechar}
+            aria-label="Fechar e voltar ao módulo"
+            className="absolute right-[10px] top-[10px] z-[6] flex h-10 w-10 items-center justify-center border-none bg-transparent text-[22px] leading-none text-white hover:opacity-75"
+            style={{ cursor: "pointer", textShadow: "0 1px 6px rgba(0,0,0,.8)" }}
           >
-            <span className="ml-[6px]">
-              <Play tamanho={26} cor="#ffffff" />
-            </span>
+            ✕
           </button>
-        ) : null}
 
-        {/*
-          Um player só: com o do Cloudflare na tela, a barra do app sai.
-
-          Sai do DOM, e não por `hidden`: a classe `flex` declara
-          `display:flex`, que vence o atributo. Escondido assim, ele
-          continuava aparecendo.
-        */}
-        {tocando && video ? null : (
-        <div className="absolute inset-x-[6px] bottom-[6px] z-[5] flex h-3 items-center">
-          <div className="relative h-[3px] w-full" style={{ background: "rgba(255,255,255,.3)" }}>
-            <div
-              className="h-full"
-              style={{
-                background: cores.ouro,
-                width: `${pctVideo}%`,
-                transition: "width .4s linear",
-              }}
+          {tocando && video ? (
+            <iframe
+              src={api.enderecoDoVideo(video)}
+              title={aula.titulo}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
+              className="absolute inset-0 z-[4] h-full w-full border-0"
             />
+          ) : null}
+
+          {/* A camada de play não intercepta cliques fora do círculo. */}
+          {!video && !tocando ? (
             <span
-              className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full"
-              style={{ left: `${pctVideo}%`, background: cores.ouro }}
-            />
-          </div>
+              className="absolute left-1/2 top-1/2 z-[5] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-pilula px-4 py-2 text-[13px]"
+              style={{
+                color: "rgba(255,255,255,.85)",
+                background: "rgba(0,0,0,.5)",
+                border: "1px solid rgba(255,255,255,.2)",
+              }}
+            >
+              Vídeo em breve
+            </span>
+          ) : null}
+
+          {video && !tocando ? (
+            <button
+              onClick={alternarPlay}
+              aria-label="Assistir aula"
+              className="absolute left-1/2 top-1/2 z-[5] flex h-[88px] w-[88px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-transform duration-300 hover:scale-105"
+              style={{
+                background: "rgba(0,0,0,.3)",
+                border: "3px solid #ffffff",
+                cursor: "pointer",
+              }}
+            >
+              <span className="ml-[6px]">
+                <Play tamanho={26} cor="#ffffff" />
+              </span>
+            </button>
+          ) : null}
+
+          {/*
+            Um player só: com o do Cloudflare na tela, a barra do app sai.
+
+            Sai do DOM, e não por `hidden`: a classe `flex` declara
+            `display:flex`, que vence o atributo. Escondido assim, ele
+            continuava aparecendo.
+          */}
+          {tocando && video ? null : (
+          <div className="absolute inset-x-[6px] bottom-[6px] z-[5] flex h-3 items-center">
+            <div className="relative h-[3px] w-full" style={{ background: "rgba(255,255,255,.3)" }}>
+              <div
+                className="h-full"
+                style={{
+                  background: cores.ouro,
+                  width: `${pctVideo}%`,
+                  transition: "width .4s linear",
+                }}
+              />
+              <span
+                className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                style={{ left: `${pctVideo}%`, background: cores.ouro }}
+              />
+            </div>
         </div>
         )}
+        </div>
       </div>
 
       <div className="relative z-20 bg-black px-4 pt-[14px]">
