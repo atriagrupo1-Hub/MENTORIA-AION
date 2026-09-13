@@ -32,6 +32,28 @@
     box-sizing: border-box;
   }
 
+  /*
+   * Campo de texto nunca abaixo de 16px em tela de toque.
+   *
+   * O iPhone amplia a página sozinho quando o foco cai num campo com
+   * fonte menor que isso — e, uma vez ampliado, o aplicativo inteiro
+   * passa a deslizar de lado, cortado nas bordas. Como o campo de
+   * entrada era o primeiro que a aluna tocava, o app começava torto e
+   * seguia assim de tela em tela.
+   *
+   * O `!important` não é preguiça: os tamanhos vêm de `style` embutido,
+   * e sem ele a regra não alcança. A alternativa seria proibir o zoom no
+   * `viewport`, o que resolveria a mesma coisa tirando da aluna a
+   * possibilidade de ampliar o texto quando precisa enxergar melhor.
+   */
+  @media (pointer: coarse) {
+    input,
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
+
   a {
     color: #e2c485;
     text-decoration: none;
