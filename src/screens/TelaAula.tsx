@@ -12,6 +12,18 @@ import { cores, paleta } from "@/design/tokens";
 const VELOCIDADES = ["0,5x", "0,75x", "Normal", "1,25x", "1,5x", "1,75x", "2x"];
 const RESOLUCOES = ["Automática (720p)", "360p", "480p", "720p", "1080p"];
 
+/**
+ * Os passos do exercício, como a administradora escreveu no painel:
+ * uma linha, um passo. Linha em branco não vira passo — assim ela pode
+ * espaçar o texto enquanto escreve sem que apareça um número vazio.
+ */
+function passosDoExercicio(texto: string | null | undefined): string[] {
+  return (texto ?? "")
+    .split("\n")
+    .map((linha) => linha.trim())
+    .filter(Boolean);
+}
+
 const ACAO: React.CSSProperties = {
   display: "flex",
   flex: "1 1 0",
@@ -52,7 +64,7 @@ export function TelaAula() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [velocidade, setVelocidade] = useState(2);
   const [resolucao, setResolucao] = useState(0);
-  const [painel, setPainel] = useState<"" | "material">("");
+  const [painel, setPainel] = useState<"" | "exercicio">("");
   const [comentariosAbertos, setComentariosAbertos] = useState(true);
   const [rascunho, setRascunho] = useState("");
   const [saindo, setSaindo] = useState(false);
@@ -110,6 +122,7 @@ export function TelaAula() {
 
   const cor = paleta(modulo.numero);
   const feita = concluida(aula.id);
+  const passos = passosDoExercicio(aula.exercicio);
   const duracaoSeg = minutosDaAula(modulo, aula) * 60;
   const segundoAtual = (pctVideo / 100) * duracaoSeg;
 
@@ -410,7 +423,16 @@ export function TelaAula() {
               acao: () => void alternarCurtida(aula.id),
               cor: curtiu(aula.id) ? cores.ouroMedio : "rgba(255,255,255,.72)",
             },
-            { rotulo: "Material", glifo: "▤", acao: () => setPainel("material") },
+            ...(feita && passos.length > 0
+              ? [
+                  {
+                    rotulo: "Exercício",
+                    glifo: "✎",
+                    acao: () => setPainel("exercicio"),
+                    cor: cores.ouroMedio,
+                  },
+                ]
+              : []),
             {
               rotulo: "Concluída",
               glifo: "✓",
@@ -443,11 +465,11 @@ export function TelaAula() {
           ))}
         </div>
 
-        {painel ? (
+        {painel === "exercicio" ? (
           <div className="mt-[10px] rounded-botao p-4" style={{ background: "#141414" }}>
-            <div className="mb-[10px] flex items-center gap-[10px]">
+            <div className="mb-3 flex items-center gap-[10px]">
               <h3 className="m-0 flex-1 text-[15px] font-bold text-white">
-                Material complementar
+                Exercício da aula
               </h3>
               <button
                 onClick={() => setPainel("")}
@@ -459,27 +481,21 @@ export function TelaAula() {
               </button>
             </div>
 
-            <div className="flex flex-col">
-                <a
-                  href={
-                    aula.materialPath ??
-                    `/assets/materiais/modulo-${modulo.numero}-aula-${aula.numero}.pdf`
-                  }
-                  target="_blank"
-                  rel="noopener"
-                  className="flex min-h-[48px] items-center gap-3 py-[10px] text-white no-underline"
-                  style={{ borderBottom: "1px solid rgba(255,255,255,.08)" }}
-                >
-                  <span className="text-[10px] tracking-[.12em]" style={{ color: cores.ouro }}>
-                    PDF
+            <ol className="m-0 flex list-none flex-col gap-[14px] p-0">
+              {passos.map((passo, i) => (
+                <li key={i} className="flex gap-3">
+                  <span
+                    className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full text-[12px] font-bold"
+                    style={{ color: cores.ouroTexto, background: cores.ouroMedio }}
+                  >
+                    {i + 1}
                   </span>
-                  <span className="text-[14px]">Guia da aula</span>
-                </a>
-            </div>
-
-            <p className="mb-0 mt-[10px] text-[14px] leading-[1.6] text-white/70">
-              O material desta aula será disponibilizado aqui.
-            </p>
+                  <span className="min-w-0 flex-1 pt-[3px] text-[14px] leading-[1.6] text-white/80">
+                    {passo}
+                  </span>
+                </li>
+              ))}
+            </ol>
           </div>
         ) : null}
 

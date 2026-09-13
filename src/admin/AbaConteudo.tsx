@@ -59,6 +59,7 @@ export function AbaConteudo({
   const [conteudoDe, setConteudoDe] = useState("");
   const [video, setVideo] = useState("");
   const [capa, setCapa] = useState("");
+  const [exercicio, setExercicio] = useState("");
 
   const totalAulas = catalogo.modulos.reduce((s, m) => s + m.aulas.length, 0);
 
@@ -375,6 +376,7 @@ export function AbaConteudo({
                               setConteudoDe(aberto ? "" : aula.id);
                               setVideo(midia?.ref ?? "");
                               setCapa(aula.capaPath ?? "");
+                              setExercicio(aula.exercicio ?? "");
                             }}
                             style={{
                               ...BOTAO_LINHA,
@@ -446,6 +448,7 @@ export function AbaConteudo({
                                 (await executar(() =>
                                   dados.atualizarAula(aula.id, {
                                     capa_path: capa.trim() || null,
+                                    exercicio: exercicio.trim() || null,
                                   }),
                                 ));
                               if (!falha) setConteudoDe("");
@@ -480,6 +483,37 @@ export function AbaConteudo({
                                 />
                               </label>
                             ))}
+
+                            <label className="flex flex-col gap-2">
+                              <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
+                                Exercício — uma linha por passo
+                              </span>
+                              <textarea
+                                value={exercicio}
+                                onChange={(e) => setExercicio(e.target.value)}
+                                rows={6}
+                                placeholder={
+                                  "Abra seu caderno numa página nova.\n" +
+                                  "Escreva a data e o título da aula.\n" +
+                                  "Responda: o que esta aula revelou sobre você?"
+                                }
+                                style={{
+                                  ...campo,
+                                  minHeight: 120,
+                                  padding: "10px 14px",
+                                  fontSize: 13,
+                                  lineHeight: 1.6,
+                                  resize: "vertical",
+                                  fontFamily: "inherit",
+                                }}
+                              />
+                              <span className="text-[11px] leading-[1.5] text-[rgba(255,255,255,.36)]">
+                                A aluna vê os passos numerados, e só depois de
+                                concluir a aula. Deixe vazio para a aula não ter
+                                exercício.
+                              </span>
+                            </label>
+
                             <div className="mt-[2px] flex flex-wrap gap-2">
                               <button
                                 type="submit"

@@ -136,6 +136,7 @@ type LinhaAula = {
   titulo: string;
   ordem: number;
   duracao_segundos: number | null;
+  exercicio: string | null;
   capa_path: string | null;
   bloqueado_geral: boolean;
 };
@@ -239,6 +240,7 @@ export async function carregarCatalogo(): Promise<Catalogo> {
         videoProvider: null,
         videoRef: null,
         materialPath: null,
+        exercicio: a.exercicio,
         capaPath: a.capa_path,
         bloqueadoGeral: a.bloqueado_geral,
       })),

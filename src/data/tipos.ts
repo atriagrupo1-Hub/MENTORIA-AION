@@ -28,6 +28,8 @@ export type Aula = {
   videoProvider: string | null;
   videoRef: string | null;
   materialPath: string | null;
+  /** Passo a passo do exercício, uma linha por passo. Vazio = não tem. */
+  exercicio: string | null;
   capaPath: string | null;
   bloqueadoGeral: boolean;
 };

@@ -302,7 +302,14 @@ export async function criarAula(
 
 export async function atualizarAula(
   id: string,
-  patch: Partial<{ titulo: string; numero: number; ordem: number; bloqueado_geral: boolean; capa_path: string | null }>,
+  patch: Partial<{
+    titulo: string;
+    numero: number;
+    ordem: number;
+    bloqueado_geral: boolean;
+    capa_path: string | null;
+    exercicio: string | null;
+  }>,
 ) {
   const { error } = await supabase.from("aulas").update(patch).eq("id", id);
   if (error) throw new Error(`aula: ${error.message}`);
