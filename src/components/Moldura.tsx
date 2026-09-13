@@ -3,6 +3,7 @@ import { useEstado } from "@/data/estado";
 import { useJornada } from "@/data/useJornada";
 import { cores, fundoApp } from "@/design/tokens";
 import { Cabecalho } from "./Cabecalho";
+import { ConviteInstalar } from "./ConviteInstalar";
 
 /**
  * Casca do aplicativo da aluna: degradê do topo na cor do módulo atual
@@ -71,6 +72,7 @@ export function Moldura() {
     >
       {naAula ? null : <Cabecalho percentualGeral={percentualGeral} />}
       <Outlet />
+      {naAula ? null : <ConviteInstalar />}
     </div>
   );
 }
