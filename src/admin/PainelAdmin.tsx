@@ -235,6 +235,9 @@ function PainelLogado() {
             Painel administrativo
           </span>
           <span className="flex-1" />
+          <span className="text-[11px]" style={{ color: tema.textoTerciario }}>
+            versão {__VERSAO__}
+          </span>
           <button onClick={() => void sair()} style={botaoNeutro}>
             Sair
           </button>

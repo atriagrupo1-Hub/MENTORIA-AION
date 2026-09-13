@@ -96,6 +96,10 @@ export function Perfil() {
           Sair da área de membros
         </button>
       </section>
+
+      <p className="mb-0 mt-8 text-center text-[11px] text-terciario">
+        versão {__VERSAO__}
+      </p>
     </main>
   );
 }
