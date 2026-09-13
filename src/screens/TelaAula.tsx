@@ -24,21 +24,9 @@ function passosDoExercicio(texto: string | null | undefined): string[] {
     .filter(Boolean);
 }
 
-const ACAO: React.CSSProperties = {
-  display: "flex",
-  flex: "1 1 0",
-  minWidth: 62,
-  flexDirection: "column",
-  alignItems: "center",
-  gap: 6,
-  padding: "4px 2px",
-  fontSize: 12,
-  color: "rgba(255,255,255,.72)",
-  background: "none",
-  border: "none",
-  cursor: "pointer",
-  transition: "color .3s ease",
-};
+/** O preto e branco desta tela: uma linha e um cinza, e nada mais. */
+const LINHA = "rgba(255,255,255,.22)";
+const SUAVE = "rgba(255,255,255,.62)";
 
 export function TelaAula() {
   const { mi, li } = useParams();
@@ -65,7 +53,8 @@ export function TelaAula() {
   const [velocidade, setVelocidade] = useState(2);
   const [resolucao, setResolucao] = useState(0);
   const [painel, setPainel] = useState<"" | "exercicio">("");
-  const [comentariosAbertos, setComentariosAbertos] = useState(true);
+  const [comentariosAbertos, setComentariosAbertos] = useState(false);
+  const secaoComentarios = useRef<HTMLElement>(null);
   const [rascunho, setRascunho] = useState("");
   const [saindo, setSaindo] = useState(false);
   const [comentarios, setComentarios] = useState<ComentarioPublico[]>([]);
@@ -214,15 +203,38 @@ export function TelaAula() {
     );
   }
 
+  /*
+   * O comentário aparece na hora, antes do banco confirmar.
+   *
+   * Antes eram duas idas a São Paulo em sequência — gravar e reler a
+   * lista inteira — e a aluna ficava olhando para o nada no meio. Agora
+   * ela vê o que escreveu imediatamente; a gravação acontece atrás, e a
+   * releitura acerta os identificadores. Falhando, o texto volta para o
+   * campo e a linha provisória some: nada fica no ar dizendo que foi
+   * publicado quando não foi.
+   */
   async function enviarComentario(e: FormEvent) {
     e.preventDefault();
     const texto = rascunho.trim();
     if (!texto || !aulaId) return;
     setRascunho("");
+    setComentariosAbertos(true);
+
+    const provisorio: api.ComentarioPublico = {
+      id: `provisorio-${Date.now()}`,
+      aulaId,
+      texto,
+      posicaoSegundos: 0,
+      criadoEm: new Date().toISOString(),
+      minha: true,
+    };
+    setComentarios((atuais) => [provisorio, ...atuais]);
+
     try {
       await api.comentar(aulaId, texto, segundoAtual);
       setComentarios(await api.comentariosDaAula(aulaId));
     } catch {
+      setComentarios((atuais) => atuais.filter((c) => c.id !== provisorio.id));
       setRascunho(texto);
       aviso.mostrar("Não conseguimos publicar seu comentário. Tente de novo.");
     }
@@ -266,8 +278,19 @@ export function TelaAula() {
           <button
             onClick={fechar}
             aria-label="Fechar e voltar ao módulo"
-            className="absolute right-[10px] top-[10px] z-[6] flex h-10 w-10 items-center justify-center border-none bg-transparent text-[22px] leading-none text-white hover:opacity-75"
-            style={{ cursor: "pointer", textShadow: "0 1px 6px rgba(0,0,0,.8)" }}
+            /*
+              Era um símbolo fino, sem fundo, colado no canto — onde o
+              polegar tem menos precisão e onde ficam os botões do
+              próprio navegador. Agora tem 44 px de alvo, um disco escuro
+              por trás para existir contra a arte clara, e folga da
+              quina.
+            */
+            className="absolute right-[14px] top-[14px] z-[6] flex h-11 w-11 items-center justify-center rounded-full border-none text-[19px] leading-none text-white hover:opacity-80"
+            style={{
+              background: "rgba(0,0,0,.55)",
+              backdropFilter: "blur(6px)",
+              cursor: "pointer",
+            }}
           >
             ✕
           </button>
@@ -327,14 +350,14 @@ export function TelaAula() {
               <div
                 className="h-full"
                 style={{
-                  background: cores.ouro,
+                  background: "#ffffff",
                   width: `${pctVideo}%`,
                   transition: "width .4s linear",
                 }}
               />
               <span
                 className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full"
-                style={{ left: `${pctVideo}%`, background: cores.ouro }}
+                style={{ left: `${pctVideo}%`, background: "#ffffff" }}
               />
             </div>
         </div>
@@ -413,57 +436,109 @@ export function TelaAula() {
           Módulo {modulo.numero} • Aula {aula.numero}
         </p>
 
-        <div className="sem-barra flex items-stretch overflow-x-auto pb-1 pt-3">
-          {[
-            { rotulo: "Anterior", glifo: "‹", acao: irParaAnterior, circulo: true },
-            { rotulo: "Próxima", glifo: "›", acao: irParaProxima, circulo: true },
-            {
-              rotulo: "Curtir",
-              glifo: curtiu(aula.id) ? "♥" : "♡",
-              acao: () => void alternarCurtida(aula.id),
-              cor: curtiu(aula.id) ? cores.ouroMedio : "rgba(255,255,255,.72)",
-            },
-            ...(feita && passos.length > 0
-              ? [
-                  {
-                    rotulo: "Exercício",
-                    glifo: "✎",
-                    acao: () => setPainel("exercicio"),
-                    cor: cores.ouroMedio,
-                  },
-                ]
-              : []),
-            {
-              rotulo: "Concluída",
-              glifo: "✓",
-              acao: marcarConcluida,
-              cor: feita ? cores.concluidoSelo : "rgba(255,255,255,.72)",
-            },
-          ].map((item, i) => (
-            <span key={item.rotulo} className="contents">
-              {i > 0 ? (
-                <span
-                  className="h-[34px] w-px flex-none self-center"
-                  style={{ background: "rgba(255,255,255,.12)" }}
-                />
+        {/*
+          A fileira de ações, em preto e branco.
+
+          Dois grupos, como faz todo aplicativo de aula: à esquerda o que
+          ela sente sobre a aula, à direita para onde ela vai. Nada de
+          divisórias entre cinco itens iguais nem de cor para chamar
+          atenção — numa tela que a aluna abre cinquenta vezes, cor vira
+          ruído. O único destaque é o botão de concluir, e ele muda de
+          estado, não de cor.
+        */}
+        <div className="flex flex-wrap items-center gap-3 pb-1 pt-4">
+          <div
+            className="flex items-center overflow-hidden rounded-pilula"
+            style={{ border: `1px solid ${LINHA}` }}
+          >
+            <button
+              onClick={() => void alternarCurtida(aula.id)}
+              aria-label={curtiu(aula.id) ? "Descurtir" : "Curtir"}
+              aria-pressed={curtiu(aula.id)}
+              className="flex h-[42px] items-center gap-2 border-none bg-transparent px-[15px] text-[16px] hover:opacity-80"
+              style={{ color: curtiu(aula.id) ? "#ffffff" : SUAVE, cursor: "pointer" }}
+            >
+              {curtiu(aula.id) ? "♥" : "♡"}
+            </button>
+            <span className="h-[18px] w-px flex-none" style={{ background: LINHA }} />
+            <button
+              onClick={() => {
+                setComentariosAbertos(true);
+                secaoComentarios.current?.scrollIntoView({
+                  behavior: "smooth",
+                  block: "start",
+                });
+              }}
+              aria-label="Ir para os comentários"
+              className="flex h-[42px] items-center gap-2 border-none bg-transparent px-[15px] text-[15px] hover:opacity-80"
+              style={{ color: SUAVE, cursor: "pointer" }}
+            >
+              <span className="text-[16px] leading-none">💬</span>
+              {comentarios.length > 0 ? (
+                <span className="text-[14px]">{comentarios.length}</span>
               ) : null}
-              <button onClick={item.acao} style={ACAO} className="hover:!text-white">
-                <span
-                  className="grid h-[34px] place-items-center text-[19px] leading-none"
-                  style={{
-                    width: item.circulo ? 34 : undefined,
-                    border: item.circulo ? "1px solid rgba(255,255,255,.35)" : undefined,
-                    borderRadius: item.circulo ? "50%" : undefined,
-                    color: item.cor,
-                  }}
-                >
-                  {item.glifo}
-                </span>
-                {item.rotulo}
-              </button>
-            </span>
-          ))}
+            </button>
+          </div>
+
+          <span className="flex-1" />
+
+          <div className="flex items-center gap-[10px]">
+            <button
+              onClick={irParaAnterior}
+              aria-label="Aula anterior"
+              className="grid h-[42px] w-[42px] place-items-center rounded-full bg-transparent text-[18px] hover:opacity-80"
+              style={{ border: `1px solid ${LINHA}`, color: SUAVE, cursor: "pointer" }}
+            >
+              ←
+            </button>
+
+            <button
+              onClick={marcarConcluida}
+              aria-pressed={feita}
+              className="flex h-[42px] items-center gap-2 rounded-pilula px-[18px] text-[14px] font-semibold hover:opacity-90"
+              style={{
+                color: feita ? "#000000" : "#ffffff",
+                background: feita ? "#ffffff" : "transparent",
+                border: `1px solid ${feita ? "#ffffff" : LINHA}`,
+                cursor: "pointer",
+              }}
+            >
+              <span className="text-[15px] leading-none">✓</span>
+              {feita ? "Concluída" : "Concluir"}
+            </button>
+
+            <button
+              onClick={irParaProxima}
+              aria-label="Próxima aula"
+              className="grid h-[42px] w-[42px] place-items-center rounded-full bg-transparent text-[18px] hover:opacity-80"
+              style={{ border: `1px solid ${LINHA}`, color: SUAVE, cursor: "pointer" }}
+            >
+              →
+            </button>
+          </div>
         </div>
+
+        {/* O exercício ganha a própria linha: é leitura, não navegação. */}
+        {feita && passos.length > 0 ? (
+          <button
+            onClick={() => setPainel(painel === "exercicio" ? "" : "exercicio")}
+            className="mt-3 flex min-h-[46px] w-full items-center gap-3 rounded-botao px-4 text-[14px] hover:opacity-85"
+            style={{
+              color: "#ffffff",
+              background: "transparent",
+              border: `1px solid ${LINHA}`,
+              cursor: "pointer",
+            }}
+          >
+            <span className="text-[15px] leading-none" style={{ color: SUAVE }}>
+              ✎
+            </span>
+            <span className="flex-1 text-left">Exercício da aula</span>
+            <span className="text-[15px] leading-none" style={{ color: SUAVE }}>
+              {painel === "exercicio" ? "⌃" : "⌄"}
+            </span>
+          </button>
+        ) : null}
 
         {painel === "exercicio" ? (
           <div className="mt-[10px] rounded-botao p-4" style={{ background: "#141414" }}>
@@ -486,7 +561,7 @@ export function TelaAula() {
                 <li key={i} className="flex gap-3">
                   <span
                     className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full text-[12px] font-bold"
-                    style={{ color: cores.ouroTexto, background: cores.ouroMedio }}
+                    style={{ color: "#ffffff", border: `1px solid ${LINHA}` }}
                   >
                     {i + 1}
                   </span>
@@ -499,100 +574,90 @@ export function TelaAula() {
           </div>
         ) : null}
 
-        <section className="mt-[14px] rounded-botao p-4" style={{ background: "#141414" }}>
-          <div className="flex items-center gap-[10px]">
-            <h2 className="m-0 text-[17px] font-bold text-white">Comentários</h2>
-            <span className="text-[15px] text-white/55">{comentarios.length}</span>
-            <button
-              onClick={() => setComentariosAbertos((v) => !v)}
-              aria-label="Mostrar ou ocultar comentários"
-              className="ml-auto grid h-[34px] w-[34px] place-items-center rounded-full bg-transparent text-[14px] text-white/70 hover:text-white"
-              style={{ border: "1px solid rgba(255,255,255,.18)", cursor: "pointer" }}
-            >
-              {comentariosAbertos ? "⌃" : "⌄"}
-            </button>
+        {/*
+          Comentários.
+
+          Convite primeiro, campo depois, lista fechada — a aluna acabou
+          de assistir e o que se quer dela é a impressão fresca, não a
+          leitura das outras. A lista abre num toque.
+
+          Sem data e sem o carimbo de minuto: a data não ajudava a
+          ninguém, e o minuto do vídeo virou promessa vazia quando o
+          player passou a ser o do Cloudflare — clicar nele mexia numa
+          barra que não é o vídeo. Quando o app conversar com o player
+          de verdade, ele volta funcionando.
+        */}
+        <section
+          ref={secaoComentarios}
+          className="mt-[18px] rounded-botao p-4"
+          style={{ background: "#101010", border: `1px solid ${LINHA}` }}
+        >
+          <p className="mb-3 mt-0 text-[15px] text-white">
+            O que você achou desta aula?{" "}
+            <span className="font-bold underline underline-offset-4">Comente!</span>
+          </p>
+
+          <form onSubmit={enviarComentario} className="flex items-center gap-2">
+            <input
+              type="text"
+              value={rascunho}
+              onChange={(e) => setRascunho(e.target.value)}
+              placeholder="Adicione seu comentário aqui"
+              aria-label="Adicionar comentário"
+              className="min-h-[46px] w-full flex-1 rounded-botao px-4 text-[14px] text-white outline-none"
+              style={{ background: "transparent", border: `1px solid ${LINHA}` }}
+            />
+            {rascunho.trim() ? (
+              <button
+                type="submit"
+                className="min-h-[46px] flex-none rounded-botao border-none px-4 text-[14px] font-semibold hover:opacity-90"
+                style={{ color: "#000000", background: "#ffffff", cursor: "pointer" }}
+              >
+                Enviar
+              </button>
+            ) : null}
+          </form>
+
+          <div className="mt-3 flex items-center">
+            <span className="flex-1 text-[12px]" style={{ color: SUAVE }}>
+              Seu nome não será exibido
+            </span>
+            {comentarios.length > 0 ? (
+              <button
+                onClick={() => setComentariosAbertos((v) => !v)}
+                className="border-none bg-transparent text-[13px] underline underline-offset-4 hover:opacity-80"
+                style={{ color: SUAVE, cursor: "pointer" }}
+              >
+                {comentariosAbertos
+                  ? "Ocultar comentários"
+                  : `Ver comentários (${comentarios.length})`}
+              </button>
+            ) : null}
           </div>
 
-          {comentariosAbertos ? (
-            <div className="mt-3">
-              <form onSubmit={enviarComentario} className="flex flex-col gap-2">
-                <input
-                  type="text"
-                  value={rascunho}
-                  onChange={(e) => setRascunho(e.target.value)}
-                  placeholder="Adicionar comentário neste momento..."
-                  aria-label="Adicionar comentário"
-                  className="min-h-[46px] w-full rounded-pilula px-[18px] text-[14px] text-white outline-none"
-                  style={{ background: "#1f1f1f", border: "1px solid rgba(255,255,255,.1)" }}
-                />
-                <div className="flex items-center gap-3">
-                  <p className="m-0 flex-1 text-[12px] text-white/45">
-                    Seu nome não será exibido
+          {comentariosAbertos && comentarios.length > 0 ? (
+            <div className="mt-2 flex flex-col">
+              {comentarios.map((c) => (
+                <div
+                  key={c.id}
+                  className="py-[14px]"
+                  style={{ borderTop: "1px solid rgba(255,255,255,.08)" }}
+                >
+                  <p className="m-0 text-[13px] font-bold text-white">
+                    {c.minha ? "Você" : "Anônimo"}
                   </p>
-                  {rascunho.trim() ? (
-                    <button
-                      type="submit"
-                      className="min-h-[34px] rounded-pilula border-none px-4 py-2 text-[13px] font-bold hover:opacity-[.88]"
-                      style={{
-                        color: cores.ouroTexto,
-                        background: cores.ouro,
-                        cursor: "pointer",
-                      }}
-                    >
-                      Comentar em {relogio(segundoAtual)}
-                    </button>
-                  ) : null}
+                  <p className="mb-0 mt-[6px] text-[14px] leading-[1.55] text-white/85">
+                    {c.texto}
+                  </p>
                 </div>
-              </form>
-
-              <div className="mt-[6px] flex flex-col">
-                {comentarios.map((c) => (
-                  <div
-                    key={c.id}
-                    className="py-[14px]"
-                    style={{ borderBottom: "1px solid rgba(255,255,255,.08)" }}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-[14px] font-bold text-white">Anônimo</span>
-                      <span className="text-[13px] text-white/35">•</span>
-                      <button
-                        onClick={() => setPctVideo((c.posicaoSegundos / duracaoSeg) * 100)}
-                        aria-label="Voltar para este momento do vídeo"
-                        className="rounded-[5px] border-none px-[9px] py-[3px] text-[12px]"
-                        style={{
-                          color: cores.ouroMedio,
-                          background: "rgba(212,177,112,.14)",
-                          cursor: "pointer",
-                        }}
-                      >
-                        {relogio(c.posicaoSegundos)}
-                      </button>
-                      <span className="ml-auto text-[12px] text-white/35">
-                        {new Date(c.criadoEm).toLocaleDateString("pt-BR", {
-                          day: "2-digit",
-                          month: "short",
-                        })}
-                      </span>
-                    </div>
-                    <p className="mb-0 mt-[7px] text-[14px] leading-[1.55] text-white/85">
-                      {c.texto}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {comentarios.length === 0 ? (
-                <p className="mb-0 mt-[14px] text-[14px] text-white/45">
-                  Seja a primeira a comentar nesta aula.
-                </p>
-              ) : null}
+              ))}
             </div>
           ) : null}
         </section>
 
         <h2
           className="mb-3 mt-[26px] text-[13px] font-bold uppercase tracking-[.22em]"
-          style={{ color: cores.ouro }}
+          style={{ color: SUAVE }}
         >
           Aulas do módulo {modulo.numero}
         </h2>
@@ -671,7 +736,7 @@ export function TelaAula() {
                   {feitaOutra && !travada ? (
                     <span
                       className="absolute left-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-[19px]"
-                      style={{ color: "#0a1a11", background: cores.concluidoSelo }}
+                      style={{ color: "#000000", background: "#ffffff" }}
                     >
                       ✓
                     </span>
@@ -691,7 +756,7 @@ export function TelaAula() {
                     >
                       <span
                         className="block h-full"
-                        style={{ background: cores.ouro, width: `${assistido}%` }}
+                        style={{ background: "#ffffff", width: `${assistido}%` }}
                       />
                     </span>
                   ) : null}
