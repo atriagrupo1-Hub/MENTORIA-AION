@@ -113,7 +113,42 @@
   animation: riseIn 0.7s ease both;
 }
 
-/* Barras de rolagem escondidas nas fileiras deslizáveis. */
+/*
+ * A barra de rolagem, escura.
+ *
+ * O navegador desenha a dele em cinza claro, pensada para página branca.
+ * Sobre o preto do app ela vira uma faixa acesa na lateral — a primeira
+ * coisa que se nota, e não é conteúdo. Aqui ela fica quase invisível e
+ * só ganha corpo quando o dedo ou o cursor passa por perto.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 99px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Fileiras que deslizam de lado não mostram barra nenhuma. */
 .sem-barra {
   scrollbar-width: none;
   -ms-overflow-style: none;

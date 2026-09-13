@@ -156,7 +156,7 @@ export function Inicio() {
 
           <div
             ref={fileira}
-            className="flex gap-5 overflow-x-auto px-1 pb-[22px] pt-[6px] cel:grid cel:grid-cols-1 cel:overflow-x-visible cel:pb-2"
+            className="sem-barra flex gap-5 overflow-x-auto px-1 pb-[22px] pt-[6px] cel:grid cel:grid-cols-1 cel:overflow-x-visible cel:pb-2"
             style={{ scrollSnapType: "x mandatory", scrollBehavior: "smooth" }}
           >
             {modulos.map((e) => (
