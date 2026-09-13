@@ -8,7 +8,7 @@ import { cores, tipografia } from "@/design/tokens";
 const CAMPO: React.CSSProperties = {
   width: "100%",
   height: 54,
-  fontSize: 15,
+  fontSize: 16,
   color: cores.textoCorpo,
   background: "rgba(8,12,24,.85)",
   border: "1px solid rgba(212,177,112,.24)",

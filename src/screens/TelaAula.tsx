@@ -55,6 +55,7 @@ export function TelaAula() {
   const [painel, setPainel] = useState<"" | "exercicio">("");
   const [comentariosAbertos, setComentariosAbertos] = useState(false);
   const secaoComentarios = useRef<HTMLElement>(null);
+  const [mostrarFechar, setMostrarFechar] = useState(true);
   const [rascunho, setRascunho] = useState("");
   const [saindo, setSaindo] = useState(false);
   const [comentarios, setComentarios] = useState<ComentarioPublico[]>([]);
@@ -108,6 +109,40 @@ export function TelaAula() {
   if (!modulo || !aula || !moduloVisivel(modulo) || aulaBloqueada(modulo, aula)) {
     return <main className="p-8">Aula não encontrada.</main>;
   }
+
+  /*
+   * O ✕ some com o vídeo rodando e volta ao toque.
+   *
+   * O certo seria acompanhar os controles do player, mas ele é do
+   * Cloudflare e roda num quadro fechado: de fora não dá para saber
+   * quando os controles dele aparecem ou somem. Então o ✕ tem o próprio
+   * relógio — some depois de alguns segundos parados e volta a qualquer
+   * toque, rolagem ou tecla.
+   *
+   * Só some com o vídeo de verdade tocando. Na capa, com o botão de
+   * play na tela, não há o que atrapalhar.
+   */
+  useEffect(() => {
+    if (!(tocando && video)) {
+      setMostrarFechar(true);
+      return;
+    }
+    let relogio = 0;
+    const adiar = () => {
+      setMostrarFechar(true);
+      window.clearTimeout(relogio);
+      relogio = window.setTimeout(() => setMostrarFechar(false), 3500);
+    };
+    adiar();
+    const gestos = ["pointerdown", "pointermove", "scroll", "keydown"] as const;
+    for (const gesto of gestos) {
+      window.addEventListener(gesto, adiar, { passive: true });
+    }
+    return () => {
+      window.clearTimeout(relogio);
+      for (const gesto of gestos) window.removeEventListener(gesto, adiar);
+    };
+  }, [tocando, video]);
 
   const cor = paleta(modulo.numero);
   const feita = concluida(aula.id);
@@ -289,11 +324,29 @@ export function TelaAula() {
             style={{
               background: "rgba(0,0,0,.55)",
               backdropFilter: "blur(6px)",
+              opacity: mostrarFechar ? 1 : 0,
+              pointerEvents: mostrarFechar ? "auto" : "none",
+              transition: "opacity .25s ease",
               cursor: "pointer",
             }}
           >
             ✕
           </button>
+
+          {/*
+            Com o ✕ escondido, esta faixa fina no alto do vídeo devolve
+            ele ao primeiro toque. Só o alto: o meio do quadro continua
+            indo direto para o player, que é onde a aluna toca para
+            pausar.
+          */}
+          {tocando && video && !mostrarFechar ? (
+            <button
+              onClick={() => setMostrarFechar(true)}
+              aria-label="Mostrar o botão de fechar"
+              className="absolute inset-x-0 top-0 z-[5] h-[68px] border-none bg-transparent"
+              style={{ cursor: "pointer" }}
+            />
+          ) : null}
 
           {tocando && video ? (
             <iframe
@@ -604,7 +657,7 @@ export function TelaAula() {
               onChange={(e) => setRascunho(e.target.value)}
               placeholder="Adicione seu comentário aqui"
               aria-label="Adicionar comentário"
-              className="min-h-[46px] w-full flex-1 rounded-botao px-4 text-[14px] text-white outline-none"
+              className="min-h-[46px] w-full flex-1 rounded-botao px-4 text-[16px] text-white outline-none"
               style={{ background: "transparent", border: `1px solid ${LINHA}` }}
             />
             {rascunho.trim() ? (

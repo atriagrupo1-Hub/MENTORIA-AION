@@ -45,8 +45,14 @@
    * e sem ele a regra não alcança. A alternativa seria proibir o zoom no
    * `viewport`, o que resolveria a mesma coisa tirando da aluna a
    * possibilidade de ampliar o texto quando precisa enxergar melhor.
+   *
+   * `any-pointer` em vez de `pointer`: alcança também o aparelho que tem
+   * toque sem que o toque seja o ponteiro principal — tablet com teclado,
+   * notebook com tela sensível. Mas isto aqui é rede: os campos que a
+   * aluna toca já nascem com 16px no próprio componente, para não
+   * dependerem de nenhuma regra de tela.
    */
-  @media (pointer: coarse) {
+  @media (any-pointer: coarse) {
     input,
     textarea,
     select {
