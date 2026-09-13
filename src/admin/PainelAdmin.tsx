@@ -12,7 +12,7 @@ import { usePainel } from "./usePainel";
 const FUNDO = tema.fundo;
 
 /** A marca, em branco, uma vez por tela. */
-function Marca({ altura = 26 }: { altura?: number }) {
+function Marca({ altura = 38 }: { altura?: number }) {
   return <img src="/marca-painel.png" alt="AIÓN" height={altura} style={{ height: altura }} />;
 }
 
@@ -85,7 +85,7 @@ function EntradaAdmin({
           }}
         >
           <div className="mb-6 flex flex-col items-center gap-4">
-            <Marca altura={34} />
+            <Marca altura={80} />
             <p
               className="m-0 text-[10px] uppercase"
               style={{ letterSpacing: ".22em", color: tema.textoTerciario }}
@@ -227,7 +227,7 @@ function PainelLogado() {
       {/* Barra da marca. Fica separada do conteúdo por uma linha só. */}
       <div style={{ borderBottom: `1px solid ${tema.linhaSuave}` }}>
         <div className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-4 px-6 py-4">
-          <Marca altura={22} />
+          <Marca altura={38} />
           <span
             className="text-[10px] uppercase"
             style={{ letterSpacing: ".2em", color: tema.textoTerciario }}

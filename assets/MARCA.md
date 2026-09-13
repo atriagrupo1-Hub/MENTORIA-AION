@@ -46,3 +46,34 @@ estes está no histórico deste commit.
 
 Se a arte nova for bem mais larga que alta, reduza o número da marca e
 espere faixa preta em cima e embaixo: é geometria, não ajuste.
+
+---
+
+# Marca do painel administrativo
+
+`public/marca-painel.png` — **o mesmo logo do ícone**, com o nome, em branco.
+
+Não é outra arte: é `marca-png/AION-marca-original-transparente.png`
+recolorida. O painel é preto e branco, e ali o dourado seria a única cor
+da tela inteira.
+
+## Como a recoloração é feita
+
+Achatar o dourado em branco não funciona: a arte tem uma fumaça escura em
+volta do símbolo, e pintá-la de branco também deixa um borrão que come as
+pontas do X. Foi a primeira tentativa, e o resultado ficou sujo.
+
+O que funciona é usar o **brilho como chave**. No original, o traço é
+claro e a fumaça é escura, então a transparência nova sai de
+`transparência antiga × (luminância / 255) ^ 0,85`: o traço dourado vira
+branco sólido, a fumaça desaparece sozinha, e o clarão da estrela no
+cruzamento do X continua lá. Valores abaixo de 14 são zerados para não
+sobrar véu.
+
+O script está no histórico do commit que criou este arquivo.
+
+## Para trocar
+
+Se a marca mudar, refaça `public/marca-painel.png` a partir da nova arte
+pelo mesmo caminho, e mantenha o nome — ele está escrito em
+`src/admin/PainelAdmin.tsx`.
