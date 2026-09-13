@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { cores } from "@/design/tokens";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
-import { botaoNeutro, botaoOuro, botaoRemover, campo } from "./estilos";
+import { botaoNeutro, botaoOuro, botaoRemover, campo, painel as tema } from "./estilos";
 import { dataCurta, diasAte, diasConcedidos, emPalavras, estadoDoPrazo } from "./prazo";
 
 /**
@@ -82,14 +81,14 @@ export function PrazoDaAluna({
     <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,.1)" }}>
       <p
         className="mb-[10px] mt-0 text-[12px] font-bold uppercase tracking-[.16em]"
-        style={{ color: cores.ouro }}
+        style={{ color: tema.textoTerciario }}
       >
         Prazo de acesso
       </p>
 
       <div
         className="mb-4 flex flex-wrap gap-x-8 gap-y-3 rounded-cartao p-4"
-        style={{ background: "rgba(8,12,24,.5)", border: "1px solid rgba(255,255,255,.08)" }}
+        style={{ background: "rgba(11,11,13,.5)", border: "1px solid rgba(255,255,255,.08)" }}
       >
         <Dado rotulo="Cadastrada em" valor={dataCurta(aluna.criadaEm)} />
         <Dado
@@ -103,18 +102,18 @@ export function PrazoDaAluna({
         <Dado
           rotulo="Situação"
           valor={estado.rotulo}
-          cor={estado.vencido ? cores.alerta : estado.perto ? cores.ouro : cores.concluido}
+          cor={estado.vencido ? tema.perigo : estado.perto ? tema.texto : tema.textoSecundario}
         />
       </div>
 
       {estado.vencido ? (
-        <p className="mb-4 mt-0 text-[13px]" style={{ color: cores.alerta }}>
+        <p className="mb-4 mt-0 text-[13px]" style={{ color: tema.perigo }}>
           O acesso venceu {dataCurta(aluna.acessoAte)}. Ela consegue entrar, mas não vê
           conteúdo nenhum. Nada foi apagado: acrescentar tempo devolve tudo.
         </p>
       ) : null}
 
-      <p className="mb-2 mt-0 text-[13px] text-[rgba(243,236,225,.6)]">
+      <p className="mb-2 mt-0 text-[13px] text-[rgba(255,255,255,.6)]">
         Quanto tempo de acesso?
       </p>
 
@@ -193,7 +192,7 @@ export function PrazoDaAluna({
         ) : null}
       </div>
 
-      <p className="mb-0 mt-3 text-[12px] leading-[1.5] text-[rgba(243,236,225,.45)]">
+      <p className="mb-0 mt-3 text-[12px] leading-[1.5] text-[rgba(255,255,255,.45)]">
         <strong>Definir</strong> conta a partir de {dataCurta(aluna.criadaEm)}, a data de
         cadastro — aplicar de novo recalcula, não soma.{" "}
         <strong>Acrescentar</strong> soma ao fim que já existe
@@ -206,7 +205,7 @@ export function PrazoDaAluna({
 function Dado({ rotulo, valor, cor }: { rotulo: string; valor: string; cor?: string }) {
   return (
     <span className="flex flex-col gap-[3px]">
-      <span className="text-[11px] uppercase tracking-[.14em] text-[rgba(243,236,225,.45)]">
+      <span className="text-[11px] uppercase tracking-[.14em] text-[rgba(255,255,255,.45)]">
         {rotulo}
       </span>
       <span className="text-[15px] font-bold" style={{ color: cor ?? "#fff" }}>
@@ -229,7 +228,7 @@ function Numero({
 }) {
   return (
     <label className="flex flex-col gap-[6px]">
-      <span className="text-[11px] uppercase tracking-[.14em] text-[rgba(243,236,225,.45)]">
+      <span className="text-[11px] uppercase tracking-[.14em] text-[rgba(255,255,255,.45)]">
         {rotulo}
       </span>
       <input

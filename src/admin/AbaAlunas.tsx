@@ -1,8 +1,7 @@
 import { useState, type FormEvent } from "react";
-import { cores } from "@/design/tokens";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
-import { botaoNeutro, botaoOuro, botaoRemover, campo } from "./estilos";
+import { botaoNeutro, botaoOuro, botaoRemover, campo, painel as tema } from "./estilos";
 import { estadoDoPrazo } from "./prazo";
 import { CronogramaDaAluna } from "./CronogramaDaAluna";
 import { PrazoDaAluna } from "./PrazoDaAluna";
@@ -100,7 +99,7 @@ export function AbaAlunas({
         <p
           className="mb-6 mt-0 rounded-[14px] p-[22px] text-center text-[15px]"
           style={{
-            color: "rgba(243,236,225,.5)",
+            color: "rgba(255,255,255,.5)",
             background: "rgba(255,255,255,.03)",
             border: "1px dashed rgba(255,255,255,.14)",
           }}
@@ -122,9 +121,9 @@ export function AbaAlunas({
               key={aluna.id}
               className="rounded-cartao p-4"
               style={{
-                background: bloqueada ? "rgba(230,168,154,.05)" : "rgba(255,255,255,.03)",
+                background: bloqueada ? "rgba(229,100,92,.05)" : "rgba(255,255,255,.03)",
                 border: `1px solid ${
-                  bloqueada ? "rgba(230,168,154,.24)" : "rgba(255,255,255,.1)"
+                  bloqueada ? "rgba(229,100,92,.24)" : "rgba(255,255,255,.1)"
                 }`,
               }}
             >
@@ -132,15 +131,16 @@ export function AbaAlunas({
                 <span
                   className="grid h-[42px] w-[42px] flex-none place-items-center rounded-full text-[16px] font-bold"
                   style={{
-                    background: "linear-gradient(135deg, #d4b170, #8f7a45)",
-                    color: cores.ouroTexto,
+                    background: "transparent",
+                    border: `1px solid ${tema.linha}`,
+                    color: tema.texto,
                   }}
                 >
                   {aluna.nome.charAt(0).toUpperCase()}
                 </span>
                 <span className="flex min-w-0 flex-[1_1_200px] flex-col gap-[3px]">
                   <span className="text-[16px] font-bold text-white">{aluna.nome}</span>
-                  <span className="text-[13px] text-[rgba(243,236,225,.55)]">
+                  <span className="text-[13px] text-[rgba(255,255,255,.55)]">
                     {aluna.login} · código {aluna.codigo} ·{" "}
                     {liberadas === 0
                       ? "sem conteúdo liberado"
@@ -150,28 +150,28 @@ export function AbaAlunas({
                   </span>
                 </span>
                 <span
-                  className="flex-none rounded-pilula px-3 py-[6px] text-[11px] uppercase tracking-[.12em]"
+                  className="flex-none rounded-[5px] px-3 py-[6px] text-[11px] uppercase tracking-[.12em]"
                   style={{
-                    color: bloqueada ? cores.alerta : cores.concluido,
-                    border: `1px solid ${bloqueada ? cores.alerta : cores.concluido}`,
+                    color: bloqueada ? tema.perigo : tema.texto,
+                    border: `1px solid ${bloqueada ? tema.perigo : tema.linha}`,
                   }}
                 >
                   {bloqueada ? "Bloqueada" : "Ativa"}
                 </span>
                 {prazo.semPrazo ? null : (
                   <span
-                    className="flex-none rounded-pilula px-3 py-[6px] text-[11px] uppercase tracking-[.12em]"
+                    className="flex-none rounded-[5px] px-3 py-[6px] text-[11px] uppercase tracking-[.12em]"
                     style={{
                       color: prazo.vencido
-                        ? cores.alerta
+                        ? tema.perigo
                         : prazo.perto
-                          ? cores.ouro
-                          : "rgba(243,236,225,.6)",
+                          ? tema.texto
+                          : "rgba(255,255,255,.6)",
                       border: `1px solid ${
                         prazo.vencido
-                          ? cores.alerta
+                          ? tema.perigo
                           : prazo.perto
-                            ? cores.ouro
+                            ? tema.texto
                             : "rgba(255,255,255,.18)"
                       }`,
                     }}

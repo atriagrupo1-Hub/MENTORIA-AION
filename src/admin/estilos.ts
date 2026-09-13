@@ -1,56 +1,125 @@
-import { cores } from "@/design/tokens";
+/**
+ * Estilos do painel administrativo.
+ *
+ * O painel não segue a identidade da área da aluna, e é de propósito.
+ * Lá o dourado é acolhimento — a aluna está sendo recebida. Aqui é
+ * ferramenta de trabalho: a equipe abre esta tela dezenas de vezes por
+ * dia para cadastrar, liberar e corrigir. Cor demais atrapalha, porque
+ * disputa atenção com a informação.
+ *
+ * Então: preto, branco e uma linha fina. Uma única cor de acento, o
+ * vermelho, e ela quer dizer sempre a mesma coisa — algo exige atenção
+ * ou vai apagar dado. A marca aparece uma vez, no cabeçalho, em branco.
+ */
+
+export const painel = {
+  /** Preto absoluto. O painel não tem degradê. */
+  fundo: "#000000",
+  /** Cartões e campos: quase preto, o suficiente para separar do fundo. */
+  superficie: "#0b0b0d",
+  superficieAlta: "#141417",
+  /** Divisórias. A `linha` desenha, a `linhaSuave` apenas separa. */
+  linha: "rgba(255,255,255,.14)",
+  linhaSuave: "rgba(255,255,255,.07)",
+  texto: "#ffffff",
+  textoSecundario: "rgba(255,255,255,.58)",
+  textoTerciario: "rgba(255,255,255,.36)",
+  /** O único acento. Atenção, risco, dado que some. */
+  perigo: "#e5645c",
+  perigoFundo: "rgba(229,100,92,.1)",
+  perigoLinha: "rgba(229,100,92,.4)",
+} as const;
+
+export const RAIO = 8;
 
 export const campo: React.CSSProperties = {
-  minHeight: 48,
-  padding: "0 16px",
-  fontSize: 15,
-  color: cores.textoCorpo,
-  background: "rgba(8,12,24,.85)",
-  border: "1px solid rgba(212,177,112,.24)",
-  borderRadius: 10,
+  minHeight: 44,
+  padding: "0 14px",
+  fontSize: 14,
+  color: painel.texto,
+  background: painel.superficie,
+  border: `1px solid ${painel.linha}`,
+  borderRadius: RAIO,
   outline: "none",
 };
 
+/** Ação principal. Branco sólido — só uma por bloco. */
 export const botaoOuro: React.CSSProperties = {
-  minHeight: 48,
-  padding: "0 24px",
-  fontSize: 15,
-  fontWeight: 700,
-  color: cores.ouroTexto,
-  background: cores.botaoOuro,
-  border: "none",
-  borderRadius: 99,
+  minHeight: 44,
+  padding: "0 20px",
+  fontSize: 14,
+  fontWeight: 600,
+  color: "#000000",
+  background: painel.texto,
+  border: "1px solid transparent",
+  borderRadius: RAIO,
   cursor: "pointer",
 };
 
+/** Ação secundária. Só o contorno. */
 export const botaoNeutro: React.CSSProperties = {
-  minHeight: 38,
-  padding: "0 14px",
+  minHeight: 36,
+  padding: "0 13px",
   fontSize: 13,
-  color: cores.textoCorpo,
-  background: "rgba(255,255,255,.06)",
-  border: "1px solid rgba(255,255,255,.16)",
-  borderRadius: 99,
+  color: painel.texto,
+  background: "transparent",
+  border: `1px solid ${painel.linha}`,
+  borderRadius: RAIO,
   cursor: "pointer",
 };
 
+/** Apaga alguma coisa. Nunca preenchido: a cor é aviso, não convite. */
 export const botaoRemover: React.CSSProperties = {
   ...botaoNeutro,
-  color: cores.alerta,
-  background: "rgba(255,255,255,.04)",
-  border: "1px solid rgba(230,168,154,.3)",
+  color: painel.perigo,
+  border: `1px solid ${painel.perigoLinha}`,
 };
 
+/** Cartão. */
+export const cartao: React.CSSProperties = {
+  background: painel.superficie,
+  border: `1px solid ${painel.linhaSuave}`,
+  borderRadius: RAIO + 4,
+};
+
+/**
+ * Aba. Sublinhado, não pílula — é o que distingue um painel de trabalho
+ * de um aplicativo de consumo.
+ */
 export function aba(ativa: boolean): React.CSSProperties {
   return {
-    minHeight: 42,
-    padding: "0 20px",
+    minHeight: 40,
+    padding: "0 2px",
+    marginRight: 26,
     fontSize: 14,
-    fontWeight: 700,
-    color: ativa ? cores.ouroTexto : cores.textoCorpo,
-    background: ativa ? cores.botaoOuro : "rgba(255,255,255,.06)",
-    border: `1px solid ${ativa ? "transparent" : "rgba(255,255,255,.16)"}`,
-    borderRadius: 99,
+    fontWeight: ativa ? 600 : 400,
+    color: ativa ? painel.texto : painel.textoTerciario,
+    background: "transparent",
+    border: "none",
+    borderBottom: `2px solid ${ativa ? painel.texto : "transparent"}`,
+    borderRadius: 0,
     cursor: "pointer",
   };
 }
+
+/** Etiqueta de estado. Sem preenchimento, só contorno e texto. */
+export function etiqueta(cor: string): React.CSSProperties {
+  return {
+    flex: "none",
+    padding: "5px 10px",
+    fontSize: 10,
+    letterSpacing: ".12em",
+    textTransform: "uppercase",
+    color: cor,
+    border: `1px solid ${cor}`,
+    borderRadius: 4,
+  };
+}
+
+/** Rótulo miúdo em versalete, para nomear um dado. */
+export const rotulo: React.CSSProperties = {
+  fontSize: 10,
+  letterSpacing: ".16em",
+  textTransform: "uppercase",
+  color: painel.textoTerciario,
+};

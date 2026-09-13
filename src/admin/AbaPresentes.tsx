@@ -1,16 +1,15 @@
 import { useState, type FormEvent } from "react";
-import { cores } from "@/design/tokens";
 import { idDoVideo } from "./AbaConteudo";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
-import { botaoNeutro, botaoOuro, botaoRemover, campo } from "./estilos";
+import { botaoNeutro, botaoOuro, botaoRemover, campo, painel as tema } from "./estilos";
 import type { Painel } from "./usePainel";
 
 const BOTAO_LINHA: React.CSSProperties = {
   minHeight: 32,
   padding: "0 11px",
   fontSize: 12,
-  color: "rgba(243,236,225,.75)",
+  color: "rgba(255,255,255,.75)",
   background: "none",
   border: "1px solid rgba(255,255,255,.14)",
   borderRadius: 99,
@@ -82,9 +81,9 @@ export function AbaPresentes({
           <span className="text-[11px] uppercase tracking-[.24em] text-[#a58a52]">
             {categoriaSozinha ? "Categoria" : "Presentes"}
           </span>
-          <span className="font-titulo text-[22px] text-marfim">{cabecalho}</span>
+          <span className="font-titulo text-[22px] text-white">{cabecalho}</span>
         </span>
-        <span className="text-[13px] text-[rgba(243,236,225,.55)]">
+        <span className="text-[13px] text-[rgba(255,255,255,.55)]">
           {catalogo.categorias.length}{" "}
           {catalogo.categorias.length === 1 ? "categoria" : "categorias"} · {totalPresentes}{" "}
           {totalPresentes === 1 ? "presente" : "presentes"}
@@ -108,7 +107,7 @@ export function AbaPresentes({
                   background: "rgba(255,255,255,.03)",
                   border: `1px solid ${
                     categoria.bloqueadaGeral
-                      ? "rgba(230,168,154,.28)"
+                      ? "rgba(229,100,92,.28)"
                       : "rgba(255,255,255,.1)"
                   }`,
                 }}
@@ -118,18 +117,18 @@ export function AbaPresentes({
                     <span className="text-[15px] font-bold text-white">
                       {categoria.titulo}
                     </span>
-                    <span className="text-[12px] text-[rgba(243,236,225,.5)]">
+                    <span className="text-[12px] text-[rgba(255,255,255,.5)]">
                       {categoria.presentes.length === 1
                         ? "1 presente"
                         : `${categoria.presentes.length} presentes`}
                     </span>
                   </span>
                   <span
-                    className="flex-none rounded-pilula px-[11px] py-[5px] text-[11px] uppercase tracking-[.1em]"
+                    className="flex-none rounded-[5px] px-[11px] py-[5px] text-[11px] uppercase tracking-[.1em]"
                     style={{
-                      color: categoria.bloqueadaGeral ? cores.alerta : cores.concluido,
+                      color: categoria.bloqueadaGeral ? tema.perigo : tema.texto,
                       border: `1px solid ${
-                        categoria.bloqueadaGeral ? cores.alerta : cores.concluido
+                        categoria.bloqueadaGeral ? tema.perigo : tema.linha
                       }`,
                     }}
                   >
@@ -297,13 +296,13 @@ export function AbaPresentes({
                               className="text-[13px]"
                               style={{
                                 color: presente.bloqueadoGeral
-                                  ? "rgba(243,236,225,.45)"
+                                  ? "rgba(255,255,255,.45)"
                                   : "#ffffff",
                               }}
                             >
                               {presente.ordem + 1}. {presente.titulo}
                             </span>
-                            <span className="text-[11px] text-[rgba(243,236,225,.4)]">
+                            <span className="text-[11px] text-[rgba(255,255,255,.4)]">
                               {anexos.length ? anexos.join(" · ") : "sem conteúdo anexado"}
                             </span>
                           </span>
@@ -319,8 +318,8 @@ export function AbaPresentes({
                             }}
                             style={{
                               ...BOTAO_LINHA,
-                              color: cores.ouroMedio,
-                              border: "1px solid rgba(212,177,112,.4)",
+                              color: tema.texto,
+                              border: "1px solid rgba(255,255,255,.4)",
                             }}
                           >
                             {conteudoDe === presente.id ? "Fechar conteúdo" : "Conteúdo"}
@@ -372,8 +371,8 @@ export function AbaPresentes({
                             }
                             style={{
                               ...BOTAO_LINHA,
-                              color: cores.alerta,
-                              border: "1px solid rgba(230,168,154,.28)",
+                              color: tema.perigo,
+                              border: "1px solid rgba(229,100,92,.28)",
                             }}
                           >
                             Remover
@@ -459,7 +458,7 @@ export function AbaPresentes({
                               },
                             ].map((linha) => (
                               <label key={linha.rotulo} className="flex flex-col gap-2">
-                                <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(243,236,225,.6)]">
+                                <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
                                   {linha.rotulo}
                                 </span>
                                 <input

@@ -45,6 +45,14 @@ export function emPalavras(dias: number): string {
   return `${parteAnos} e ${meses} ${meses === 1 ? "mês" : "meses"}`;
 }
 
+/**
+ * O verbo acompanha o número: "Falta 1 ano", mas "Faltam 2 anos".
+ * Só é singular quando a contagem inteira é uma unidade só.
+ */
+function faltaOuFaltam(tempo: string): string {
+  return /^1 (dia|mês|ano)$/.test(tempo) ? "Falta" : "Faltam";
+}
+
 export type EstadoPrazo = {
   rotulo: string;
   vencido: boolean;
@@ -69,8 +77,9 @@ export function estadoDoPrazo(acessoAte: string | null): EstadoPrazo {
   if (dias === 0) {
     return { rotulo: "Vence hoje", vencido: false, perto: true, semPrazo: false };
   }
+  const tempo = emPalavras(dias);
   return {
-    rotulo: `Faltam ${emPalavras(dias)}`,
+    rotulo: `${faltaOuFaltam(tempo)} ${tempo}`,
     vencido: false,
     perto: dias <= 30,
     semPrazo: false,

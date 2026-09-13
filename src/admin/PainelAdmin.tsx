@@ -2,16 +2,19 @@ import { useState, type FormEvent } from "react";
 import { Aviso } from "@/components/Aviso";
 import { useAviso } from "@/components/useAviso";
 import { useEstado } from "@/data/estado";
-import { cores } from "@/design/tokens";
 import { AbaAlunas } from "./AbaAlunas";
 import { AbaConteudo } from "./AbaConteudo";
 import { AbaPresentes } from "./AbaPresentes";
 import { Confirmacao, type PedidoConfirmacao } from "./Confirmacao";
-import { aba, campo } from "./estilos";
+import { aba, botaoNeutro, botaoOuro, campo, painel as tema } from "./estilos";
 import { usePainel } from "./usePainel";
 
-const FUNDO =
-  "linear-gradient(180deg, rgba(157,117,54,.28) 0px, rgba(157,117,54,.08) 220px, rgba(5,7,15,0) 420px) no-repeat, #05070f";
+const FUNDO = tema.fundo;
+
+/** A marca, em branco, uma vez por tela. */
+function Marca({ altura = 26 }: { altura?: number }) {
+  return <img src="/marca-painel.png" alt="AIÓN" height={altura} style={{ height: altura }} />;
+}
 
 /**
  * Painel administrativo.
@@ -28,7 +31,7 @@ export function PainelAdmin() {
   if (carregandoSessao) {
     return (
       <div className="flex min-h-screen items-center justify-center" style={{ background: FUNDO }}>
-        <p className="m-0 text-[15px]" style={{ color: cores.textoSecundario }}>
+        <p className="m-0 text-[14px]" style={{ color: tema.textoSecundario }}>
           Carregando…
         </p>
       </div>
@@ -74,40 +77,35 @@ function EntradaAdmin({
       <div className="flex min-h-screen items-center justify-center px-[18px] py-8">
         <form
           onSubmit={enviar}
-          className="rise-in w-full max-w-[420px] rounded-[20px] px-6 py-7"
+          className="rise-in w-full max-w-[380px] px-7 py-8"
           style={{
-            background: cores.cartaoForte,
-            border: "1px solid rgba(212,177,112,.2)",
-            boxShadow: "0 40px 90px -50px rgba(212,177,112,.35)",
+            background: tema.superficie,
+            border: `1px solid ${tema.linhaSuave}`,
+            borderRadius: 12,
           }}
         >
-          <p className="mb-2 mt-0 text-center text-[11px] uppercase tracking-[.3em] text-marfim">
-            Mentoria
-          </p>
-          <h1
-            className="mb-1 mt-0 text-center font-titulo text-[26px] font-semibold tracking-[.08em]"
-            style={{ color: cores.ouroSuave }}
-          >
-            PAINEL ADMINISTRATIVO
-          </h1>
-          <p className="mb-6 mt-0 text-center text-[14px] text-[rgba(243,236,225,.6)]">
-            Acesso restrito à equipe da mentoria.
-          </p>
+          <div className="mb-6 flex flex-col items-center gap-4">
+            <Marca altura={34} />
+            <p
+              className="m-0 text-[10px] uppercase"
+              style={{ letterSpacing: ".22em", color: tema.textoTerciario }}
+            >
+              Painel administrativo
+            </p>
+          </div>
 
           {logada ? (
             <>
-              <p className="mb-5 mt-0 text-center text-[14px]" style={{ color: "#e6b8a0" }}>
+              <p
+                className="mb-5 mt-0 text-center text-[14px]"
+                style={{ color: tema.perigo }}
+              >
                 Esta conta não tem acesso ao painel.
               </p>
               <button
                 type="button"
                 onClick={() => void sair()}
-                className="min-h-[54px] w-full rounded-pilula border-none text-[16px] font-bold"
-                style={{
-                  color: cores.ouroTexto,
-                  background: cores.botaoOuro,
-                  cursor: "pointer",
-                }}
+                style={{ ...botaoOuro, minHeight: 48, width: "100%", fontSize: 15 }}
               >
                 Sair e entrar com outra conta
               </button>
@@ -116,7 +114,8 @@ function EntradaAdmin({
             <>
               <label
                 htmlFor="admin-login"
-                className="mb-2 block text-[12px] font-bold text-[rgba(243,236,225,.75)]"
+                className="mb-2 block text-[10px] uppercase"
+                style={{ letterSpacing: ".16em", color: tema.textoTerciario }}
               >
                 Seu nome de acesso
               </label>
@@ -130,12 +129,13 @@ function EntradaAdmin({
                 }}
                 autoComplete="off"
                 placeholder="admin"
-                style={{ ...campo, height: 54, width: "100%", borderRadius: 12 }}
+                style={{ ...campo, height: 48, width: "100%" }}
               />
 
               <label
                 htmlFor="admin-codigo"
-                className="mb-2 mt-4 block text-[12px] font-bold text-[rgba(243,236,225,.75)]"
+                className="mb-2 mt-5 block text-[10px] uppercase"
+                style={{ letterSpacing: ".16em", color: tema.textoTerciario }}
               >
                 Seu código
               </label>
@@ -150,11 +150,11 @@ function EntradaAdmin({
                 inputMode="numeric"
                 autoComplete="off"
                 placeholder="••••••"
-                style={{ ...campo, height: 54, width: "100%", borderRadius: 12 }}
+                style={{ ...campo, height: 48, width: "100%" }}
               />
 
               {erro ? (
-                <p className="mb-0 mt-3 text-[14px]" style={{ color: "#e6b8a0" }}>
+                <p className="mb-0 mt-3 text-[13px]" style={{ color: tema.perigo }}>
                   {erro}
                 </p>
               ) : null}
@@ -162,12 +162,14 @@ function EntradaAdmin({
               <button
                 type="submit"
                 disabled={entrando}
-                className="mt-5 min-h-[54px] w-full rounded-pilula border-none text-[16px] font-bold hover:opacity-90"
+                className="mt-6 hover:opacity-90"
                 style={{
-                  color: cores.ouroTexto,
-                  background: cores.botaoOuro,
+                  ...botaoOuro,
+                  minHeight: 48,
+                  width: "100%",
+                  fontSize: 15,
                   cursor: entrando ? "wait" : "pointer",
-                  opacity: entrando ? 0.7 : 1,
+                  opacity: entrando ? 0.6 : 1,
                 }}
               >
                 {entrando ? "Entrando..." : "Entrar no painel"}
@@ -222,49 +224,51 @@ function PainelLogado() {
 
   return (
     <div className="min-h-screen" style={{ background: FUNDO }}>
-      <div className="rise-in-rapido mx-auto max-w-[1180px] px-5 pb-[90px] pt-[26px]">
-        <header className="mb-[26px] flex flex-wrap items-center gap-3">
-          <div className="flex-[1_1_240px]">
-            <p className="mb-1 mt-0 text-[11px] uppercase tracking-[.28em] text-[#a58a52]">
-              Painel administrativo
-            </p>
-            <h1
-              className="m-0 font-titulo font-semibold text-marfim"
-              style={{ fontSize: "clamp(24px, 5vw, 32px)" }}
-            >
-              {abaAtiva === "conteudo" ? "Conteúdo da mentoria" : "Alunas da mentoria"}
-            </h1>
-          </div>
-          <span className="text-[14px] text-[rgba(243,236,225,.6)]">
-            {carregando ? "Carregando…" : abaAtiva === "conteudo" ? resumoConteudo : resumoAlunas}
-          </span>
-          <button
-            onClick={() => void sair()}
-            className="min-h-[40px] rounded-pilula px-4 text-[14px] text-marfim-corpo"
-            style={{
-              background: "rgba(255,255,255,.06)",
-              border: "1px solid rgba(255,255,255,.16)",
-              cursor: "pointer",
-            }}
+      {/* Barra da marca. Fica separada do conteúdo por uma linha só. */}
+      <div style={{ borderBottom: `1px solid ${tema.linhaSuave}` }}>
+        <div className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-4 px-6 py-4">
+          <Marca altura={22} />
+          <span
+            className="text-[10px] uppercase"
+            style={{ letterSpacing: ".2em", color: tema.textoTerciario }}
           >
+            Painel administrativo
+          </span>
+          <span className="flex-1" />
+          <button onClick={() => void sair()} style={botaoNeutro}>
             Sair
           </button>
+        </div>
+      </div>
+
+      <div className="rise-in-rapido mx-auto max-w-[1180px] px-6 pb-[90px] pt-9">
+        <header className="mb-7 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+          <h1 className="m-0 text-[27px] font-semibold" style={{ color: tema.texto }}>
+            {abaAtiva === "conteudo" ? "Conteúdo da mentoria" : "Alunas da mentoria"}
+          </h1>
+          <span className="text-[14px]" style={{ color: tema.textoSecundario }}>
+            {carregando ? "Carregando…" : abaAtiva === "conteudo" ? resumoConteudo : resumoAlunas}
+          </span>
         </header>
 
         {erro ? (
           <p
-            className="mb-5 rounded-botao p-4 text-[14px]"
+            className="mb-5 p-4 text-[14px]"
             style={{
-              color: cores.alerta,
-              background: "rgba(230,168,154,.06)",
-              border: "1px solid rgba(230,168,154,.3)",
+              color: tema.perigo,
+              background: tema.perigoFundo,
+              border: `1px solid ${tema.perigoLinha}`,
+              borderRadius: 8,
             }}
           >
             {erro}
           </p>
         ) : null}
 
-        <div className="mb-[22px] flex gap-[10px]">
+        <div
+          className="mb-7 flex"
+          style={{ borderBottom: `1px solid ${tema.linhaSuave}` }}
+        >
           <button onClick={() => setAbaAtiva("alunas")} style={aba(abaAtiva === "alunas")}>
             Alunas
           </button>
@@ -277,7 +281,10 @@ function PainelLogado() {
           <AbaAlunas painel={painel} pedirConfirmacao={setPedido} avisar={aviso.mostrar} />
         ) : (
           <div>
-            <div className="mb-4 flex flex-wrap gap-2">
+            <div
+              className="mb-5 flex flex-wrap"
+              style={{ borderBottom: `1px solid ${tema.linhaSuave}` }}
+            >
               {subabas.map((s) => (
                 <button
                   key={s.chave}

@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
 import type { Catalogo, Modulo } from "@/data/tipos";
-import { cores } from "@/design/tokens";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
-import { botaoNeutro, botaoOuro, botaoRemover, campo } from "./estilos";
+import { botaoNeutro, botaoOuro, botaoRemover, campo, painel as tema } from "./estilos";
 import { dataCurta } from "./prazo";
 import type { Midia } from "./usePainel";
 
@@ -203,21 +202,21 @@ export function CronogramaDaAluna({
     <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,.1)" }}>
       <p
         className="mb-[10px] mt-0 text-[12px] font-bold uppercase tracking-[.16em]"
-        style={{ color: cores.ouro }}
+        style={{ color: tema.textoTerciario }}
       >
         Cronograma
       </p>
 
       <div
         className="mb-4 flex flex-wrap gap-x-8 gap-y-3 rounded-cartao p-4"
-        style={{ background: "rgba(8,12,24,.5)", border: "1px solid rgba(255,255,255,.08)" }}
+        style={{ background: "rgba(11,11,13,.5)", border: "1px solid rgba(255,255,255,.08)" }}
       >
         <Dado rotulo="Aulas atribuídas" valor={`${resumo.atribuidas} de 50`} />
         <Dado rotulo="Já abertas" valor={String(resumo.abertas)} />
         <Dado
           rotulo="Abertas sem vídeo"
           valor={String(resumo.abertasSemVideo)}
-          cor={resumo.abertasSemVideo > 0 ? cores.alerta : undefined}
+          cor={resumo.abertasSemVideo > 0 ? tema.perigo : undefined}
         />
         <Dado
           rotulo="Próxima abre em"
@@ -226,7 +225,7 @@ export function CronogramaDaAluna({
       </div>
 
       {/* ---- Passo 1: quais módulos ---- */}
-      <p className="mb-2 mt-0 text-[13px] text-[rgba(243,236,225,.6)]">
+      <p className="mb-2 mt-0 text-[13px] text-[rgba(255,255,255,.6)]">
         <strong>1.</strong> Quais módulos ela recebe. Módulo não marcado fica oculto para ela.
       </p>
 
@@ -258,8 +257,8 @@ export function CronogramaDaAluna({
               key={m.id}
               className="rounded-cartao"
               style={{
-                background: marcado ? "rgba(212,177,112,.07)" : "rgba(8,12,24,.5)",
-                border: `1px solid ${marcado ? "rgba(212,177,112,.34)" : "rgba(255,255,255,.08)"}`,
+                background: marcado ? "rgba(255,255,255,.07)" : "rgba(11,11,13,.5)",
+                border: `1px solid ${marcado ? "rgba(255,255,255,.34)" : "rgba(255,255,255,.08)"}`,
               }}
             >
               <div className="flex flex-wrap items-center gap-3 p-3">
@@ -267,14 +266,14 @@ export function CronogramaDaAluna({
                   onClick={() => alternarModulo(m.id)}
                   className="grid h-[20px] w-[20px] flex-none place-items-center rounded-[5px]"
                   style={{
-                    background: marcado ? cores.ouro : "transparent",
-                    border: `2px solid ${marcado ? cores.ouro : "rgba(255,255,255,.3)"}`,
+                    background: marcado ? tema.texto : "transparent",
+                    border: `1px solid ${marcado ? tema.texto : tema.linha}`,
                     cursor: "pointer",
                   }}
                   aria-label={marcado ? `Tirar o Módulo ${m.numero}` : `Dar o Módulo ${m.numero}`}
                 >
                   {marcado ? (
-                    <span className="text-[13px] font-bold" style={{ color: cores.ouroTexto }}>
+                    <span className="text-[13px] font-bold" style={{ color: "#000000" }}>
                       ✓
                     </span>
                   ) : null}
@@ -284,12 +283,12 @@ export function CronogramaDaAluna({
                   <span className="text-[14px] font-bold text-white">
                     Módulo {m.numero} · {m.aulas.length} aulas
                   </span>
-                  <span className="text-[12px] text-[rgba(243,236,225,.5)]">
+                  <span className="text-[12px] text-[rgba(255,255,255,.5)]">
                     {suas.length === 0
                       ? "nenhuma aula atribuída"
                       : `${suas.length} atribuídas a ela`}
                     {suasSemVideo > 0 ? (
-                      <span style={{ color: cores.alerta }}>
+                      <span style={{ color: tema.perigo }}>
                         {" · "}
                         {suasSemVideo} sem vídeo
                       </span>
@@ -333,13 +332,13 @@ export function CronogramaDaAluna({
       </div>
 
       {/* ---- Passo 2: o ritmo ---- */}
-      <p className="mb-2 mt-0 text-[13px] text-[rgba(243,236,225,.6)]">
+      <p className="mb-2 mt-0 text-[13px] text-[rgba(255,255,255,.6)]">
         <strong>2.</strong> Abrir uma aula a cada quantos dias, a partir de quando.
       </p>
 
       <div className="mb-3 flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-[6px]">
-          <span className="text-[11px] uppercase tracking-[.14em] text-[rgba(243,236,225,.45)]">
+          <span className="text-[11px] uppercase tracking-[.14em] text-[rgba(255,255,255,.45)]">
             Intervalo (dias)
           </span>
           <input
@@ -353,7 +352,7 @@ export function CronogramaDaAluna({
           />
         </label>
         <label className="flex flex-col gap-[6px]">
-          <span className="text-[11px] uppercase tracking-[.14em] text-[rgba(243,236,225,.45)]">
+          <span className="text-[11px] uppercase tracking-[.14em] text-[rgba(255,255,255,.45)]">
             Começando em
           </span>
           <input
@@ -363,7 +362,7 @@ export function CronogramaDaAluna({
             style={data}
           />
         </label>
-        <span className="text-[13px] text-[rgba(243,236,225,.5)]">
+        <span className="text-[13px] text-[rgba(255,255,255,.5)]">
           {totalMarcadas === 0
             ? "nenhum módulo marcado"
             : nDias === 0
@@ -375,7 +374,7 @@ export function CronogramaDaAluna({
       {avisoVideo ? (
         <p
           className="mb-3 mt-0 text-[13px] leading-[1.6]"
-          style={{ color: cores.alerta }}
+          style={{ color: tema.perigo }}
         >
           {avisoVideo}
         </p>
@@ -411,7 +410,7 @@ export function CronogramaDaAluna({
         ) : null}
       </div>
 
-      <p className="mb-0 mt-3 text-[12px] leading-[1.6] text-[rgba(243,236,225,.45)]">
+      <p className="mb-0 mt-3 text-[12px] leading-[1.6] text-[rgba(255,255,255,.45)]">
         Gerar substitui o cronograma inteiro dela. Depois, cada aula é corrigida sozinha em{" "}
         <strong>Ver datas</strong> — as outras não se mexem. Intervalo <strong>0</strong> abre
         tudo de uma vez.
@@ -422,14 +421,14 @@ export function CronogramaDaAluna({
 
 function EtiquetaEstado({ estado }: { estado: EstadoModulo }) {
   const mapa = {
-    oculto: { texto: "Oculto", cor: "rgba(243,236,225,.4)" },
-    em_breve: { texto: "Libera em breve", cor: cores.ouro },
-    aberto: { texto: "Aberto", cor: cores.concluido },
+    oculto: { texto: "Oculto", cor: tema.textoTerciario },
+    em_breve: { texto: "Libera em breve", cor: tema.textoSecundario },
+    aberto: { texto: "Aberto", cor: tema.texto },
   } as const;
   const { texto, cor } = mapa[estado];
   return (
     <span
-      className="flex-none rounded-pilula px-[10px] py-[5px] text-[10px] uppercase tracking-[.12em]"
+      className="flex-none rounded-[5px] px-[10px] py-[5px] text-[10px] uppercase tracking-[.12em]"
       style={{ color: cor, border: `1px solid ${cor}` }}
     >
       {texto}
@@ -474,15 +473,15 @@ function LinhaAula({
     >
       <span
         className="min-w-0 flex-[1_1_180px] truncate text-[13px]"
-        style={{ color: atribuida ? "#fff" : "rgba(243,236,225,.35)" }}
+        style={{ color: atribuida ? "#fff" : "rgba(255,255,255,.35)" }}
       >
         {titulo}
       </span>
 
       {temVideo ? null : (
         <span
-          className="flex-none rounded-pilula px-[9px] py-[3px] text-[10px] uppercase tracking-[.12em]"
-          style={{ color: cores.alerta, border: `1px solid ${cores.alerta}` }}
+          className="flex-none rounded-[5px] px-[9px] py-[3px] text-[10px] uppercase tracking-[.12em]"
+          style={{ color: tema.perigo, border: `1px solid ${tema.perigo}` }}
         >
           sem vídeo
         </span>
@@ -515,7 +514,7 @@ function LinhaAula({
               Abrir agora
             </button>
           ) : (
-            <span className="text-[11px]" style={{ color: cores.concluido }}>
+            <span className="text-[11px]" style={{ color: tema.textoSecundario }}>
               aberta
             </span>
           )}
@@ -555,7 +554,7 @@ function Dado({
 }) {
   return (
     <span className="flex flex-col gap-[3px]">
-      <span className="text-[11px] uppercase tracking-[.14em] text-[rgba(243,236,225,.45)]">
+      <span className="text-[11px] uppercase tracking-[.14em] text-[rgba(255,255,255,.45)]">
         {rotulo}
       </span>
       <span className="text-[15px] font-bold" style={{ color: cor ?? "#fff" }}>
