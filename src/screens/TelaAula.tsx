@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Aviso } from "@/components/Aviso";
 import { Capa, capaAula, capaModulo } from "@/components/Capa";
+import { Player } from "@/components/Player";
 import { Play } from "@/components/Icones";
 import { useAviso } from "@/components/useAviso";
 import * as api from "@/data/api";
@@ -42,13 +43,13 @@ export function TelaAula() {
     alternarConcluida,
     alternarCurtida,
     registrarPosicao,
+    posicaoSegundos,
     aulaBloqueada,
     moduloLiberado,
     moduloVisivel,
   } = estado;
 
   const [tocando, setTocando] = useState(false);
-  const [pctVideo, setPctVideo] = useState(0);
   const [menuAberto, setMenuAberto] = useState(false);
   const [velocidade, setVelocidade] = useState(2);
   const [resolucao, setResolucao] = useState(0);
@@ -60,7 +61,7 @@ export function TelaAula() {
   const [saindo, setSaindo] = useState(false);
   const [comentarios, setComentarios] = useState<ComentarioPublico[]>([]);
   const [video, setVideo] = useState<api.Video | null>(null);
-  const timer = useRef<number | null>(null);
+  const [segundos, setSegundos] = useState(0);
 
   const modulo = catalogo.modulos.find((m) => m.numero === numeroModulo);
   const aula = modulo?.aulas[ordem];
@@ -69,9 +70,8 @@ export function TelaAula() {
 
   useEffect(() => {
     setTocando(false);
-    setPctVideo(0);
+    setSegundos(0);
     setPainel("");
-    if (timer.current) window.clearInterval(timer.current);
   }, [numeroModulo, ordem]);
 
   // Comentários e endereço do vídeo vêm do banco, por aula. O endereço
@@ -94,7 +94,6 @@ export function TelaAula() {
     };
   }, [aulaId]);
 
-  useEffect(() => () => { if (timer.current) window.clearInterval(timer.current); }, []);
 
   /*
    * Aula que não é dela responde igual a aula que não existe.
@@ -147,47 +146,26 @@ export function TelaAula() {
   const cor = paleta(modulo.numero);
   const feita = concluida(aula.id);
   const passos = passosDoExercicio(aula.exercicio);
-  const duracaoSeg = minutosDaAula(modulo, aula) * 60;
-  const segundoAtual = (pctVideo / 100) * duracaoSeg;
+  /*
+   * O minuto em que ela está. Com vídeo de verdade vem do player; sem
+   * vídeo, da barra simulada, que só existe enquanto a aula não subiu.
+   */
+  const segundoAtual = segundos;
 
 
   /*
-   * O avanço simulado é herança do protótipo, que não tinha vídeo: um
-   * relógio empurrava a barra para a demonstração parecer viva.
+   * O relógio simulado do protótipo saiu daqui.
    *
-   * Com vídeo de verdade ele não pode rodar. Primeiro porque duplicaria
-   * a barra do player do Cloudflare na tela. Segundo, e pior, porque
-   * gravaria em `progresso` uma posição inventada — e é dela que sai o
-   * "continue de onde parou". Progresso fingido é pior que progresso
-   * nenhum: leva a aluna de volta ao ponto errado.
-   *
-   * Enquanto o player real não for conduzido pelo app, quem marca a
-   * conclusão é a própria aluna, no botão.
+   * Ele empurrava a barra para a demonstração parecer viva, e gravava em
+   * `progresso` uma posição inventada — justamente de onde sai o
+   * "continue de onde parou". Agora quem diz o minuto é o player, e o
+   * que se grava é o que ela assistiu de verdade.
    */
-  function alternarPlay() {
-    if (tocando) {
-      if (timer.current) window.clearInterval(timer.current);
-      setTocando(false);
-      if (!video) registrarPosicao(aula!.id, (pctVideo / 100) * duracaoSeg, duracaoSeg);
-      return;
-    }
-    setTocando(true);
-    if (video) return;                       // o player do Cloudflare assume
-    setPctVideo((v) => (v >= 100 ? 0 : v));
-    if (timer.current) window.clearInterval(timer.current);
-    timer.current = window.setInterval(() => {
-      setPctVideo((anterior) => {
-        const proximo = Math.min(100, anterior + 1.5);
-        registrarPosicao(aula!.id, (proximo / 100) * duracaoSeg, duracaoSeg);
-        if (proximo >= 100) {
-          if (timer.current) window.clearInterval(timer.current);
-          setTocando(false);
-        }
-        return proximo;
-      });
-    }, 320);
+  /** O player avisou onde está. É daqui que sai "continue de onde parou". */
+  function aoProgredir(atual: number, total: number) {
+    setSegundos(atual);
+    registrarPosicao(aula!.id, atual, total);
   }
-
   function fechar() {
     setSaindo(true);
     window.setTimeout(() => navegar(`/modulo/${modulo!.numero}`), 280);
@@ -304,22 +282,46 @@ export function TelaAula() {
       <div className="sticky top-0 z-50 w-full bg-black">
         <div style={{ height: "env(safe-area-inset-top)" }} />
         <div className="relative aspect-video w-full overflow-hidden">
-          <Capa
-            caminhos={[capaAula(modulo.numero, aula.ordem), capaModulo(modulo.numero)]}
-            alt={`Capa da Aula ${aula.numero} — ${aula.titulo}`}
-            opacidade={tocando ? 0.55 : 1}
-          />
+          {video ? (
+            <Player
+              identificador={video.ref}
+              capa={
+                <Capa
+                  caminhos={[capaAula(modulo.numero, aula.ordem), capaModulo(modulo.numero)]}
+                  alt={`Capa da Aula ${aula.numero} — ${aula.titulo}`}
+                />
+              }
+              comecarEm={posicaoSegundos(aula.id)}
+              aoTocar={setTocando}
+              aoProgredir={aoProgredir}
+            />
+          ) : (
+            <>
+              <Capa
+                caminhos={[capaAula(modulo.numero, aula.ordem), capaModulo(modulo.numero)]}
+                alt={`Capa da Aula ${aula.numero} — ${aula.titulo}`}
+                opacidade={tocando ? 0.55 : 1}
+              />
+
+              {/* Aula ainda sem vídeo cadastrado: nada de botão que não toca. */}
+              {tocando ? null : (
+                <span
+                  className="absolute left-1/2 top-1/2 z-[5] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-[5px] px-4 py-2 text-[13px]"
+                  style={{
+                    color: "rgba(255,255,255,.85)",
+                    background: "rgba(0,0,0,.5)",
+                    border: "1px solid rgba(255,255,255,.2)",
+                  }}
+                >
+                  Vídeo em breve
+                </span>
+              )}
+            </>
+          )}
 
           <button
             onClick={fechar}
             aria-label="Fechar e voltar ao módulo"
-            /*
-              Era um símbolo fino, sem fundo, colado no canto — onde o
-              polegar tem menos precisão e onde ficam os botões do
-              próprio navegador. Agora tem 44 px de alvo, um disco escuro
-              por trás para existir contra a arte clara, e folga da
-              quina.
-            */
             className="absolute right-[14px] top-[14px] z-[6] flex h-11 w-11 items-center justify-center rounded-full border-none text-[19px] leading-none text-white hover:opacity-80"
             style={{
               background: "rgba(0,0,0,.55)",
@@ -334,10 +336,9 @@ export function TelaAula() {
           </button>
 
           {/*
-            Com o ✕ escondido, esta faixa fina no alto do vídeo devolve
-            ele ao primeiro toque. Só o alto: o meio do quadro continua
-            indo direto para o player, que é onde a aluna toca para
-            pausar.
+            Com o ✕ escondido, esta faixa fina no alto devolve ele ao
+            primeiro toque. Só o alto: o meio do quadro continua indo
+            para o player, que é onde a aluna toca para pausar.
           */}
           {tocando && video && !mostrarFechar ? (
             <button
@@ -347,74 +348,6 @@ export function TelaAula() {
               style={{ cursor: "pointer" }}
             />
           ) : null}
-
-          {tocando && video ? (
-            <iframe
-              src={api.enderecoDoVideo(video)}
-              title={aula.titulo}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              referrerPolicy="strict-origin-when-cross-origin"
-              className="absolute inset-0 z-[4] h-full w-full border-0"
-            />
-          ) : null}
-
-          {/* A camada de play não intercepta cliques fora do círculo. */}
-          {!video && !tocando ? (
-            <span
-              className="absolute left-1/2 top-1/2 z-[5] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-pilula px-4 py-2 text-[13px]"
-              style={{
-                color: "rgba(255,255,255,.85)",
-                background: "rgba(0,0,0,.5)",
-                border: "1px solid rgba(255,255,255,.2)",
-              }}
-            >
-              Vídeo em breve
-            </span>
-          ) : null}
-
-          {video && !tocando ? (
-            <button
-              onClick={alternarPlay}
-              aria-label="Assistir aula"
-              className="absolute left-1/2 top-1/2 z-[5] flex h-[88px] w-[88px] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full transition-transform duration-300 hover:scale-105"
-              style={{
-                background: "rgba(0,0,0,.3)",
-                border: "3px solid #ffffff",
-                cursor: "pointer",
-              }}
-            >
-              <span className="ml-[6px]">
-                <Play tamanho={26} cor="#ffffff" />
-              </span>
-            </button>
-          ) : null}
-
-          {/*
-            Um player só: com o do Cloudflare na tela, a barra do app sai.
-
-            Sai do DOM, e não por `hidden`: a classe `flex` declara
-            `display:flex`, que vence o atributo. Escondido assim, ele
-            continuava aparecendo.
-          */}
-          {tocando && video ? null : (
-          <div className="absolute inset-x-[6px] bottom-[6px] z-[5] flex h-3 items-center">
-            <div className="relative h-[3px] w-full" style={{ background: "rgba(255,255,255,.3)" }}>
-              <div
-                className="h-full"
-                style={{
-                  background: "#ffffff",
-                  width: `${pctVideo}%`,
-                  transition: "width .4s linear",
-                }}
-              />
-              <span
-                className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full"
-                style={{ left: `${pctVideo}%`, background: "#ffffff" }}
-              />
-            </div>
-        </div>
-        )}
         </div>
       </div>
 
