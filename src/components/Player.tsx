@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 /**
  * O player da aula.
@@ -33,6 +33,14 @@ type Props = {
   capa?: ReactNode;
   /** Onde retomar, em segundos. Zero começa do início. */
   comecarEm?: number;
+  /**
+   * Pede um endereço novo ao servidor e devolve se conseguiu.
+   *
+   * Com URL assinada o endereço tem prazo. Expirando com a aula aberta,
+   * o vídeo para de carregar e não há nada que o player possa fazer
+   * sozinho: só o servidor assina. Esta é a porta para pedir outro.
+   */
+  aoRenovar?: () => Promise<boolean>;
   aoTocar?: (tocando: boolean) => void;
   /**
    * Onde o vídeo está. `agora` pede para gravar sem esperar a próxima
@@ -62,6 +70,7 @@ export function Player({
   identificador,
   capa,
   comecarEm = 0,
+  aoRenovar,
   aoTocar,
   aoProgredir,
   aoTerminar,
@@ -71,18 +80,80 @@ export function Player({
   const ultimaGravacao = useRef(0);
   const [comecou, setComecou] = useState(false);
   const [terminou, setTerminou] = useState(false);
+  const [falhou, setFalhou] = useState(false);
+  /** Onde o vídeo estava quando falhou, para voltar ao mesmo ponto. */
+  const retomarDe = useRef(0);
+  /** Estava tocando na hora da falha? Se sim, volta tocando. */
+  const tocavaAntes = useRef(false);
+  /** Quando foi a última renovação, para não entrar em laço. */
+  const ultimaRenovacao = useRef(0);
+  /** Há um pedido de endereço em curso. */
+  const renovando = useRef(false);
+  /*
+   * Conta as renovações, e serve só para religar a fonte.
+   *
+   * O endereço novo quase sempre é diferente do velho, e trocá-lo já
+   * religaria sozinho. "Quase sempre" não basta: enquanto a chave de
+   * assinatura não estiver configurada, o servidor devolve o mesmo
+   * identificador, e aí nada mudaria — o vídeo ficaria parado sem
+   * ninguém tentar de novo. Contando as tentativas, a fonte recomeça
+   * de qualquer jeito.
+   */
+  const [tentativa, setTentativa] = useState(0);
+
+  /**
+   * O endereço falhou. Pede outro ao servidor, uma vez.
+   *
+   * Quase sempre é o prazo da assinatura que acabou — a aula ficou
+   * aberta numa aba, ou o celular dormiu no meio dela. Renovar resolve
+   * sem a aluna saber que houve problema. Dando errado de novo, aí sim
+   * a tela avisa: pode ser a internet, ou o acesso dela ter mudado.
+   *
+   * A trava de trinta segundos existe porque o hls.js repete o erro
+   * enquanto não conseguir carregar; sem ela, seria um pedido por
+   * tentativa, em rajada.
+   */
+  const renovar = useCallback(async () => {
+    // Um pedido já em curso: o erro que chega agora é o mesmo de antes,
+    // repetido pela biblioteca. Esperar é melhor que declarar falha.
+    if (renovando.current) return;
+    const agora = Date.now();
+    if (!aoRenovar || agora - ultimaRenovacao.current < 30_000) {
+      setFalhou(true);
+      return;
+    }
+    ultimaRenovacao.current = agora;
+    renovando.current = true;
+    const v = video.current;
+    if (v) {
+      if (v.currentTime > 0) retomarDe.current = v.currentTime;
+      tocavaAntes.current = !v.paused;
+    }
+    const deuCerto = await aoRenovar().catch(() => false);
+    renovando.current = false;
+    if (!deuCerto) {
+      setFalhou(true);
+      return;
+    }
+    setTentativa((n) => n + 1);
+  }, [aoRenovar]);
 
   // ---- a fonte ----
   useEffect(() => {
     const v = video.current;
     if (!v || !identificador) return;
     const manifesto = `https://videodelivery.net/${identificador}/manifest/video.m3u8`;
+    setFalhou(false);
 
     // O Safari toca este formato sozinho, e melhor do que qualquer
     // biblioteca faria: é o mesmo caminho do vídeo nativo do iOS.
     if (v.canPlayType("application/vnd.apple.mpegurl")) {
       v.src = manifesto;
-      return;
+      // No Safari o erro chega como evento do próprio vídeo: endereço
+      // vencido devolve 403, e o elemento dispara `error`.
+      const aoErrar = () => void renovar();
+      v.addEventListener("error", aoErrar);
+      return () => v.removeEventListener("error", aoErrar);
     }
 
     /*
@@ -102,6 +173,16 @@ export function Player({
       }
       const hls = new Hls({ enableWorker: true });
       dispensar = () => hls.destroy();
+      /*
+       * Erro grave é o que a biblioteca não resolve sozinha. Os leves
+       * ela recupera — um segmento que demorou, um corte de rede — e
+       * interromper nesses casos seria trocar uma pausa de um segundo
+       * por uma tela de erro.
+       */
+      hls.on(Hls.Events.ERROR, (_evento, dados) => {
+        if (!dados.fatal) return;
+        void renovar();
+      });
       hls.loadSource(manifesto);
       hls.attachMedia(atual);
     });
@@ -109,17 +190,30 @@ export function Player({
       cancelado = true;
       dispensar?.();
     };
-  }, [identificador]);
+  }, [identificador, tentativa, renovar]);
 
   // ---- retomar de onde parou ----
   useEffect(() => {
     const v = video.current;
-    if (!v || comecarEm <= 0) return;
+    if (!v) return;
+    /*
+     * Duas retomadas moram aqui, e a ordem importa.
+     *
+     * `retomarDe` é o ponto em que o vídeo estava quando o endereço
+     * falhou — vale mais que o minuto guardado no banco, que pode ser
+     * de quinze segundos atrás. Sem ele, uma renovação no meio da aula
+     * jogaria a aluna para trás toda vez.
+     */
+    const alvo = retomarDe.current > 0 ? retomarDe.current : comecarEm;
+    if (alvo <= 0) return;
     function retomar() {
-      const alvo = comecarEm;
       // Perto do fim não faz sentido retomar: ela veio rever.
       if (Number.isFinite(v!.duration) && alvo > v!.duration - 15) return;
       v!.currentTime = alvo;
+      if (tocavaAntes.current) {
+        tocavaAntes.current = false;
+        void v!.play().catch(() => undefined);
+      }
     }
     v.addEventListener("loadedmetadata", retomar, { once: true });
     return () => v.removeEventListener("loadedmetadata", retomar);
@@ -143,6 +237,7 @@ export function Player({
       if (Number.isFinite(v.duration)) aoProgredir?.(v.currentTime, v.duration, true);
     };
     const aoAndar = () => {
+      retomarDe.current = v.currentTime;
       if (!Number.isFinite(v.duration)) return;
       if (v.currentTime - ultimaGravacao.current < SEGUNDOS_ENTRE_GRAVACOES) return;
       ultimaGravacao.current = v.currentTime;
@@ -251,11 +346,31 @@ export function Player({
         className="h-full w-full bg-black"
       />
 
-      {comecou ? null : (
+      {comecou || falhou ? null : (
         <div className="absolute inset-0 z-[3]">{capa}</div>
       )}
 
-      {comecou && !terminou ? null : (
+      {falhou ? (
+        <div className="absolute inset-0 z-[6] flex flex-col items-center justify-center gap-4 px-6 text-center"
+             style={{ background: "rgba(0,0,0,.86)" }}>
+          <p className="m-0 max-w-[300px] text-[15px] leading-[1.6] text-white">
+            Não conseguimos carregar este vídeo agora.
+          </p>
+          <button
+            onClick={() => {
+              ultimaRenovacao.current = 0;
+              setFalhou(false);
+              void renovar();
+            }}
+            className="min-h-[46px] rounded-pilula border-none px-6 text-[15px] font-bold"
+            style={{ color: "#000000", background: "#ffffff", cursor: "pointer" }}
+          >
+            Tentar de novo
+          </button>
+        </div>
+      ) : null}
+
+      {falhou || (comecou && !terminou) ? null : (
         <button
           onClick={() => void assistir()}
           aria-label={terminou ? "Assistir novamente" : "Assistir aula"}

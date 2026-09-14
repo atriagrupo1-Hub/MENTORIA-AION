@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Aviso } from "@/components/Aviso";
 import { Capa, capaAula, capaModulo } from "@/components/Capa";
@@ -92,6 +92,26 @@ export function TelaAula() {
     return () => {
       valeAinda = false;
     };
+  }, [aulaId]);
+
+  /*
+   * Um endereço novo, quando o de agora deixou de servir.
+   *
+   * Com URL assinada o endereço tem prazo: uma aula aberta numa aba
+   * desde cedo, ou um celular que dormiu no meio, voltam com um
+   * endereço vencido. O player avisa, isto assina outro, e ela volta ao
+   * mesmo minuto sem saber que houve problema.
+   *
+   * Quem decide continua sendo o banco. Se o acesso dela mudou nesse
+   * meio-tempo — prazo vencido, conta suspensa —, o servidor não assina
+   * nada, e é o certo: a tela do player passa a dizer que não deu.
+   */
+  const renovarVideo = useCallback(async () => {
+    if (!aulaId) return false;
+    const novo = await api.videoDaAula(aulaId).catch(() => null);
+    if (!novo) return false;
+    setVideo(novo);
+    return true;
   }, [aulaId]);
 
 
@@ -285,6 +305,7 @@ export function TelaAula() {
           {video ? (
             <Player
               identificador={video.ref}
+              aoRenovar={renovarVideo}
               capa={
                 <Capa
                   caminhos={[capaAula(modulo.numero, aula.ordem), capaModulo(modulo.numero)]}
