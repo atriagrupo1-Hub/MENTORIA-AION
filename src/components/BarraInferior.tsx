@@ -100,7 +100,7 @@ export function BarraInferior() {
         <NavLink
           key={a.chave}
           to={a.para}
-          className="flex flex-1 flex-col items-center justify-center gap-[5px] pb-[9px] pt-[10px] no-underline"
+          className="flex flex-1 flex-col items-center justify-center gap-1 pb-2 pt-3 no-underline"
         >
           {({ isActive }) => (
             <>

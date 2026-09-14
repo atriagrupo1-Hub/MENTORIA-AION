@@ -39,11 +39,19 @@ export function estadoDoModulo(
   };
 }
 
-/** Rótulo de estado do módulo, verbatim do protótipo. */
+/**
+ * Rótulo de estado do módulo.
+ *
+ * Sem a palavra "módulo", de propósito. As três telas que usam este
+ * rótulo já escrevem "Módulo 2 · " antes dele, e o resultado saía
+ * "Módulo 2 · Módulo em andamento" — a mesma palavra duas vezes na
+ * mesma linha, num rótulo de onze pixels que existe para ser lido de
+ * relance.
+ */
 export function rotuloEstadoModulo(e: EstadoModulo): string {
   if (!e.liberado) return "Libera em breve";
-  if (e.completo) return "Módulo concluído";
-  if (e.concluidas > 0) return "Módulo em andamento";
+  if (e.completo) return "Concluído";
+  if (e.concluidas > 0) return "Em andamento";
   return "Disponível";
 }
 

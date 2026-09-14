@@ -23,8 +23,8 @@ export function Presentes() {
   const todos = catalogo.categorias.flatMap((c) => c.presentes);
 
   return (
-    <main className="rise-in mx-auto max-w-[1360px] px-7 pb-[90px] pt-[22px] cel-sm:px-[18px]">
-      <p className="mb-[10px] mt-0 text-rotulo uppercase tracking-rotulo text-[rgba(255,255,255,.4)]">
+    <main className="rise-in mx-auto max-w-[1360px] px-7 pb-24 pt-6 cel-sm:px-5">
+      <p className="mb-3 mt-0 text-rotulo uppercase tracking-rotulo text-[rgba(255,255,255,.4)]">
         Acervo
       </p>
       <h1
@@ -40,22 +40,22 @@ export function Presentes() {
       </p>
 
       {categorias.map((categoria) => (
-        <section key={categoria.id} className="mt-[34px]">
+        <section key={categoria.id} className="mt-9">
           <h2
-            className="mb-[14px] mt-0 text-rotulo font-bold uppercase tracking-rotulo"
+            className="mb-4 mt-0 text-rotulo font-bold uppercase tracking-rotulo"
             style={{ color: "#ffffff" }}
           >
             {categoria.titulo}
           </h2>
 
           {categoria.presentes.length === 0 ? (
-            <p className="mb-[6px] mt-0 text-corpo text-[rgba(243,236,225,.45)]">
+            <p className="mb-2 mt-0 text-corpo text-[rgba(243,236,225,.45)]">
               Em breve, presentes nesta categoria.
             </p>
           ) : null}
 
           <div
-            className="sem-barra flex gap-[14px] overflow-x-auto pb-1"
+            className="sem-barra flex gap-4 overflow-x-auto pb-1"
             style={{ scrollSnapType: "x mandatory", scrollBehavior: "smooth" }}
           >
             {categoria.presentes.map((presente) => {
@@ -96,7 +96,7 @@ export function Presentes() {
                       }}
                     />
                     <span
-                      className="absolute left-1/2 top-1/2 flex min-h-[26px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-[6px] whitespace-nowrap rounded-pilula px-[11px] py-[6px] text-rotulo font-bold"
+                      className="absolute left-1/2 top-1/2 flex min-h-[26px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-2 whitespace-nowrap rounded-pilula px-3 py-2 text-rotulo font-bold"
                       style={{
                         color: liberado ? "#000000" : "#ffffff",
                         background: liberado
@@ -132,7 +132,7 @@ export function Presentes() {
                       {liberado ? "Assistir" : "Em breve"}
                     </span>
                     <span
-                      className="absolute inset-x-3 bottom-[14px] text-center font-titulo text-realce leading-[1.18] text-marfim"
+                      className="absolute inset-x-3 bottom-4 text-center font-titulo text-realce leading-[1.18] text-marfim"
                     >
                       {liberado ? presente.titulo : ""}
                     </span>

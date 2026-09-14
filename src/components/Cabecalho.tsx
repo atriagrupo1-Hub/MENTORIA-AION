@@ -52,7 +52,7 @@ export function Cabecalho({
 
   return (
     <header
-      className={`sticky top-0 z-40 flex flex-wrap items-center gap-x-[26px] gap-y-[18px] px-7 pb-4 cel-sm:px-4 cel-sm:gap-y-3 ${
+      className={`sticky top-0 z-40 flex flex-wrap items-center gap-x-7 gap-y-5 px-7 pb-4 cel-sm:px-4 cel-sm:gap-y-3 ${
         soComputador ? "cel:hidden" : ""
       }`}
       style={{
@@ -80,7 +80,7 @@ export function Cabecalho({
       </button>
 
       {/* No celular a navegação está no rodapé; aqui ela só existe na tela grande. */}
-      <nav className="sem-barra ml-auto flex gap-[26px] cel:hidden">
+      <nav className="sem-barra ml-auto flex gap-7 cel:hidden">
         {ABAS.map((aba) => (
           <NavLink
             key={aba.para}
@@ -100,7 +100,7 @@ export function Cabecalho({
 
       <div className="flex min-w-[190px] items-center gap-3 cel:hidden">
         <div className="min-w-[110px] flex-1">
-          <div className="mb-[6px] flex justify-between text-apoio text-[#a89f92]">
+          <div className="mb-2 flex justify-between text-apoio text-[#a89f92]">
             <span>Seu progresso</span>
             <span style={{ color: "#ffffff" }}>{percentualGeral}%</span>
           </div>

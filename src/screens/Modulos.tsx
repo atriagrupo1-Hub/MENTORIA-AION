@@ -19,8 +19,8 @@ export function Modulos() {
   const aviso = useAviso();
 
   return (
-    <main className="rise-in mx-auto max-w-[1100px] px-7 pb-[90px] pt-[22px] cel-sm:px-[18px]">
-      <p className="mb-[6px] mt-0 text-rotulo uppercase tracking-rotulo text-[rgba(255,255,255,.4)]">
+    <main className="rise-in mx-auto max-w-[1100px] px-7 pb-24 pt-6 cel-sm:px-5">
+      <p className="mb-2 mt-0 text-rotulo uppercase tracking-rotulo text-[rgba(255,255,255,.4)]">
         Minha jornada
       </p>
       <h1
@@ -42,7 +42,7 @@ export function Modulos() {
               }
               navegar(`/modulo/${e.modulo.numero}`);
             }}
-            className="flex items-center gap-[14px] rounded-cartao-lg p-[14px] text-left transition-transform duration-300 hover:translate-x-[6px]"
+            className="flex items-center gap-4 rounded-cartao-lg p-4 text-left transition-transform duration-300 hover:translate-x-[6px]"
             style={{
               background: `linear-gradient(120deg, rgba(${e.rgb},.1), rgba(6,9,18,.88) 62%)`,
               border: `1px solid ${
@@ -65,7 +65,7 @@ export function Modulos() {
               />
             </span>
 
-            <span className="flex min-w-0 flex-1 flex-col gap-[7px]">
+            <span className="flex min-w-0 flex-1 flex-col gap-2">
               <span
                 className="text-rotulo uppercase tracking-rotulo"
                 style={{ color: e.destaque }}
@@ -91,7 +91,7 @@ export function Modulos() {
             </span>
 
             <span
-              className="flex min-h-[32px] flex-none items-center justify-center gap-[7px] whitespace-nowrap rounded-pilula px-[14px] py-2 text-apoio font-bold cel:h-[38px] cel:w-[38px] cel:min-h-[38px] cel:gap-0 cel:rounded-full cel:p-0"
+              className="flex min-h-[32px] flex-none items-center justify-center gap-2 whitespace-nowrap rounded-pilula px-4 py-2 text-apoio font-bold cel:h-[38px] cel:w-[38px] cel:min-h-[38px] cel:gap-0 cel:rounded-full cel:p-0"
               style={{
                 color: e.liberado ? "#000000" : "rgba(255,255,255,.85)",
                 background: e.liberado ? "rgba(255,255,255,.88)" : "rgba(255,255,255,.16)",

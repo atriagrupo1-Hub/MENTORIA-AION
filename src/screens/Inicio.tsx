@@ -50,7 +50,7 @@ export function Inicio() {
   }
 
   return (
-    <main className="rise-in mx-auto max-w-[1360px] px-7 pb-[90px] pt-[22px] cel-sm:px-[18px]">
+    <main className="rise-in mx-auto max-w-[1360px] px-7 pb-24 pt-6 cel-sm:px-5">
       {/*
         O bloco de retomada tem largura própria.
         A página vai a 1360px, o que serve para a fileira de módulos.
@@ -101,7 +101,7 @@ export function Inicio() {
             ) : null}
           </div>
 
-          <div className="flex flex-col gap-1 px-[2px] pt-3">
+          <div className="flex flex-col gap-1 pt-3">
             <p className="m-0 text-rotulo uppercase tracking-rotulo text-white/55">
               {kicker}
             </p>
@@ -121,14 +121,14 @@ export function Inicio() {
             </p>
           </div>
 
-          <div className="flex w-full flex-wrap justify-center gap-[10px] pt-3 cel:flex-col">
+          <div className="flex w-full flex-wrap justify-center gap-3 pt-3 cel:flex-col">
             <button
               onClick={() =>
                 navegar(
                   `/aula/${retomada.modulo.numero}/${retomada.aula.ordem}`,
                 )
               }
-              className="flex min-h-[56px] min-w-[240px] flex-1 items-center justify-center gap-3 rounded-pilula border-none bg-white px-[26px] py-4 text-realce font-bold text-black transition-opacity hover:opacity-[.86] cel:w-full cel:min-w-0"
+              className="flex min-h-[56px] min-w-[240px] flex-1 items-center justify-center gap-3 rounded-pilula border-none bg-white px-7 py-4 text-realce font-bold text-black transition-opacity hover:opacity-[.86] cel:w-full cel:min-w-0"
               style={{ cursor: "pointer" }}
             >
               <Play />
@@ -136,7 +136,7 @@ export function Inicio() {
             </button>
             <button
               onClick={() => navegar(`/modulo/${retomada.modulo.numero}`)}
-              className="flex min-h-[56px] min-w-[240px] flex-1 items-center justify-center gap-3 rounded-pilula border-none px-[26px] py-4 text-realce font-bold text-white cel:w-full cel:min-w-0"
+              className="flex min-h-[56px] min-w-[240px] flex-1 items-center justify-center gap-3 rounded-pilula border-none px-7 py-4 text-realce font-bold text-white cel:w-full cel:min-w-0"
               style={{
                 background: "rgba(255,255,255,.22)",
                 backdropFilter: "blur(10px)",
@@ -162,9 +162,9 @@ export function Inicio() {
       */}
       {modulos.length > 0 ? (
         <section className="mt-10">
-          <div className="mb-6 flex flex-wrap items-end gap-[18px]">
+          <div className="mb-6 flex flex-wrap items-end gap-5">
             <div className="flex-[1_1_280px]" />
-            <div className="flex gap-[10px] cel:hidden">
+            <div className="flex gap-3 cel:hidden">
               {[
                 { rotulo: "Voltar nos módulos", glifo: "‹", passo: -560 },
                 { rotulo: "Avançar nos módulos", glifo: "›", passo: 560 },
@@ -180,9 +180,10 @@ export function Inicio() {
                   aria-label={seta.rotulo}
                   className="h-14 w-14 rounded-full text-titulo text-marfim-corpo"
                   style={{
-                    background:
-                      "radial-gradient(150% 240% at 50% 140%, rgba(255,255,255,.24) 0%, rgba(44,34,16,.7) 38%, #0a0805 78%)",
-                    border: "1px solid rgba(180,150,95,.22)",
+                    background: "rgba(255,255,255,.14)",
+                    backdropFilter: "blur(10px)",
+                    WebkitBackdropFilter: "blur(10px)",
+                    border: "none",
                     cursor: "pointer",
                   }}
                 >
@@ -194,14 +195,14 @@ export function Inicio() {
 
           <div
             ref={fileira}
-            className="sem-barra flex gap-5 overflow-x-auto px-1 pb-[22px] pt-[6px] cel:grid cel:grid-cols-1 cel:overflow-x-visible cel:pb-2"
+            className="sem-barra flex gap-5 overflow-x-auto pb-6 pt-2 cel:grid cel:grid-cols-1 cel:overflow-x-visible cel:pb-2"
             style={{ scrollSnapType: "x mandatory", scrollBehavior: "smooth" }}
           >
             {modulos.map((e) => (
               <button
                 key={e.modulo.id}
                 onClick={() => abrirModulo(e.modulo.numero, e.liberado)}
-                className="flex flex-[0_0_clamp(196px,62vw,252px)] flex-col gap-[14px] border-none bg-transparent p-0 text-left cel:w-full cel:flex-[0_0_auto]"
+                className="flex flex-[0_0_clamp(196px,62vw,252px)] flex-col gap-4 border-none bg-transparent p-0 text-left cel:w-full cel:flex-[0_0_auto]"
                 style={{ scrollSnapAlign: "start", cursor: "pointer" }}
               >
                 <span
@@ -240,7 +241,7 @@ export function Inicio() {
                             "linear-gradient(180deg, rgba(5,8,16,.15) 0%, rgba(5,8,16,.55) 55%, rgba(5,8,16,.94) 100%)",
                         }}
                       />
-                      <span className="absolute inset-x-[18px] bottom-[18px] flex flex-col gap-2">
+                      <span className="absolute inset-x-5 bottom-5 flex flex-col gap-2">
                         <span
                           className="text-rotulo uppercase tracking-rotulo"
                           style={{ color: e.destaque }}
@@ -255,7 +256,7 @@ export function Inicio() {
                   )}
 
                   <span
-                    className="absolute left-1/2 top-1/2 flex min-h-[32px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-[7px] whitespace-nowrap rounded-pilula px-[15px] py-2 text-apoio font-bold"
+                    className="absolute left-1/2 top-1/2 flex min-h-[32px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-2 whitespace-nowrap rounded-pilula px-4 py-2 text-apoio font-bold"
                     style={{
                       color: e.liberado ? "#000000" : "rgba(255,255,255,.85)",
                       background: e.liberado

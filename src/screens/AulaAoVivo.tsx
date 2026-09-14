@@ -19,15 +19,16 @@ export function AulaAoVivo() {
   const aoVivo = catalogo.aoVivo[modulo.id];
 
   return (
-    <main className="rise-in-rapido mx-auto max-w-[1240px] px-7 pb-[90px] pt-[34px] cel-sm:px-[18px]">
-      <div className="mb-[26px] flex flex-wrap items-center gap-[14px]">
+    <main className="rise-in-rapido mx-auto max-w-[1240px] px-7 pb-24 pt-9 cel-sm:px-5">
+      <div className="mb-7 flex flex-wrap items-center gap-4">
         <button
           onClick={() => navegar(`/modulo/${numero}`)}
-          className="min-h-[52px] rounded-pilula px-5 py-[14px] text-corpo text-marfim-corpo"
+          className="min-h-[52px] rounded-pilula px-5 py-4 text-corpo text-marfim-corpo"
           style={{
-            background:
-              "radial-gradient(150% 240% at 50% 140%, rgba(255,255,255,.24) 0%, rgba(44,34,16,.7) 38%, #0a0805 78%)",
-            border: "1px solid rgba(180,150,95,.22)",
+            background: "rgba(255,255,255,.14)",
+            backdropFilter: "blur(10px)",
+            WebkitBackdropFilter: "blur(10px)",
+            border: "none",
             cursor: "pointer",
           }}
         >
@@ -43,7 +44,7 @@ export function AulaAoVivo() {
         style={{ color: "#ffffff" }}
       >
         <span
-          className="mr-[10px] h-[9px] w-[9px] flex-none rounded-full"
+          className="mr-3 h-[9px] w-[9px] flex-none rounded-full"
           style={{
             background: "#ffffff",
             boxShadow: "0 0 12px rgba(240,220,168,.9)",
@@ -54,7 +55,7 @@ export function AulaAoVivo() {
       </span>
 
       <h1
-        className="text-heroi mb-[26px] mt-0 font-titulo font-semibold text-marfim"
+        className="text-heroi mb-7 mt-0 font-titulo font-semibold text-marfim"
       >
         Encontro ao vivo do Módulo {numero} — {modulo.titulo}
       </h1>
@@ -83,7 +84,7 @@ export function AulaAoVivo() {
               setPct((v) => (v === 0 ? 4 : v));
             }}
             aria-label={tocando ? "Pausar transmissão" : "Assistir aula ao vivo"}
-            className="flex min-h-[56px] items-center justify-center gap-3 rounded-pilula border-none bg-white px-[26px] py-4 text-realce font-bold text-black hover:opacity-[.86]"
+            className="flex min-h-[56px] items-center justify-center gap-3 rounded-pilula border-none bg-white px-7 py-4 text-realce font-bold text-black hover:opacity-[.86]"
             style={{ cursor: "pointer" }}
           >
             <Play tamanho={14} />
@@ -91,7 +92,7 @@ export function AulaAoVivo() {
           </button>
         </div>
         <div
-          className="absolute inset-x-0 bottom-0 px-[22px] py-5"
+          className="absolute inset-x-0 bottom-0 px-6 py-5"
           style={{ background: "linear-gradient(180deg, transparent, rgba(5,8,16,.92))" }}
         >
           <div
@@ -107,19 +108,19 @@ export function AulaAoVivo() {
               }}
             />
           </div>
-          <div className="mt-[10px] flex justify-between text-corpo text-[#cbbfae]">
+          <div className="mt-3 flex justify-between text-corpo text-[#cbbfae]">
             <span>{tocando ? "Reproduzindo" : pct > 0 ? "Pausado" : "Pronto para assistir"}</span>
             <span>{aoVivo?.quandoTexto ?? "Encontro de 1 hora"}</span>
           </div>
         </div>
       </div>
 
-      <div className="mt-[26px] flex flex-wrap gap-[18px]">
+      <div className="mt-7 flex flex-wrap gap-5">
         <div
-          className="flex-[1_1_340px] rounded-cartao-lg p-[26px]"
+          className="flex-[1_1_340px] rounded-cartao-lg p-7"
           style={{ background: cores.cartao, border: "1px solid rgba(255,255,255,.2)" }}
         >
-          <h3 className="mb-[14px] mt-0 font-titulo text-titulo text-marfim">
+          <h3 className="mb-4 mt-0 font-titulo text-titulo text-marfim">
             Sobre este encontro
           </h3>
           <p className="mb-3 mt-0 text-secao leading-[1.7] text-[#b9ac9a]">
@@ -131,10 +132,10 @@ export function AulaAoVivo() {
           </p>
         </div>
         <div
-          className="flex-[1_1_260px] rounded-cartao-lg p-[26px]"
+          className="flex-[1_1_260px] rounded-cartao-lg p-7"
           style={{ background: cores.cartao, border: "1px solid rgba(255,255,255,.2)" }}
         >
-          <h3 className="mb-[14px] mt-0 font-titulo text-titulo text-marfim">
+          <h3 className="mb-4 mt-0 font-titulo text-titulo text-marfim">
             Como participar
           </h3>
           <p className="m-0 text-secao leading-[1.7] text-[#b9ac9a]">

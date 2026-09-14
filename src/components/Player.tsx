@@ -382,7 +382,7 @@ export function Player({
             style={{ background: "rgba(0,0,0,.45)", border: "2px solid #ffffff" }}
           >
             <span
-              className="ml-[6px] block h-0 w-0"
+              className="ml-2 block h-0 w-0"
               style={{
                 borderTop: "13px solid transparent",
                 borderBottom: "13px solid transparent",

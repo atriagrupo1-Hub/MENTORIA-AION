@@ -170,7 +170,7 @@ export function ConviteInstalar() {
         <button
           onClick={dispensar}
           aria-label="Dispensar"
-          className="-mr-1 -mt-1 flex-none rounded-pilula px-[10px] py-[6px] text-realce leading-none"
+          className="-mr-1 -mt-1 flex-none rounded-pilula px-3 py-2 text-realce leading-none"
           style={{
             color: cores.textoSecundario,
             background: "transparent",

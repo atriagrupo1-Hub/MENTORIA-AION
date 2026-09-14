@@ -107,7 +107,7 @@ export function PaginaModulo() {
   const iniciar = () => abrirAula(proxima >= 0 ? proxima : 0);
 
   return (
-    <main className="rise-in-rapido pb-[90px]">
+    <main className="rise-in-rapido pb-24">
       {/* ---------- abertura no celular: a arte é a tela ---------- */}
       <section
         className="relative hidden w-full overflow-hidden cel:block"
@@ -127,7 +127,7 @@ export function PaginaModulo() {
         />
 
         <div
-          className="absolute inset-x-[18px] flex items-center gap-2"
+          className="absolute inset-x-5 flex items-center gap-2"
           // Instalado no celular, a página começa atrás do relógio e da
           // bateria; a faixa do aparelho é devolvida aqui.
           style={{ top: "calc(12px + env(safe-area-inset-top))" }}
@@ -145,13 +145,13 @@ export function PaginaModulo() {
           </div>
         </div>
 
-        <div className="absolute inset-x-[18px] bottom-[22px]">
+        <div className="absolute inset-x-5 bottom-6">
           <p className="m-0 text-rotulo uppercase tracking-rotulo" style={{ color: SUAVE }}>
             Módulo {modulo.numero} · {rotuloEstadoModulo(e)}
           </p>
           {modulo.tituloNaArte ? null : (
             <h1
-              className="text-heroi mb-0 mt-[10px] font-titulo font-semibold text-marfim"
+              className="text-heroi mb-0 mt-3 font-titulo font-semibold text-marfim"
             >
               {modulo.titulo}
             </h1>
@@ -159,9 +159,9 @@ export function PaginaModulo() {
         </div>
       </section>
 
-      <div className="mx-auto max-w-[1240px] px-7 cel-sm:px-[18px]">
+      <div className="mx-auto max-w-[1240px] px-7 cel-sm:px-5">
         {/* ---------- o que vem depois da arte, no celular ---------- */}
-        <div className="hidden flex-col gap-[18px] pt-5 cel:flex">
+        <div className="hidden flex-col gap-5 pt-5 cel:flex">
           <p className="m-0 text-corpo text-[#b9ac9a]">{modulo.intro}</p>
           <Progresso estado={e} />
           <BotaoIniciar estado={e} aoClicar={iniciar} largo />
@@ -169,7 +169,7 @@ export function PaginaModulo() {
 
         {/* ---------- abertura na tela grande ---------- */}
         <div className="cel:hidden">
-          <div className="sem-barra mb-6 flex items-center gap-2 overflow-x-auto pt-[34px]">
+          <div className="sem-barra mb-6 flex items-center gap-2 overflow-x-auto pt-9">
             <button onClick={() => navegar("/inicio")} style={NAV}>
               ‹ Todos
             </button>
@@ -201,14 +201,14 @@ export function PaginaModulo() {
                       background: "linear-gradient(180deg, rgba(5,8,16,.1), rgba(5,8,16,.9))",
                     }}
                   />
-                  <span className="absolute inset-x-5 bottom-[22px] font-titulo text-titulo leading-[1.15] text-marfim">
+                  <span className="absolute inset-x-5 bottom-6 font-titulo text-titulo leading-[1.15] text-marfim">
                     {modulo.titulo}
                   </span>
                 </>
               )}
             </div>
 
-            <div className="flex flex-[1_1_420px] flex-col gap-[13px]">
+            <div className="flex flex-[1_1_420px] flex-col gap-3">
               <p className="m-0 text-rotulo uppercase tracking-rotulo" style={{ color: SUAVE }}>
                 Módulo {modulo.numero} · {rotuloEstadoModulo(e)}
               </p>
@@ -330,7 +330,7 @@ function BotaoIniciar({
   return (
     <button
       onClick={aoClicar}
-      className={`flex min-h-[56px] items-center justify-center gap-3 border-none bg-white px-[26px] py-4 text-realce font-bold text-black transition-opacity hover:opacity-[.86] ${
+      className={`flex min-h-[56px] items-center justify-center gap-3 border-none bg-white px-7 py-4 text-realce font-bold text-black transition-opacity hover:opacity-[.86] ${
         largo ? "w-full rounded-cartao" : "self-start rounded-pilula"
       }`}
       style={{ cursor: "pointer" }}
@@ -368,7 +368,7 @@ function LinhaDaAula({
   return (
     <button
       onClick={aoAbrir}
-      className="flex items-start gap-4 border-none bg-transparent px-1 py-[14px] text-left transition-opacity hover:opacity-80"
+      className="flex items-start gap-4 border-none bg-transparent py-4 text-left transition-opacity hover:opacity-80"
       style={{ borderBottom: `1px solid ${LINHA}`, cursor: "pointer" }}
     >
       <span
@@ -387,14 +387,14 @@ function LinhaDaAula({
           {travada ? (
             <Cadeado />
           ) : (
-            <span className="ml-[3px]">
+            <span className="ml-1">
               <Play tamanho={10} cor="#ffffff" />
             </span>
           )}
         </span>
       </span>
 
-      <span className="flex flex-1 flex-col gap-[6px] pt-[2px]">
+      <span className="flex flex-1 flex-col gap-2 pt-1">
         <span className="text-realce font-semibold text-white">{titulo}</span>
         <span className="text-corpo" style={{ color: SUAVE }}>
           {feita ? "✓ " : ""}

@@ -34,8 +34,8 @@ export function Perfil() {
   ];
 
   return (
-    <main className="rise-in mx-auto max-w-[1360px] px-7 pb-[90px] pt-[22px] cel-sm:px-[18px]">
-      <p className="mb-[10px] mt-0 text-rotulo uppercase tracking-rotulo text-[rgba(255,255,255,.4)]">
+    <main className="rise-in mx-auto max-w-[1360px] px-7 pb-24 pt-6 cel-sm:px-5">
+      <p className="mb-3 mt-0 text-rotulo uppercase tracking-rotulo text-[rgba(255,255,255,.4)]">
         Sua jornada
       </p>
       <h1
@@ -78,7 +78,7 @@ export function Perfil() {
         ))}
       </section>
 
-      <section className="mt-[34px] flex flex-wrap gap-3">
+      <section className="mt-9 flex flex-wrap gap-3">
         <button
           onClick={() => {
             sair();

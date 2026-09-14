@@ -41,11 +41,11 @@ export function PaginaPresente() {
   const liberado = presenteLiberado(categoriaId, presente.id);
 
   return (
-    <main className="rise-in-rapido mx-auto max-w-[1240px] px-7 pb-[90px] pt-[34px] cel-sm:px-[18px]">
-      <div className="mb-[26px] flex flex-wrap items-center gap-[14px]">
+    <main className="rise-in-rapido mx-auto max-w-[1240px] px-7 pb-24 pt-9 cel-sm:px-5">
+      <div className="mb-7 flex flex-wrap items-center gap-4">
         <button
           onClick={() => navegar("/presentes")}
-          className="flex min-h-[52px] items-center justify-center gap-[10px] rounded-pilula border-none px-[22px] py-[15px] text-realce font-bold text-white"
+          className="flex min-h-[52px] items-center justify-center gap-3 rounded-pilula border-none px-6 py-4 text-realce font-bold text-white"
           style={{
             background: "rgba(255,255,255,.16)",
             backdropFilter: "blur(10px)",
@@ -64,7 +64,7 @@ export function PaginaPresente() {
         Presente {indice + 1}
       </p>
       <h1
-        className="text-heroi mb-[26px] mt-0 font-titulo font-semibold text-marfim"
+        className="text-heroi mb-7 mt-0 font-titulo font-semibold text-marfim"
       >
         {presente.titulo}
       </h1>
@@ -103,7 +103,7 @@ export function PaginaPresente() {
               <button
                 onClick={() => setTocando(true)}
                 aria-label="Assistir"
-                className="flex min-h-[56px] items-center justify-center gap-3 rounded-pilula border-none bg-white px-[26px] py-4 text-realce font-bold text-black hover:opacity-[.86]"
+                className="flex min-h-[56px] items-center justify-center gap-3 rounded-pilula border-none bg-white px-7 py-4 text-realce font-bold text-black hover:opacity-[.86]"
                 style={{ cursor: "pointer" }}
               >
                 <Play tamanho={14} />
@@ -114,7 +114,7 @@ export function PaginaPresente() {
         </div>
       ) : (
         <div
-          className="flex aspect-video w-full flex-col items-center justify-center gap-[14px] rounded-[20px]"
+          className="flex aspect-video w-full flex-col items-center justify-center gap-4 rounded-[20px]"
           style={{
             background: "linear-gradient(165deg, rgba(16,24,42,.9), rgba(6,9,18,.94))",
             border: "1px solid rgba(255,255,255,.18)",
@@ -127,12 +127,12 @@ export function PaginaPresente() {
         </div>
       )}
 
-      <div className="mt-[26px] flex flex-wrap gap-[18px]">
+      <div className="mt-7 flex flex-wrap gap-5">
         <div
-          className="flex-[1_1_320px] rounded-cartao-lg p-[26px]"
+          className="flex-[1_1_320px] rounded-cartao-lg p-7"
           style={{ background: cores.cartao, border: "1px solid rgba(255,255,255,.2)" }}
         >
-          <h3 className="mb-[14px] mt-0 font-titulo text-titulo text-marfim">
+          <h3 className="mb-4 mt-0 font-titulo text-titulo text-marfim">
             Sobre este presente
           </h3>
           <p className="m-0 text-secao leading-[1.7] text-[#b9ac9a]">
@@ -141,10 +141,10 @@ export function PaginaPresente() {
         </div>
 
         <div
-          className="flex-[1_1_260px] rounded-cartao-lg p-[26px]"
+          className="flex-[1_1_260px] rounded-cartao-lg p-7"
           style={{ background: cores.cartao, border: "1px solid rgba(255,255,255,.2)" }}
         >
-          <h3 className="mb-[14px] mt-0 font-titulo text-titulo text-marfim">
+          <h3 className="mb-4 mt-0 font-titulo text-titulo text-marfim">
             Outros presentes
           </h3>
           <div className="flex flex-col gap-2">
@@ -157,7 +157,7 @@ export function PaginaPresente() {
                   onClick={() =>
                     outroLiberado ? navegar(`/presente/${outro.presente.id}`) : undefined
                   }
-                  className="flex min-h-[64px] items-center gap-[14px] rounded-botao px-[14px] py-[10px] text-left"
+                  className="flex min-h-[64px] items-center gap-4 rounded-botao px-4 py-3 text-left"
                   style={{
                     background: selecionado
                       ? "rgba(255,255,255,.12)"

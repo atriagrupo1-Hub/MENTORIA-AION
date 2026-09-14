@@ -13,13 +13,13 @@ import { Cadeado } from "./Icones";
 export function SemConteudo() {
   return (
     <section
-      className="mt-1 rounded-cartao-lg px-[22px] py-[34px] text-center"
+      className="mt-1 rounded-cartao-lg px-6 py-9 text-center"
       style={{
         background: "rgba(255,255,255,.03)",
         border: "1px solid rgba(255,255,255,.1)",
       }}
     >
-      <span className="mb-[14px] inline-flex">
+      <span className="mb-4 inline-flex">
         <Cadeado largura={28} cor="rgba(255,255,255,.4)" corArco="rgba(255,255,255,.5)" />
       </span>
       <p
@@ -27,7 +27,7 @@ export function SemConteudo() {
       >
         Seu conteúdo será liberado em breve.
       </p>
-      <p className="mb-0 mt-[10px] text-corpo text-[rgba(243,236,225,.6)]">
+      <p className="mb-0 mt-3 text-corpo text-[rgba(243,236,225,.6)]">
         Assim que a primeira aula estiver disponível, ela aparecerá aqui.
       </p>
     </section>

@@ -276,7 +276,7 @@ export function TelaAula() {
   return (
     <main
       data-saindo={saindo ? "1" : "0"}
-      className="tela-aula mx-auto max-w-[1080px] pb-[90px]"
+      className="tela-aula mx-auto max-w-[1080px] pb-24"
     >
       {/*
         O escurecimento da tela inteira vinha do protótipo, onde não
@@ -343,7 +343,7 @@ export function TelaAula() {
           <button
             onClick={fechar}
             aria-label="Fechar e voltar ao módulo"
-            className="absolute right-[14px] top-[14px] z-[6] flex h-11 w-11 items-center justify-center rounded-full border-none text-secao leading-none text-white hover:opacity-80"
+            className="absolute right-4 top-4 z-[6] flex h-11 w-11 items-center justify-center rounded-full border-none text-secao leading-none text-white hover:opacity-80"
             style={{
               background: "rgba(0,0,0,.55)",
               backdropFilter: "blur(6px)",
@@ -372,8 +372,8 @@ export function TelaAula() {
         </div>
       </div>
 
-      <div className="relative z-20 bg-black px-4 pt-[14px]">
-        <div className="flex items-start gap-[10px]">
+      <div className="relative z-20 bg-black px-4 pt-4">
+        <div className="flex items-start gap-3">
           <h1
             className="text-titulo m-0 min-w-0 flex-1 font-bold leading-[1.3] text-white"
           >
@@ -390,7 +390,7 @@ export function TelaAula() {
             <button
               onClick={() => setMenuAberto((v) => !v)}
               aria-label="Opções do player"
-              className="flex h-10 w-[34px] flex-col items-center justify-center gap-[3px] border-none bg-transparent hover:opacity-70"
+              className="flex h-10 w-[34px] flex-col items-center justify-center gap-1 border-none bg-transparent hover:opacity-70"
               style={{ cursor: "pointer" }}
             >
               {[0, 1, 2].map((i) => (
@@ -400,7 +400,7 @@ export function TelaAula() {
 
             {menuAberto ? (
               <div
-                className="absolute right-0 top-[44px] z-40 w-[300px] max-w-[calc(100vw-32px)] rounded-botao p-[6px]"
+                className="absolute right-0 top-11 z-40 w-[300px] max-w-[calc(100vw-32px)] rounded-botao p-2"
                 style={{
                   background: "#1b1b1b",
                   border: "1px solid rgba(255,255,255,.1)",
@@ -429,7 +429,7 @@ export function TelaAula() {
                       {item.rotulo}
                     </span>
                     <span className="text-corpo text-white/60">{item.valor}</span>
-                    <span className="ml-[10px] text-realce text-white/60">›</span>
+                    <span className="ml-3 text-realce text-white/60">›</span>
                   </button>
                 ))}
               </div>
@@ -461,7 +461,7 @@ export function TelaAula() {
               onClick={() => void alternarCurtida(aula.id)}
               aria-label={curtiu(aula.id) ? "Descurtir" : "Curtir"}
               aria-pressed={curtiu(aula.id)}
-              className="flex h-[42px] items-center gap-2 border-none bg-transparent px-[15px] text-realce hover:opacity-80"
+              className="flex h-[42px] items-center gap-2 border-none bg-transparent px-4 text-realce hover:opacity-80"
               style={{ color: curtiu(aula.id) ? "#ffffff" : SUAVE, cursor: "pointer" }}
             >
               {curtiu(aula.id) ? "♥" : "♡"}
@@ -476,7 +476,7 @@ export function TelaAula() {
                 });
               }}
               aria-label="Ir para os comentários"
-              className="flex h-[42px] items-center gap-2 border-none bg-transparent px-[15px] text-corpo hover:opacity-80"
+              className="flex h-[42px] items-center gap-2 border-none bg-transparent px-4 text-corpo hover:opacity-80"
               style={{ color: SUAVE, cursor: "pointer" }}
             >
               <span className="text-realce leading-none">💬</span>
@@ -488,7 +488,7 @@ export function TelaAula() {
 
           <span className="flex-1" />
 
-          <div className="flex items-center gap-[10px]">
+          <div className="flex items-center gap-3">
             <button
               onClick={irParaAnterior}
               aria-label="Aula anterior"
@@ -501,7 +501,7 @@ export function TelaAula() {
             <button
               onClick={marcarConcluida}
               aria-pressed={feita}
-              className="flex h-[42px] items-center gap-2 rounded-pilula px-[18px] text-corpo font-semibold hover:opacity-90"
+              className="flex h-[42px] items-center gap-2 rounded-pilula px-5 text-corpo font-semibold hover:opacity-90"
               style={{
                 color: feita ? "#000000" : "#ffffff",
                 background: feita ? "#ffffff" : "transparent",
@@ -547,8 +547,8 @@ export function TelaAula() {
         ) : null}
 
         {painel === "exercicio" ? (
-          <div className="mt-[10px] rounded-botao p-4" style={{ background: "#141414" }}>
-            <div className="mb-3 flex items-center gap-[10px]">
+          <div className="mt-3 rounded-botao p-4" style={{ background: "#141414" }}>
+            <div className="mb-3 flex items-center gap-3">
               <h3 className="m-0 flex-1 text-corpo font-bold text-white">
                 Exercício da aula
               </h3>
@@ -562,7 +562,7 @@ export function TelaAula() {
               </button>
             </div>
 
-            <ol className="m-0 flex list-none flex-col gap-[14px] p-0">
+            <ol className="m-0 flex list-none flex-col gap-4 p-0">
               {passos.map((passo, i) => (
                 <li key={i} className="flex gap-3">
                   <span
@@ -571,7 +571,7 @@ export function TelaAula() {
                   >
                     {i + 1}
                   </span>
-                  <span className="min-w-0 flex-1 pt-[3px] text-corpo text-white/80">
+                  <span className="min-w-0 flex-1 pt-1 text-corpo text-white/80">
                     {passo}
                   </span>
                 </li>
@@ -595,7 +595,7 @@ export function TelaAula() {
         */}
         <section
           ref={secaoComentarios}
-          className="mt-[18px] rounded-botao p-4"
+          className="mt-5 rounded-botao p-4"
           style={{ background: "#101010", border: `1px solid ${LINHA}` }}
         >
           <p className="mb-3 mt-0 text-corpo text-white">
@@ -646,13 +646,13 @@ export function TelaAula() {
               {comentarios.map((c) => (
                 <div
                   key={c.id}
-                  className="py-[14px]"
+                  className="py-4"
                   style={{ borderTop: "1px solid rgba(255,255,255,.08)" }}
                 >
                   <p className="m-0 text-apoio font-bold text-white">
                     {c.minha ? "Você" : "Anônimo"}
                   </p>
-                  <p className="mb-0 mt-[6px] text-corpo text-white/85">
+                  <p className="mb-0 mt-2 text-corpo text-white/85">
                     {c.texto}
                   </p>
                 </div>
@@ -662,7 +662,7 @@ export function TelaAula() {
         </section>
 
         <h2
-          className="mb-3 mt-[26px] text-rotulo font-bold uppercase tracking-rotulo"
+          className="mb-3 mt-7 text-rotulo font-bold uppercase tracking-rotulo"
           style={{ color: SUAVE }}
         >
           Aulas do módulo {modulo.numero}
@@ -684,7 +684,7 @@ export function TelaAula() {
                   }
                   navegar(`/aula/${modulo.numero}/${outra.ordem}`);
                 }}
-                className="flex items-start gap-[14px] border-none bg-transparent py-3 text-left transition-opacity hover:opacity-[.82]"
+                className="flex items-start gap-4 border-none bg-transparent py-3 text-left transition-opacity hover:opacity-[.82]"
                 style={{ borderBottom: "1px solid rgba(255,255,255,.08)", cursor: "pointer" }}
               >
                 <span
@@ -708,7 +708,7 @@ export function TelaAula() {
                       className="absolute left-1/2 top-1/2 flex h-10 w-10 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full"
                       style={{ border: "2px solid rgba(255,255,255,.92)" }}
                     >
-                      <span className="ml-[3px]">
+                      <span className="ml-1">
                         <Play tamanho={12} cor="#ffffff" />
                       </span>
                     </span>
@@ -749,7 +749,7 @@ export function TelaAula() {
                   ) : null}
 
                   <span
-                    className="absolute bottom-[6px] right-[6px] rounded-[3px] px-[6px] py-[2px] text-rotulo text-white"
+                    className="absolute bottom-2 right-2 rounded-[3px] px-2 py-1 text-rotulo text-white"
                     style={{ background: "rgba(0,0,0,.78)" }}
                   >
                     {relogio(minutosDaAula(modulo, outra) * 60)}
@@ -775,7 +775,7 @@ export function TelaAula() {
                   ) : null}
                 </span>
 
-                <span className="flex min-w-0 flex-1 flex-col gap-1 pt-[2px]">
+                <span className="flex min-w-0 flex-1 flex-col gap-1 pt-1">
                   <span
                     className="text-corpo font-bold leading-[1.35]"
                     style={{ color: atual ? "#ffffff" : "rgba(255,255,255,.62)" }}
