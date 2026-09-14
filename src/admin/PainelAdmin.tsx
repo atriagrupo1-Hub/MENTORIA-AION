@@ -3,6 +3,7 @@ import { Aviso } from "@/components/Aviso";
 import { useAviso } from "@/components/useAviso";
 import { useEstado } from "@/data/estado";
 import { AbaAlunas } from "./AbaAlunas";
+import { AbaComentarios } from "./AbaComentarios";
 import { AbaConteudo } from "./AbaConteudo";
 import { AbaPresentes } from "./AbaPresentes";
 import { Confirmacao, type PedidoConfirmacao } from "./Confirmacao";
@@ -186,7 +187,7 @@ function PainelLogado() {
   const { sair } = useEstado();
   const painel = usePainel();
   const aviso = useAviso();
-  const [abaAtiva, setAbaAtiva] = useState<"alunas" | "conteudo">("alunas");
+  const [abaAtiva, setAbaAtiva] = useState<"alunas" | "conteudo" | "comentarios">("alunas");
   const [subaba, setSubaba] = useState("mentoria");
   const [pedido, setPedido] = useState<PedidoConfirmacao | null>(null);
 
@@ -247,10 +248,20 @@ function PainelLogado() {
       <div className="entra mx-auto max-w-[1180px] px-6 pb-[90px] pt-9">
         <header className="mb-7 flex flex-wrap items-baseline gap-x-4 gap-y-1">
           <h1 className="m-0 text-[27px] font-semibold" style={{ color: tema.texto }}>
-            {abaAtiva === "conteudo" ? "Conteúdo da mentoria" : "Alunas da mentoria"}
+            {abaAtiva === "conteudo"
+              ? "Conteúdo da mentoria"
+              : abaAtiva === "comentarios"
+                ? "Comentários das alunas"
+                : "Alunas da mentoria"}
           </h1>
           <span className="text-[14px]" style={{ color: tema.textoSecundario }}>
-            {carregando ? "Carregando…" : abaAtiva === "conteudo" ? resumoConteudo : resumoAlunas}
+            {abaAtiva === "comentarios"
+              ? "O que elas escreveram nas aulas"
+              : carregando
+                ? "Carregando…"
+                : abaAtiva === "conteudo"
+                  ? resumoConteudo
+                  : resumoAlunas}
           </span>
         </header>
 
@@ -278,9 +289,17 @@ function PainelLogado() {
           <button onClick={() => setAbaAtiva("conteudo")} style={aba(abaAtiva === "conteudo")}>
             Conteúdo
           </button>
+          <button
+            onClick={() => setAbaAtiva("comentarios")}
+            style={aba(abaAtiva === "comentarios")}
+          >
+            Comentários
+          </button>
         </div>
 
-        {abaAtiva === "alunas" ? (
+        {abaAtiva === "comentarios" ? (
+          <AbaComentarios pedirConfirmacao={setPedido} avisar={aviso.mostrar} />
+        ) : abaAtiva === "alunas" ? (
           <AbaAlunas painel={painel} pedirConfirmacao={setPedido} avisar={aviso.mostrar} />
         ) : (
           <div>

@@ -450,3 +450,71 @@ export async function midiaDosPresentes(): Promise<
 /** Catálogo completo, para o painel. Reaproveita a leitura da aluna. */
 export { carregarCatalogo } from "@/data/api";
 export type { Catalogo };
+
+// ---------------------------------------------------------------------
+// Moderação de comentários
+//
+// A autoria só sai do banco por aqui. A coluna `autora_id` não é
+// concedida ao papel `authenticated`, e a administradora é
+// `authenticated` como qualquer aluna — o que a distingue é o papel
+// `admin`, que a função confere lá dentro. É o mesmo padrão da mídia e
+// das credenciais.
+// ---------------------------------------------------------------------
+
+export type ComentarioParaModerar = {
+  id: string;
+  aulaId: string;
+  moduloNumero: number;
+  aulaNumero: number;
+  autoraId: string;
+  autoraNome: string;
+  texto: string;
+  status: "publicado" | "oculto" | "removido";
+  criadoEm: string;
+};
+
+export async function comentariosParaModerar(): Promise<ComentarioParaModerar[]> {
+  const { data, error } = await supabase.rpc("comentarios_para_moderacao", { p_aula: null });
+  if (error) throw new Error(`comentários: ${error.message}`);
+  return (data ?? []).map(
+    (c: {
+      id: string;
+      aula_id: string;
+      modulo_numero: number;
+      aula_numero: number;
+      autora_id: string;
+      autora_nome: string;
+      texto: string;
+      status: ComentarioParaModerar["status"];
+      criado_em: string;
+    }) => ({
+      id: c.id,
+      aulaId: c.aula_id,
+      moduloNumero: c.modulo_numero,
+      aulaNumero: c.aula_numero,
+      autoraId: c.autora_id,
+      autoraNome: c.autora_nome,
+      texto: c.texto,
+      status: c.status,
+      criadoEm: c.criado_em,
+    }),
+  );
+}
+
+/**
+ * Ocultar tira o comentário da vista das alunas; publicar devolve.
+ *
+ * Nenhum dos dois apaga a linha — o item (I) do modelo pede histórico
+ * preservado, e quem moderou e quando fica gravado. É o que permite
+ * desfazer, e é o que responde "quem tirou isso do ar?".
+ */
+export async function moderarComentario(
+  id: string,
+  status: ComentarioParaModerar["status"],
+): Promise<void> {
+  const { error } = await supabase.rpc("moderar_comentario", {
+    p_comentario: id,
+    p_status: status,
+  });
+  if (error) throw new Error(`moderar: ${error.message}`);
+}
