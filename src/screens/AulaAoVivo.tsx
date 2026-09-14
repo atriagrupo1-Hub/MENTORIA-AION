@@ -103,7 +103,7 @@ export function AulaAoVivo() {
             <div
               className="h-full rounded-pilula"
               style={{
-                background: "linear-gradient(90deg, #b8934f, #f0dca8)",
+                background: "#ffffff",
                 width: `${pct}%`,
                 transition: "width .4s linear",
               }}

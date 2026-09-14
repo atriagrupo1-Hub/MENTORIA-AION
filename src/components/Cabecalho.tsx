@@ -102,7 +102,7 @@ export function Cabecalho({
         <div className="min-w-[110px] flex-1">
           <div className="mb-[6px] flex justify-between text-[13px] text-[#a89f92]">
             <span>Seu progresso</span>
-            <span className="text-ouro-medio">{percentualGeral}%</span>
+            <span style={{ color: "#ffffff" }}>{percentualGeral}%</span>
           </div>
           <div
             className="h-[6px] overflow-hidden rounded-pilula"
@@ -111,7 +111,7 @@ export function Cabecalho({
             <div
               className="h-full rounded-pilula"
               style={{
-                background: "linear-gradient(90deg, #b8934f, #f0dca8)",
+                background: "#ffffff",
                 width: `${percentualGeral}%`,
                 transition: "width .9s cubic-bezier(.22,.61,.36,1)",
               }}

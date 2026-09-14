@@ -7,8 +7,8 @@ import { useEstado } from "@/data/estado";
 import { cores } from "@/design/tokens";
 
 /**
- * Acervo em faixas: cada categoria com título dourado em maiúsculas e
- * uma fileira deslizável mostrando duas capas por tela. Categorias
+ * Acervo em faixas: cada categoria com o título em maiúsculas e uma
+ * fileira deslizável mostrando duas capas por tela. Categorias
  * destacadas vêm primeiro.
  */
 export function Presentes() {
