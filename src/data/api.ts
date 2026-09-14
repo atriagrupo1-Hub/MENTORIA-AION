@@ -301,6 +301,15 @@ export type AulaLiberada = {
   posicaoSegundos: number;
   concluida: boolean;
   duracaoSegundos: number | null;
+  /**
+   * Quando esta aula mexeu pela última vez, no relógio do banco. Nulo
+   * quer dizer que ela nunca abriu esta aula.
+   *
+   * É o que responde "de onde eu parei": sem esta data, a única coisa
+   * que dava para saber era qual aula está pendente — e pendente não é
+   * o mesmo que a última que ela estava assistindo.
+   */
+  atualizadaEm: string | null;
 };
 
 /**
@@ -316,11 +325,13 @@ export async function minhasAulas(): Promise<AulaLiberada[]> {
       posicao_segundos: number;
       concluida: boolean;
       duracao_segundos: number | null;
+      atualizada_em: string | null;
     }) => ({
       aulaId: l.aula_id,
       posicaoSegundos: l.posicao_segundos,
       concluida: l.concluida,
       duracaoSegundos: l.duracao_segundos,
+      atualizadaEm: l.atualizada_em,
     }),
   );
 }

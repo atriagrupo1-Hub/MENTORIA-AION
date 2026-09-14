@@ -46,6 +46,17 @@ export function relogio(segundos: number): string {
   return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
+/**
+ * O mesmo minuto, escrito como se fala: 7:12, não 07:12.
+ *
+ * O zero à frente serve num contador que corre, onde a largura não pode
+ * mudar a cada minuto. Numa frase — "voltar aos 7:12" — ele só atrapalha.
+ */
+export function minutoFalado(segundos: number): string {
+  const s = Math.max(0, Math.round(segundos));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
 type Estado = {
   carregando: boolean;
   erro: string | null;
@@ -68,11 +79,19 @@ type Estado = {
   concluida: (aulaId: string) => boolean;
   percentualAssistido: (aulaId: string) => number;
   posicaoSegundos: (aulaId: string) => number;
+  /** Quando ela mexeu nesta aula pela última vez. Nulo = nunca abriu. */
+  atualizadaEm: (aulaId: string) => string | null;
   curtiu: (aulaId: string) => boolean;
 
   alternarConcluida: (aulaId: string) => Promise<boolean>;
   alternarCurtida: (aulaId: string) => Promise<void>;
-  registrarPosicao: (aulaId: string, segundos: number, duracao: number) => void;
+  registrarPosicao: (
+    aulaId: string,
+    segundos: number,
+    duracao: number,
+    /** Grava agora, sem esperar os 15 segundos. Ver `registrarPosicao`. */
+    agora?: boolean,
+  ) => void;
 };
 
 const Contexto = createContext<Estado | null>(null);
@@ -91,6 +110,15 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
 
   /** Posição do vídeo em andamento, antes de chegar ao banco. */
   const posicoesLocais = useRef<Map<string, number>>(new Map());
+  /*
+   * Aulas que ela mexeu nesta visita, e quando.
+   *
+   * O banco só é relido quando a tela inteira recarrega. Sem esta
+   * lembrança, ela assistiria dez minutos de uma aula, voltaria ao
+   * Início e o bloco "continue de onde parou" ainda apontaria para a
+   * aula anterior — o app saberia menos do que ela acabou de fazer.
+   */
+  const mexidasAgora = useRef<Map<string, string>>(new Map());
   const enviosPendentes = useRef<Map<string, number>>(new Map());
 
   const carregarTudo = useCallback(async () => {
@@ -226,6 +254,17 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
     [liberadas],
   );
 
+  /*
+   * A data que o banco devolveu, ou agora, se ela mexeu nesta aula
+   * depois de a tela ter carregado. Sem essa segunda metade, assistir
+   * uma aula e voltar para o Início mostraria a aula de antes.
+   */
+  const atualizadaEm = useCallback<Estado["atualizadaEm"]>(
+    (aulaId) =>
+      mexidasAgora.current.get(aulaId) ?? liberadas.get(aulaId)?.atualizadaEm ?? null,
+    [liberadas],
+  );
+
   const percentualAssistido = useCallback<Estado["percentualAssistido"]>(
     (aulaId) => {
       const info = liberadas.get(aulaId);
@@ -268,15 +307,22 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
 
   /**
    * A posição vai para o banco a cada 15 segundos de reprodução, como
-   * pede o item (H) do modelo — não a cada segundo. No pior caso perdem-se
-   * alguns segundos de posição; conclusão nunca, porque vai na hora.
+   * pede o item (H) do modelo — não a cada segundo.
+   *
+   * `agora` fura essa espera. O player pede isso quando ela pausa,
+   * quando a aula acaba e quando ela sai do aplicativo: são justamente
+   * os momentos em que "onde eu parei" é decidido, e economizar uma
+   * gravação ali custava até quinze segundos de aula na volta. Durante
+   * a reprodução a espera continua valendo — é o que impede uma aula de
+   * vinte minutos de virar mil gravações.
    */
   const registrarPosicao = useCallback<Estado["registrarPosicao"]>(
-    (aulaId, segundos, duracao) => {
+    (aulaId, segundos, duracao, agora = false) => {
       posicoesLocais.current.set(aulaId, segundos);
       const ultimo = enviosPendentes.current.get(aulaId) ?? -Infinity;
-      if (Math.abs(segundos - ultimo) < 15) return;
+      if (!agora && Math.abs(segundos - ultimo) < 15) return;
       enviosPendentes.current.set(aulaId, segundos);
+      mexidasAgora.current.set(aulaId, new Date().toISOString());
       void api.salvarPosicao(aulaId, segundos).catch(() => undefined);
       const info = liberadas.get(aulaId);
       if (info && !info.duracaoSegundos && duracao > 0) {
@@ -304,6 +350,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       concluida,
       percentualAssistido,
       posicaoSegundos,
+      atualizadaEm,
       curtiu,
       alternarConcluida,
       alternarCurtida,
@@ -326,6 +373,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       concluida,
       percentualAssistido,
       posicaoSegundos,
+      atualizadaEm,
       curtiu,
       alternarConcluida,
       alternarCurtida,

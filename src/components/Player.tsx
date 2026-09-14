@@ -34,7 +34,11 @@ type Props = {
   /** Onde retomar, em segundos. Zero começa do início. */
   comecarEm?: number;
   aoTocar?: (tocando: boolean) => void;
-  aoProgredir?: (segundos: number, duracao: number) => void;
+  /**
+   * Onde o vídeo está. `agora` pede para gravar sem esperar a próxima
+   * janela: é o que garante que "de onde parei" seja o minuto certo.
+   */
+  aoProgredir?: (segundos: number, duracao: number, agora?: boolean) => void;
   aoTerminar?: () => void;
 };
 
@@ -133,7 +137,10 @@ export function Player({
     };
     const aoPausar = () => {
       aoTocar?.(false);
-      if (Number.isFinite(v.duration)) aoProgredir?.(v.currentTime, v.duration);
+      // Sem `agora`, uma pausa a oito segundos da última gravação era
+      // descartada — e oito segundos é exatamente o que ela perderia ao
+      // voltar. Pausar é o momento em que "onde parei" fica decidido.
+      if (Number.isFinite(v.duration)) aoProgredir?.(v.currentTime, v.duration, true);
     };
     const aoAndar = () => {
       if (!Number.isFinite(v.duration)) return;
@@ -144,7 +151,7 @@ export function Player({
     const aoAcabar = () => {
       setTerminou(true);
       aoTocar?.(false);
-      if (Number.isFinite(v.duration)) aoProgredir?.(v.duration, v.duration);
+      if (Number.isFinite(v.duration)) aoProgredir?.(v.duration, v.duration, true);
       aoTerminar?.();
     };
 
@@ -159,6 +166,38 @@ export function Player({
       v.removeEventListener("ended", aoAcabar);
     };
   }, [aoTocar, aoProgredir, aoTerminar]);
+
+  /*
+   * ---- saindo do aplicativo, a posição vai junto ----
+   *
+   * Fechar o app, trocar de aba, apertar o botão de início: em nenhum
+   * desses o navegador promete outro momento depois. `visibilitychange`
+   * é o último aviso que ele dá, e no iPhone é o único — `unload` não
+   * chega a acontecer. Aqui a posição é gravada na hora, sem esperar a
+   * janela dos quinze segundos.
+   *
+   * O `pause` acima cobre a maioria dos casos, porque o sistema pausa o
+   * vídeo ao mandar o app para trás. Isto é a rede embaixo: sai barato
+   * (uma gravação) e é o que decide se ela volta no minuto certo.
+   */
+  useEffect(() => {
+    function guardar() {
+      const v = video.current;
+      if (!v || !Number.isFinite(v.duration) || v.currentTime <= 0) return;
+      aoProgredir?.(v.currentTime, v.duration, true);
+    }
+    // `pagehide` já é a saída; `visibilitychange` dispara também na
+    // volta, e aí não há nada a guardar.
+    function aoEsconder() {
+      if (document.visibilityState === "hidden") guardar();
+    }
+    document.addEventListener("visibilitychange", aoEsconder);
+    window.addEventListener("pagehide", guardar);
+    return () => {
+      document.removeEventListener("visibilitychange", aoEsconder);
+      window.removeEventListener("pagehide", guardar);
+    };
+  }, [aoProgredir]);
 
   // ---- saindo da tela cheia, a orientação volta a ser dela ----
   useEffect(() => {

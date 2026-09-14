@@ -10,7 +10,15 @@ import { useEstado } from "./estado";
 /** Números que as telas Início, Módulos e Perfil compartilham. */
 export function useJornada() {
   const estado = useEstado();
-  const { catalogo, moduloLiberado, moduloVisivel, aulaBloqueada, concluida } = estado;
+  const {
+    catalogo,
+    moduloLiberado,
+    moduloVisivel,
+    aulaBloqueada,
+    concluida,
+    posicaoSegundos,
+    atualizadaEm,
+  } = estado;
 
   return useMemo(() => {
     /*
@@ -29,7 +37,13 @@ export function useJornada() {
 
     const totalAulas = meus.reduce((s, m) => s + m.aulas.length, 0);
     const totalConcluidas = modulos.reduce((s, m) => s + m.concluidas, 0);
-    const retomada = pontoDeRetomada(meus, moduloLiberado, aulaBloqueada, concluida);
+    const retomada = pontoDeRetomada(meus, {
+      moduloLiberado,
+      aulaBloqueada,
+      concluida,
+      posicaoSegundos,
+      atualizadaEm,
+    });
     const moduloAtual = retomada?.modulo ?? meus[0];
 
     return {
@@ -41,5 +55,13 @@ export function useJornada() {
       retomada,
       moduloAtual,
     };
-  }, [catalogo, moduloLiberado, moduloVisivel, aulaBloqueada, concluida]);
+  }, [
+    catalogo,
+    moduloLiberado,
+    moduloVisivel,
+    aulaBloqueada,
+    concluida,
+    posicaoSegundos,
+    atualizadaEm,
+  ]);
 }

@@ -162,9 +162,9 @@ export function TelaAula() {
    * que se grava é o que ela assistiu de verdade.
    */
   /** O player avisou onde está. É daqui que sai "continue de onde parou". */
-  function aoProgredir(atual: number, total: number) {
+  function aoProgredir(atual: number, total: number, agora = false) {
     setSegundos(atual);
-    registrarPosicao(aula!.id, atual, total);
+    registrarPosicao(aula!.id, atual, total, agora);
   }
   function fechar() {
     setSaindo(true);

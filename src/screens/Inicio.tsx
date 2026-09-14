@@ -5,8 +5,8 @@ import { Capa, capaAula, capaModulo } from "@/components/Capa";
 import { Cadeado, Mais, Play } from "@/components/Icones";
 import { SemConteudo } from "@/components/SemConteudo";
 import { useAviso } from "@/components/useAviso";
-import { rotuloAcaoModulo, rotuloConcluidas } from "@/data/derivados";
-import { rotuloDuracao, useEstado } from "@/data/estado";
+import { rotuloAcaoModulo, rotuloConcluidas, type Retomada } from "@/data/derivados";
+import { minutoFalado, minutosDaAula, rotuloDuracao, useEstado } from "@/data/estado";
 import { useJornada } from "@/data/useJornada";
 import { cores } from "@/design/tokens";
 import { useRef } from "react";
@@ -18,12 +18,26 @@ export function Inicio() {
   const aviso = useAviso();
   const fileira = useRef<HTMLDivElement>(null);
 
-  const kicker =
-    totalConcluidas === 0 ? "Comece por aqui" : "Continue assistindo";
-  const acao =
-    totalConcluidas === 0
+  /*
+   * O que o bloco promete tem de ser o que ele faz.
+   *
+   * "Continuar de onde parei" aparecia sempre que houvesse uma aula
+   * concluída em qualquer lugar da jornada, mesmo mandando a aluna para
+   * o começo de uma aula que ela nunca abriu. Agora quem decide é a
+   * própria retomada: só promete continuar quando há mesmo um minuto
+   * guardado para voltar.
+   */
+  const retomando = retomada?.retomando ?? false;
+  const kicker = retomando
+    ? "Continue assistindo"
+    : totalConcluidas === 0
+      ? "Comece por aqui"
+      : "Próxima aula";
+  const acao = retomando
+    ? `Voltar aos ${minutoFalado(retomada!.segundos)}`
+    : totalConcluidas === 0
       ? "Começar a primeira aula"
-      : "Continuar de onde parei";
+      : "Assistir agora";
 
   function abrirModulo(numero: number, liberado: boolean) {
     if (!liberado) {
@@ -63,6 +77,28 @@ export function Inicio() {
               alt="Capa da aula em andamento"
             />
             <div className="aspect-video" />
+            {retomando ? (
+              /*
+               * A tira que a Netflix põe embaixo da capa. Ela responde
+               * "quanto falta" antes de qualquer texto: a aluna vê num
+               * relance se é um começo ou uma volta.
+               */
+              <span className="absolute inset-x-0 bottom-0 h-[3px] bg-white/25">
+                <span
+                  className="block h-full bg-white"
+                  style={{
+                    width: `${Math.min(
+                      100,
+                      Math.round(
+                        (retomada!.segundos /
+                          (minutosDaAula(retomada!.modulo, retomada!.aula) * 60)) *
+                          100,
+                      ),
+                    )}%`,
+                  }}
+                />
+              </span>
+            ) : null}
           </div>
 
           <div className="flex flex-col gap-1 px-[2px] pt-3">
@@ -77,9 +113,11 @@ export function Inicio() {
             </h2>
             <p className="m-0 text-[13px] text-white/55">
               {rotuloDuracao(retomada.modulo, retomada.aula)} ·{" "}
-              {concluida(retomada.aula.id)
-                ? "Aula concluída"
-                : "Disponível agora"}
+              {retomando
+                ? `faltam ${faltamMinutos(retomada)} min`
+                : concluida(retomada.aula.id)
+                  ? "Aula concluída"
+                  : "Disponível agora"}
             </p>
           </div>
 
@@ -260,4 +298,14 @@ export function Inicio() {
       <Aviso mensagem={aviso.mensagem} aoFechar={aviso.limpar} />
     </main>
   );
+}
+
+/**
+ * Quanto falta da aula, em minutos inteiros. É a informação que a aluna
+ * usa para decidir se começa agora — mais útil que repetir o minuto
+ * exato, que o botão ao lado já diz.
+ */
+function faltamMinutos(retomada: Retomada): number {
+  const total = minutosDaAula(retomada.modulo, retomada.aula) * 60;
+  return Math.max(1, Math.round((total - retomada.segundos) / 60));
 }
