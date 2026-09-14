@@ -35,13 +35,26 @@ const ABAS = [
  * Cabeçalho fixo sobre o degradê do módulo. Some por completo na tela
  * da aula. O ícone de alternar celular/computador do protótipo não vem
  * para produção (item 11 do README).
+ *
+ * `soComputador` some com ele também no celular. É o que a página do
+ * módulo pede: lá a capa começa colada no alto da tela, e um cabeçalho
+ * empurrando a arte para baixo desfaz justamente o efeito. No celular a
+ * navegação está no rodapé, então nada se perde.
  */
-export function Cabecalho({ percentualGeral }: { percentualGeral: number }) {
+export function Cabecalho({
+  percentualGeral,
+  soComputador = false,
+}: {
+  percentualGeral: number;
+  soComputador?: boolean;
+}) {
   const navegar = useNavigate();
 
   return (
     <header
-      className="sticky top-0 z-40 flex flex-wrap items-center gap-x-[26px] gap-y-[18px] px-7 pb-4 cel-sm:px-4 cel-sm:gap-y-3"
+      className={`sticky top-0 z-40 flex flex-wrap items-center gap-x-[26px] gap-y-[18px] px-7 pb-4 cel-sm:px-4 cel-sm:gap-y-3 ${
+        soComputador ? "cel:hidden" : ""
+      }`}
       style={{
         // Instalado no celular, a página começa atrás do relógio e da
         // bateria — é o `viewport-fit=cover` do index.html. Reservar a

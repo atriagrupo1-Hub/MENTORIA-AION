@@ -65,13 +65,16 @@ export function Moldura() {
   }
 
   const naAula = local.pathname.startsWith("/aula/");
+  const naPaginaDoModulo = local.pathname.startsWith("/modulo/");
 
   return (
     <div
       className={`min-h-screen ${naAula ? "" : ESPACO_DA_BARRA}`}
       style={{ background: naAula ? "#000000" : fundoApp(moduloAtual?.numero ?? 0) }}
     >
-      {naAula ? null : <Cabecalho percentualGeral={percentualGeral} />}
+      {naAula ? null : (
+        <Cabecalho percentualGeral={percentualGeral} soComputador={naPaginaDoModulo} />
+      )}
       <Outlet />
       {naAula ? null : <ConviteInstalar />}
       {naAula ? null : <BarraInferior />}
