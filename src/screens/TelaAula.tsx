@@ -8,7 +8,7 @@ import { Play } from "@/components/Icones";
 import { useAviso } from "@/components/useAviso";
 import * as api from "@/data/api";
 import type { ComentarioPublico } from "@/data/api";
-import { minutosDaAula, relogio, rotuloDuracao, useEstado } from "@/data/estado";
+import { rotuloDuracao, useEstado } from "@/data/estado";
 import { cores, paleta } from "@/design/tokens";
 
 const VELOCIDADES = ["0,5x", "0,75x", "Normal", "1,25x", "1,5x", "1,75x", "2x"];
@@ -784,12 +784,14 @@ export function TelaAula() {
                     </span>
                   ) : null}
 
-                  <span
-                    className="absolute bottom-2 right-2 rounded-[3px] px-2 py-1 text-rotulo text-white"
-                    style={{ background: "rgba(0,0,0,.78)" }}
-                  >
-                    {relogio(minutosDaAula(modulo, outra) * 60)}
-                  </span>
+                  {/*
+                    A etiqueta de duração saiu da miniatura.
+                    Ela dizia "16:00" no canto da imagem e a linha ao
+                    lado dizia "16 min" — a mesma informação duas vezes,
+                    em dois formatos, a dois centímetros de distância.
+                    Ficou a do texto, que é onde o olho já está lendo o
+                    resto.
+                  */}
 
                   {!travada && !feitaOutra && assistido > 0 ? (
                     <span
@@ -819,7 +821,7 @@ export function TelaAula() {
                     {outra.numero}. {outra.titulo}
                   </span>
                   <span className="text-apoio text-white/50">
-                    {rotuloDuracao(modulo, outra)} •{" "}
+                    {rotuloDuracao(modulo, outra)} ·{" "}
                     {travada
                       ? "Bloqueada"
                       : feitaOutra

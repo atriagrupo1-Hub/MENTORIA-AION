@@ -195,14 +195,27 @@ export function Inicio() {
 
           <div
             ref={fileira}
-            className="sem-barra flex gap-5 overflow-x-auto pb-6 pt-2 cel:grid cel:grid-cols-1 cel:overflow-x-visible cel:pb-2"
+            /*
+             * Fileira deslizante também no celular.
+             *
+             * Ela virava uma coluna de um cartão por linha. Com os três
+             * módulos de teste isso parecia bom; com os onze de verdade
+             * a tela Início passou a ter 7.354 pixels de altura — quase
+             * nove telas de rolagem, medidas no aplicativo publicado.
+             * O módulo 11 ficava a oito arrastadas de distância.
+             *
+             * Deslizando de lado, a jornada inteira cabe num gesto, e a
+             * tela volta a ter o tamanho de uma tela. É o que Netflix
+             * faz com um catálogo, e pela mesma razão.
+             */
+            className="sem-barra flex gap-4 overflow-x-auto pb-6 pt-2 cel:gap-3"
             style={{ scrollSnapType: "x mandatory", scrollBehavior: "smooth" }}
           >
             {modulos.map((e) => (
               <button
                 key={e.modulo.id}
                 onClick={() => abrirModulo(e.modulo.numero, e.liberado)}
-                className="flex flex-[0_0_clamp(196px,62vw,252px)] flex-col gap-4 border-none bg-transparent p-0 text-left cel:w-full cel:flex-[0_0_auto]"
+                className="flex flex-[0_0_clamp(196px,62vw,252px)] flex-col gap-4 border-none bg-transparent p-0 text-left"
                 style={{ scrollSnapAlign: "start", cursor: "pointer" }}
               >
                 <span
