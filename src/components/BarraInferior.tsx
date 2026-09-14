@@ -106,7 +106,7 @@ export function BarraInferior() {
             <>
               <Icone nome={a.chave} cor={isActive ? BRANCO : APAGADO} />
               <span
-                className="text-[10.5px]"
+                className="text-rotulo"
                 style={{ color: isActive ? BRANCO : APAGADO, fontWeight: isActive ? 600 : 400 }}
               >
                 {a.rotulo}

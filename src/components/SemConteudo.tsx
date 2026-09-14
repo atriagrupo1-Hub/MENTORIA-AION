@@ -23,12 +23,11 @@ export function SemConteudo() {
         <Cadeado largura={28} cor="rgba(255,255,255,.4)" corArco="rgba(255,255,255,.5)" />
       </span>
       <p
-        className="m-0 font-titulo leading-[1.25] text-marfim"
-        style={{ fontSize: "clamp(21px, 5vw, 27px)" }}
+        className="text-titulo m-0 font-titulo text-marfim"
       >
         Seu conteúdo será liberado em breve.
       </p>
-      <p className="mb-0 mt-[10px] text-[15px] leading-[1.6] text-[rgba(243,236,225,.6)]">
+      <p className="mb-0 mt-[10px] text-corpo text-[rgba(243,236,225,.6)]">
         Assim que a primeira aula estiver disponível, ela aparecerá aqui.
       </p>
     </section>

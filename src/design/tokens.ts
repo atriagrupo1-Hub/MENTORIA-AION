@@ -31,11 +31,15 @@ export const cores = {
 } as const;
 
 /** Escala tipográfica do item 3, com `cqw` trocado por `vw`. */
+/*
+ * A escala de texto mudou de casa: agora ela mora no `tailwind.config`,
+ * como `text-rotulo`, `text-apoio`, `text-corpo`, `text-realce`,
+ * `text-secao`, `text-titulo` e `text-heroi`. Aqui sobrou só a marca do
+ * login, que é a única medida que não pertence à escala — é o tamanho de
+ * uma assinatura, e ela existe numa tela só.
+ */
 export const tipografia = {
   marcaLogin: "clamp(21px, 5.4vw, 28px)",
-  tituloTela: "clamp(21px, 4.8vw, 30px)",
-  tituloModulo: "clamp(17px, 3.8vw, 26px)",
-  tituloAula: "clamp(14px, 3.2vw, 20px)",
 } as const;
 
 export type CorModulo = { destaque: string; rgb: string };

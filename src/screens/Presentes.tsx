@@ -24,18 +24,16 @@ export function Presentes() {
 
   return (
     <main className="rise-in mx-auto max-w-[1360px] px-7 pb-[90px] pt-[22px] cel-sm:px-[18px]">
-      <p className="mb-[10px] mt-0 text-[13px] uppercase tracking-[.3em] text-[rgba(255,255,255,.4)]">
+      <p className="mb-[10px] mt-0 text-rotulo uppercase tracking-rotulo text-[rgba(255,255,255,.4)]">
         Acervo
       </p>
       <h1
-        className="m-0 font-titulo font-semibold leading-[1.12] text-marfim"
-        style={{ fontSize: "clamp(28px, 7vw, 46px)" }}
+        className="text-heroi m-0 font-titulo font-semibold text-marfim"
       >
         Presentes
       </h1>
       <p
-        className="mb-0 mt-4 max-w-[700px] leading-[1.55] text-[#cbbfae]"
-        style={{ fontSize: "clamp(18px, 4.6vw, 21px)" }}
+        className="text-titulo mb-0 mt-4 max-w-[700px] leading-[1.55] text-[#cbbfae]"
       >
         Conteúdos escolhidos para assistir com calma, no seu tempo, ao lado das aulas da
         mentoria.
@@ -44,14 +42,14 @@ export function Presentes() {
       {categorias.map((categoria) => (
         <section key={categoria.id} className="mt-[34px]">
           <h2
-            className="mb-[14px] mt-0 text-[12px] font-bold uppercase tracking-[.22em]"
+            className="mb-[14px] mt-0 text-rotulo font-bold uppercase tracking-rotulo"
             style={{ color: "#ffffff" }}
           >
             {categoria.titulo}
           </h2>
 
           {categoria.presentes.length === 0 ? (
-            <p className="mb-[6px] mt-0 text-[14px] text-[rgba(243,236,225,.45)]">
+            <p className="mb-[6px] mt-0 text-corpo text-[rgba(243,236,225,.45)]">
               Em breve, presentes nesta categoria.
             </p>
           ) : null}
@@ -98,7 +96,7 @@ export function Presentes() {
                       }}
                     />
                     <span
-                      className="absolute left-1/2 top-1/2 flex min-h-[26px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-[6px] whitespace-nowrap rounded-pilula px-[11px] py-[6px] text-[10px] font-bold"
+                      className="absolute left-1/2 top-1/2 flex min-h-[26px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-[6px] whitespace-nowrap rounded-pilula px-[11px] py-[6px] text-rotulo font-bold"
                       style={{
                         color: liberado ? "#000000" : "#ffffff",
                         background: liberado
@@ -134,8 +132,7 @@ export function Presentes() {
                       {liberado ? "Assistir" : "Em breve"}
                     </span>
                     <span
-                      className="absolute inset-x-3 bottom-[14px] text-center font-titulo leading-[1.18] text-marfim"
-                      style={{ fontSize: "clamp(16px, 3.6vw, 19px)" }}
+                      className="absolute inset-x-3 bottom-[14px] text-center font-titulo text-realce leading-[1.18] text-marfim"
                     >
                       {liberado ? presente.titulo : ""}
                     </span>

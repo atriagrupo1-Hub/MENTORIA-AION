@@ -112,21 +112,21 @@ export function ConviteInstalar() {
         />
 
         <div className="min-w-0 flex-1">
-          <p className="mb-1 mt-0 text-[15px] font-bold text-marfim">
+          <p className="mb-1 mt-0 text-corpo font-bold text-marfim">
             Deixe a mentoria na sua tela inicial
           </p>
 
           {iPhone ? (
             <>
               <p
-                className="mb-0 mt-0 text-[13px] leading-[1.6]"
+                className="mb-0 mt-0 text-apoio leading-[1.6]"
                 style={{ color: cores.textoSecundarioForte }}
               >
                 Toque em <IconeCompartilhar /> <strong>Compartilhar</strong>, aqui embaixo, e
                 escolha <strong>Adicionar à Tela de Início</strong>.
               </p>
               <p
-                className="mb-0 mt-2 text-[12px] leading-[1.5]"
+                className="mb-0 mt-2 text-apoio"
                 style={{ color: cores.textoSecundario }}
               >
                 Não encontrou essa opção? Abra este endereço no Safari.
@@ -135,14 +135,14 @@ export function ConviteInstalar() {
           ) : convite ? (
             <>
               <p
-                className="mb-3 mt-0 text-[13px] leading-[1.6]"
+                className="mb-3 mt-0 text-apoio leading-[1.6]"
                 style={{ color: cores.textoSecundarioForte }}
               >
                 Abre em tela cheia, como um aplicativo.
               </p>
               <button
                 onClick={() => void instalar()}
-                className="min-h-[42px] rounded-pilula border-none px-5 text-[14px] font-bold"
+                className="min-h-[42px] rounded-pilula border-none px-5 text-corpo font-bold"
                 style={{ color: "#000000", background: "#ffffff", cursor: "pointer" }}
               >
                 Instalar
@@ -151,14 +151,14 @@ export function ConviteInstalar() {
           ) : (
             <>
               <p
-                className="mb-0 mt-0 text-[13px] leading-[1.6]"
+                className="mb-0 mt-0 text-apoio leading-[1.6]"
                 style={{ color: cores.textoSecundarioForte }}
               >
                 Toque no menu <strong>⋮</strong> do navegador e escolha{" "}
                 <strong>Instalar aplicativo</strong>.
               </p>
               <p
-                className="mb-0 mt-2 text-[12px] leading-[1.5]"
+                className="mb-0 mt-2 text-apoio"
                 style={{ color: cores.textoSecundario }}
               >
                 Não encontrou essa opção? Abra este endereço no Chrome.
@@ -170,7 +170,7 @@ export function ConviteInstalar() {
         <button
           onClick={dispensar}
           aria-label="Dispensar"
-          className="-mr-1 -mt-1 flex-none rounded-pilula px-[10px] py-[6px] text-[16px] leading-none"
+          className="-mr-1 -mt-1 flex-none rounded-pilula px-[10px] py-[6px] text-realce leading-none"
           style={{
             color: cores.textoSecundario,
             background: "transparent",

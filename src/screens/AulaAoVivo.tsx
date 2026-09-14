@@ -23,9 +23,8 @@ export function AulaAoVivo() {
       <div className="mb-[26px] flex flex-wrap items-center gap-[14px]">
         <button
           onClick={() => navegar(`/modulo/${numero}`)}
-          className="min-h-[52px] rounded-pilula px-5 py-[14px] text-marfim-corpo"
+          className="min-h-[52px] rounded-pilula px-5 py-[14px] text-corpo text-marfim-corpo"
           style={{
-            fontSize: "clamp(14px, 3.8vw, 16px)",
             background:
               "radial-gradient(150% 240% at 50% 140%, rgba(255,255,255,.24) 0%, rgba(44,34,16,.7) 38%, #0a0805 78%)",
             border: "1px solid rgba(180,150,95,.22)",
@@ -34,13 +33,13 @@ export function AulaAoVivo() {
         >
           ‹ Voltar ao módulo
         </button>
-        <p className="m-0 text-[15px] text-terciario">
+        <p className="m-0 text-corpo text-terciario">
           Início / Módulo {numero} / Aula ao vivo
         </p>
       </div>
 
       <span
-        className="mb-2 flex items-center text-[13px] uppercase tracking-[.28em]"
+        className="mb-2 flex items-center text-rotulo uppercase tracking-rotulo"
         style={{ color: "#ffffff" }}
       >
         <span
@@ -55,8 +54,7 @@ export function AulaAoVivo() {
       </span>
 
       <h1
-        className="mb-[26px] mt-0 font-titulo font-semibold leading-[1.16] text-marfim"
-        style={{ fontSize: "clamp(26px, 6.4vw, 42px)" }}
+        className="text-heroi mb-[26px] mt-0 font-titulo font-semibold text-marfim"
       >
         Encontro ao vivo do Módulo {numero} — {modulo.titulo}
       </h1>
@@ -85,7 +83,7 @@ export function AulaAoVivo() {
               setPct((v) => (v === 0 ? 4 : v));
             }}
             aria-label={tocando ? "Pausar transmissão" : "Assistir aula ao vivo"}
-            className="flex min-h-[56px] items-center justify-center gap-3 rounded-pilula border-none bg-white px-[26px] py-4 text-[17px] font-bold text-black hover:opacity-[.86]"
+            className="flex min-h-[56px] items-center justify-center gap-3 rounded-pilula border-none bg-white px-[26px] py-4 text-realce font-bold text-black hover:opacity-[.86]"
             style={{ cursor: "pointer" }}
           >
             <Play tamanho={14} />
@@ -109,7 +107,7 @@ export function AulaAoVivo() {
               }}
             />
           </div>
-          <div className="mt-[10px] flex justify-between text-[15px] text-[#cbbfae]">
+          <div className="mt-[10px] flex justify-between text-corpo text-[#cbbfae]">
             <span>{tocando ? "Reproduzindo" : pct > 0 ? "Pausado" : "Pronto para assistir"}</span>
             <span>{aoVivo?.quandoTexto ?? "Encontro de 1 hora"}</span>
           </div>
@@ -121,14 +119,14 @@ export function AulaAoVivo() {
           className="flex-[1_1_340px] rounded-cartao-lg p-[26px]"
           style={{ background: cores.cartao, border: "1px solid rgba(255,255,255,.2)" }}
         >
-          <h3 className="mb-[14px] mt-0 font-titulo text-[27px] text-marfim">
+          <h3 className="mb-[14px] mt-0 font-titulo text-titulo text-marfim">
             Sobre este encontro
           </h3>
-          <p className="mb-3 mt-0 text-[18px] leading-[1.7] text-[#b9ac9a]">
+          <p className="mb-3 mt-0 text-secao leading-[1.7] text-[#b9ac9a]">
             Uma aula ao vivo dedicada a este módulo: revisão dos pontos centrais, respostas
             às dúvidas das alunas e orientação prática para aplicar o conteúdo na sua rotina.
           </p>
-          <p className="m-0 text-[17px] text-[#a89f92]">
+          <p className="m-0 text-realce text-[#a89f92]">
             {aoVivo?.quandoTexto ?? "Data e horário a confirmar"}
           </p>
         </div>
@@ -136,10 +134,10 @@ export function AulaAoVivo() {
           className="flex-[1_1_260px] rounded-cartao-lg p-[26px]"
           style={{ background: cores.cartao, border: "1px solid rgba(255,255,255,.2)" }}
         >
-          <h3 className="mb-[14px] mt-0 font-titulo text-[27px] text-marfim">
+          <h3 className="mb-[14px] mt-0 font-titulo text-titulo text-marfim">
             Como participar
           </h3>
-          <p className="m-0 text-[18px] leading-[1.7] text-[#b9ac9a]">
+          <p className="m-0 text-secao leading-[1.7] text-[#b9ac9a]">
             O encontro acontece nesta mesma página. Entre alguns minutos antes, com o caderno
             da mentoria em mãos. A gravação fica disponível aqui depois da transmissão.
           </p>

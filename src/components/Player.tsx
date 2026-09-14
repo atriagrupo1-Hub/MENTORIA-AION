@@ -353,7 +353,7 @@ export function Player({
       {falhou ? (
         <div className="absolute inset-0 z-[6] flex flex-col items-center justify-center gap-4 px-6 text-center"
              style={{ background: "rgba(0,0,0,.86)" }}>
-          <p className="m-0 max-w-[300px] text-[15px] leading-[1.6] text-white">
+          <p className="m-0 max-w-[300px] text-corpo text-white">
             Não conseguimos carregar este vídeo agora.
           </p>
           <button
@@ -362,7 +362,7 @@ export function Player({
               setFalhou(false);
               void renovar();
             }}
-            className="min-h-[46px] rounded-pilula border-none px-6 text-[15px] font-bold"
+            className="min-h-[46px] rounded-pilula border-none px-6 text-corpo font-bold"
             style={{ color: "#000000", background: "#ffffff", cursor: "pointer" }}
           >
             Tentar de novo
@@ -391,7 +391,7 @@ export function Player({
             />
           </span>
           {terminou ? (
-            <span className="text-[14px] font-semibold text-white">Assistir novamente</span>
+            <span className="text-corpo font-semibold text-white">Assistir novamente</span>
           ) : null}
         </button>
       )}

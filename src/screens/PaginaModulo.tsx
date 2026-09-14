@@ -37,7 +37,7 @@ import { cores, paleta } from "@/design/tokens";
 const NAV: React.CSSProperties = {
   minHeight: 34,
   padding: "8px 11px",
-  fontSize: 12,
+  fontSize: 13,
   fontWeight: 700,
   whiteSpace: "nowrap",
   color: "#ffffff",
@@ -146,13 +146,12 @@ export function PaginaModulo() {
         </div>
 
         <div className="absolute inset-x-[18px] bottom-[22px]">
-          <p className="m-0 text-[11px] uppercase tracking-[.24em]" style={{ color: SUAVE }}>
+          <p className="m-0 text-rotulo uppercase tracking-rotulo" style={{ color: SUAVE }}>
             Módulo {modulo.numero} · {rotuloEstadoModulo(e)}
           </p>
           {modulo.tituloNaArte ? null : (
             <h1
-              className="mb-0 mt-[10px] font-titulo font-semibold leading-[1.14] text-marfim"
-              style={{ fontSize: "clamp(26px, 7.4vw, 34px)" }}
+              className="text-heroi mb-0 mt-[10px] font-titulo font-semibold text-marfim"
             >
               {modulo.titulo}
             </h1>
@@ -163,7 +162,7 @@ export function PaginaModulo() {
       <div className="mx-auto max-w-[1240px] px-7 cel-sm:px-[18px]">
         {/* ---------- o que vem depois da arte, no celular ---------- */}
         <div className="hidden flex-col gap-[18px] pt-5 cel:flex">
-          <p className="m-0 text-[15px] leading-[1.6] text-[#b9ac9a]">{modulo.intro}</p>
+          <p className="m-0 text-corpo text-[#b9ac9a]">{modulo.intro}</p>
           <Progresso estado={e} />
           <BotaoIniciar estado={e} aoClicar={iniciar} largo />
         </div>
@@ -202,7 +201,7 @@ export function PaginaModulo() {
                       background: "linear-gradient(180deg, rgba(5,8,16,.1), rgba(5,8,16,.9))",
                     }}
                   />
-                  <span className="absolute inset-x-5 bottom-[22px] font-titulo text-[27px] leading-[1.15] text-marfim">
+                  <span className="absolute inset-x-5 bottom-[22px] font-titulo text-titulo leading-[1.15] text-marfim">
                     {modulo.titulo}
                   </span>
                 </>
@@ -210,16 +209,15 @@ export function PaginaModulo() {
             </div>
 
             <div className="flex flex-[1_1_420px] flex-col gap-[13px]">
-              <p className="m-0 text-[11px] uppercase tracking-[.24em]" style={{ color: SUAVE }}>
+              <p className="m-0 text-rotulo uppercase tracking-rotulo" style={{ color: SUAVE }}>
                 Módulo {modulo.numero} · {rotuloEstadoModulo(e)}
               </p>
               <h1
-                className="m-0 font-titulo font-semibold leading-[1.22] text-marfim"
-                style={{ fontSize: "clamp(17px, 3.8vw, 26px)" }}
+                className="text-titulo m-0 font-titulo font-semibold text-marfim"
               >
                 {modulo.titulo}
               </h1>
-              <p className="m-0 max-w-[640px] text-[15px] leading-[1.6] text-[#b9ac9a]">
+              <p className="m-0 max-w-[640px] text-corpo text-[#b9ac9a]">
                 {modulo.intro}
               </p>
               <div className="mt-1 max-w-[460px]">
@@ -235,7 +233,7 @@ export function PaginaModulo() {
         {/* ---------- as aulas ---------- */}
         <section className="mt-11 cel:mt-8">
           <h2
-            className="mb-4 mt-0 text-[11px] font-semibold uppercase tracking-[.24em]"
+            className="mb-4 mt-0 text-rotulo font-semibold uppercase tracking-rotulo"
             style={{ color: SUAVE }}
           >
             Aulas deste módulo
@@ -312,7 +310,7 @@ function Progresso({ estado }: { estado: EstadoModulo }) {
           }}
         />
       </div>
-      <span className="flex-none text-[14px]" style={{ color: SUAVE }}>
+      <span className="flex-none text-corpo" style={{ color: SUAVE }}>
         {estado.total === 1 ? "1 aula" : `${estado.total} aulas`} ·{" "}
         {rotuloConcluidas(estado.concluidas)}
       </span>
@@ -332,7 +330,7 @@ function BotaoIniciar({
   return (
     <button
       onClick={aoClicar}
-      className={`flex min-h-[56px] items-center justify-center gap-3 border-none bg-white px-[26px] py-4 text-[17px] font-bold text-black transition-opacity hover:opacity-[.86] ${
+      className={`flex min-h-[56px] items-center justify-center gap-3 border-none bg-white px-[26px] py-4 text-realce font-bold text-black transition-opacity hover:opacity-[.86] ${
         largo ? "w-full rounded-cartao" : "self-start rounded-pilula"
       }`}
       style={{ cursor: "pointer" }}
@@ -397,8 +395,8 @@ function LinhaDaAula({
       </span>
 
       <span className="flex flex-1 flex-col gap-[6px] pt-[2px]">
-        <span className="text-[16px] font-semibold leading-[1.35] text-white">{titulo}</span>
-        <span className="text-[14px]" style={{ color: SUAVE }}>
+        <span className="text-realce font-semibold text-white">{titulo}</span>
+        <span className="text-corpo" style={{ color: SUAVE }}>
           {feita ? "✓ " : ""}
           {detalhe}
         </span>

@@ -327,7 +327,7 @@ export function TelaAula() {
               {/* Aula ainda sem vídeo cadastrado: nada de botão que não toca. */}
               {tocando ? null : (
                 <span
-                  className="absolute left-1/2 top-1/2 z-[5] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-[5px] px-4 py-2 text-[13px]"
+                  className="absolute left-1/2 top-1/2 z-[5] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-[5px] px-4 py-2 text-apoio"
                   style={{
                     color: "rgba(255,255,255,.85)",
                     background: "rgba(0,0,0,.5)",
@@ -343,7 +343,7 @@ export function TelaAula() {
           <button
             onClick={fechar}
             aria-label="Fechar e voltar ao módulo"
-            className="absolute right-[14px] top-[14px] z-[6] flex h-11 w-11 items-center justify-center rounded-full border-none text-[19px] leading-none text-white hover:opacity-80"
+            className="absolute right-[14px] top-[14px] z-[6] flex h-11 w-11 items-center justify-center rounded-full border-none text-secao leading-none text-white hover:opacity-80"
             style={{
               background: "rgba(0,0,0,.55)",
               backdropFilter: "blur(6px)",
@@ -375,8 +375,7 @@ export function TelaAula() {
       <div className="relative z-20 bg-black px-4 pt-[14px]">
         <div className="flex items-start gap-[10px]">
           <h1
-            className="m-0 min-w-0 flex-1 font-bold leading-[1.3] text-white"
-            style={{ fontSize: "clamp(17px, 4.4vw, 21px)" }}
+            className="text-titulo m-0 min-w-0 flex-1 font-bold leading-[1.3] text-white"
           >
             {aula.numero}. {aula.titulo}
           </h1>
@@ -426,11 +425,11 @@ export function TelaAula() {
                     className="flex min-h-[52px] w-full items-center rounded-lg border-none bg-transparent px-3 hover:bg-white/[.07]"
                     style={{ cursor: "pointer" }}
                   >
-                    <span className="flex-1 text-left text-[16px] text-white">
+                    <span className="flex-1 text-left text-realce text-white">
                       {item.rotulo}
                     </span>
-                    <span className="text-[15px] text-white/60">{item.valor}</span>
-                    <span className="ml-[10px] text-[17px] text-white/60">›</span>
+                    <span className="text-corpo text-white/60">{item.valor}</span>
+                    <span className="ml-[10px] text-realce text-white/60">›</span>
                   </button>
                 ))}
               </div>
@@ -439,7 +438,7 @@ export function TelaAula() {
           )}
         </div>
 
-        <p className="mb-0 mt-1 text-[14px] text-white/55">
+        <p className="mb-0 mt-1 text-corpo text-white/55">
           Módulo {modulo.numero} • Aula {aula.numero}
         </p>
 
@@ -462,7 +461,7 @@ export function TelaAula() {
               onClick={() => void alternarCurtida(aula.id)}
               aria-label={curtiu(aula.id) ? "Descurtir" : "Curtir"}
               aria-pressed={curtiu(aula.id)}
-              className="flex h-[42px] items-center gap-2 border-none bg-transparent px-[15px] text-[16px] hover:opacity-80"
+              className="flex h-[42px] items-center gap-2 border-none bg-transparent px-[15px] text-realce hover:opacity-80"
               style={{ color: curtiu(aula.id) ? "#ffffff" : SUAVE, cursor: "pointer" }}
             >
               {curtiu(aula.id) ? "♥" : "♡"}
@@ -477,12 +476,12 @@ export function TelaAula() {
                 });
               }}
               aria-label="Ir para os comentários"
-              className="flex h-[42px] items-center gap-2 border-none bg-transparent px-[15px] text-[15px] hover:opacity-80"
+              className="flex h-[42px] items-center gap-2 border-none bg-transparent px-[15px] text-corpo hover:opacity-80"
               style={{ color: SUAVE, cursor: "pointer" }}
             >
-              <span className="text-[16px] leading-none">💬</span>
+              <span className="text-realce leading-none">💬</span>
               {comentarios.length > 0 ? (
-                <span className="text-[14px]">{comentarios.length}</span>
+                <span className="text-corpo">{comentarios.length}</span>
               ) : null}
             </button>
           </div>
@@ -493,7 +492,7 @@ export function TelaAula() {
             <button
               onClick={irParaAnterior}
               aria-label="Aula anterior"
-              className="grid h-[42px] w-[42px] place-items-center rounded-full bg-transparent text-[18px] hover:opacity-80"
+              className="grid h-[42px] w-[42px] place-items-center rounded-full bg-transparent text-secao hover:opacity-80"
               style={{ border: `1px solid ${LINHA}`, color: SUAVE, cursor: "pointer" }}
             >
               ←
@@ -502,7 +501,7 @@ export function TelaAula() {
             <button
               onClick={marcarConcluida}
               aria-pressed={feita}
-              className="flex h-[42px] items-center gap-2 rounded-pilula px-[18px] text-[14px] font-semibold hover:opacity-90"
+              className="flex h-[42px] items-center gap-2 rounded-pilula px-[18px] text-corpo font-semibold hover:opacity-90"
               style={{
                 color: feita ? "#000000" : "#ffffff",
                 background: feita ? "#ffffff" : "transparent",
@@ -510,14 +509,14 @@ export function TelaAula() {
                 cursor: "pointer",
               }}
             >
-              <span className="text-[15px] leading-none">✓</span>
+              <span className="text-corpo leading-none">✓</span>
               {feita ? "Concluída" : "Concluir"}
             </button>
 
             <button
               onClick={irParaProxima}
               aria-label="Próxima aula"
-              className="grid h-[42px] w-[42px] place-items-center rounded-full bg-transparent text-[18px] hover:opacity-80"
+              className="grid h-[42px] w-[42px] place-items-center rounded-full bg-transparent text-secao hover:opacity-80"
               style={{ border: `1px solid ${LINHA}`, color: SUAVE, cursor: "pointer" }}
             >
               →
@@ -529,7 +528,7 @@ export function TelaAula() {
         {feita && passos.length > 0 ? (
           <button
             onClick={() => setPainel(painel === "exercicio" ? "" : "exercicio")}
-            className="mt-3 flex min-h-[46px] w-full items-center gap-3 rounded-botao px-4 text-[14px] hover:opacity-85"
+            className="mt-3 flex min-h-[46px] w-full items-center gap-3 rounded-botao px-4 text-corpo hover:opacity-85"
             style={{
               color: "#ffffff",
               background: "transparent",
@@ -537,11 +536,11 @@ export function TelaAula() {
               cursor: "pointer",
             }}
           >
-            <span className="text-[15px] leading-none" style={{ color: SUAVE }}>
+            <span className="text-corpo leading-none" style={{ color: SUAVE }}>
               ✎
             </span>
             <span className="flex-1 text-left">Exercício da aula</span>
-            <span className="text-[15px] leading-none" style={{ color: SUAVE }}>
+            <span className="text-corpo leading-none" style={{ color: SUAVE }}>
               {painel === "exercicio" ? "⌃" : "⌄"}
             </span>
           </button>
@@ -550,13 +549,13 @@ export function TelaAula() {
         {painel === "exercicio" ? (
           <div className="mt-[10px] rounded-botao p-4" style={{ background: "#141414" }}>
             <div className="mb-3 flex items-center gap-[10px]">
-              <h3 className="m-0 flex-1 text-[15px] font-bold text-white">
+              <h3 className="m-0 flex-1 text-corpo font-bold text-white">
                 Exercício da aula
               </h3>
               <button
                 onClick={() => setPainel("")}
                 aria-label="Fechar"
-                className="h-[30px] w-[30px] border-none bg-transparent text-[16px] text-white/60 hover:text-white"
+                className="h-[30px] w-[30px] border-none bg-transparent text-realce text-white/60 hover:text-white"
                 style={{ cursor: "pointer" }}
               >
                 ✕
@@ -567,12 +566,12 @@ export function TelaAula() {
               {passos.map((passo, i) => (
                 <li key={i} className="flex gap-3">
                   <span
-                    className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full text-[12px] font-bold"
+                    className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full text-apoio font-bold"
                     style={{ color: "#ffffff", border: `1px solid ${LINHA}` }}
                   >
                     {i + 1}
                   </span>
-                  <span className="min-w-0 flex-1 pt-[3px] text-[14px] leading-[1.6] text-white/80">
+                  <span className="min-w-0 flex-1 pt-[3px] text-corpo text-white/80">
                     {passo}
                   </span>
                 </li>
@@ -599,7 +598,7 @@ export function TelaAula() {
           className="mt-[18px] rounded-botao p-4"
           style={{ background: "#101010", border: `1px solid ${LINHA}` }}
         >
-          <p className="mb-3 mt-0 text-[15px] text-white">
+          <p className="mb-3 mt-0 text-corpo text-white">
             O que você achou desta aula?{" "}
             <span className="font-bold underline underline-offset-4">Comente!</span>
           </p>
@@ -611,13 +610,13 @@ export function TelaAula() {
               onChange={(e) => setRascunho(e.target.value)}
               placeholder="Adicione seu comentário aqui"
               aria-label="Adicionar comentário"
-              className="min-h-[46px] w-full flex-1 rounded-botao px-4 text-[16px] text-white outline-none"
+              className="min-h-[46px] w-full flex-1 rounded-botao px-4 text-realce text-white outline-none"
               style={{ background: "transparent", border: `1px solid ${LINHA}` }}
             />
             {rascunho.trim() ? (
               <button
                 type="submit"
-                className="min-h-[46px] flex-none rounded-botao border-none px-4 text-[14px] font-semibold hover:opacity-90"
+                className="min-h-[46px] flex-none rounded-botao border-none px-4 text-corpo font-semibold hover:opacity-90"
                 style={{ color: "#000000", background: "#ffffff", cursor: "pointer" }}
               >
                 Enviar
@@ -626,13 +625,13 @@ export function TelaAula() {
           </form>
 
           <div className="mt-3 flex items-center">
-            <span className="flex-1 text-[12px]" style={{ color: SUAVE }}>
+            <span className="flex-1 text-apoio" style={{ color: SUAVE }}>
               Seu nome não será exibido
             </span>
             {comentarios.length > 0 ? (
               <button
                 onClick={() => setComentariosAbertos((v) => !v)}
-                className="border-none bg-transparent text-[13px] underline underline-offset-4 hover:opacity-80"
+                className="border-none bg-transparent text-apoio underline underline-offset-4 hover:opacity-80"
                 style={{ color: SUAVE, cursor: "pointer" }}
               >
                 {comentariosAbertos
@@ -650,10 +649,10 @@ export function TelaAula() {
                   className="py-[14px]"
                   style={{ borderTop: "1px solid rgba(255,255,255,.08)" }}
                 >
-                  <p className="m-0 text-[13px] font-bold text-white">
+                  <p className="m-0 text-apoio font-bold text-white">
                     {c.minha ? "Você" : "Anônimo"}
                   </p>
-                  <p className="mb-0 mt-[6px] text-[14px] leading-[1.55] text-white/85">
+                  <p className="mb-0 mt-[6px] text-corpo text-white/85">
                     {c.texto}
                   </p>
                 </div>
@@ -663,7 +662,7 @@ export function TelaAula() {
         </section>
 
         <h2
-          className="mb-3 mt-[26px] text-[13px] font-bold uppercase tracking-[.22em]"
+          className="mb-3 mt-[26px] text-rotulo font-bold uppercase tracking-rotulo"
           style={{ color: SUAVE }}
         >
           Aulas do módulo {modulo.numero}
@@ -742,7 +741,7 @@ export function TelaAula() {
 
                   {feitaOutra && !travada ? (
                     <span
-                      className="absolute left-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-[19px]"
+                      className="absolute left-1/2 top-1/2 grid h-10 w-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-secao"
                       style={{ color: "#000000", background: "#ffffff" }}
                     >
                       ✓
@@ -750,7 +749,7 @@ export function TelaAula() {
                   ) : null}
 
                   <span
-                    className="absolute bottom-[6px] right-[6px] rounded-[3px] px-[6px] py-[2px] text-[11px] text-white"
+                    className="absolute bottom-[6px] right-[6px] rounded-[3px] px-[6px] py-[2px] text-rotulo text-white"
                     style={{ background: "rgba(0,0,0,.78)" }}
                   >
                     {relogio(minutosDaAula(modulo, outra) * 60)}
@@ -778,12 +777,12 @@ export function TelaAula() {
 
                 <span className="flex min-w-0 flex-1 flex-col gap-1 pt-[2px]">
                   <span
-                    className="text-[15px] font-bold leading-[1.35]"
+                    className="text-corpo font-bold leading-[1.35]"
                     style={{ color: atual ? "#ffffff" : "rgba(255,255,255,.62)" }}
                   >
                     {outra.numero}. {outra.titulo}
                   </span>
-                  <span className="text-[13px] text-white/50">
+                  <span className="text-apoio text-white/50">
                     {rotuloDuracao(modulo, outra)} •{" "}
                     {travada
                       ? "Bloqueada"

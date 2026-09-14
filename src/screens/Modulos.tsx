@@ -20,12 +20,11 @@ export function Modulos() {
 
   return (
     <main className="rise-in mx-auto max-w-[1100px] px-7 pb-[90px] pt-[22px] cel-sm:px-[18px]">
-      <p className="mb-[6px] mt-0 text-[11px] uppercase tracking-[.22em] text-[rgba(255,255,255,.4)]">
+      <p className="mb-[6px] mt-0 text-rotulo uppercase tracking-rotulo text-[rgba(255,255,255,.4)]">
         Minha jornada
       </p>
       <h1
-        className="mb-6 mt-0 font-titulo font-semibold text-marfim"
-        style={{ fontSize: "clamp(21px, 4.8vw, 30px)" }}
+        className="text-heroi mb-6 mt-0 font-titulo font-semibold text-marfim"
       >
         Seu caminho, etapa por etapa
       </h1>
@@ -68,7 +67,7 @@ export function Modulos() {
 
             <span className="flex min-w-0 flex-1 flex-col gap-[7px]">
               <span
-                className="text-[12px] uppercase tracking-[.26em]"
+                className="text-rotulo uppercase tracking-rotulo"
                 style={{ color: e.destaque }}
               >
                 {e.liberado
@@ -76,8 +75,7 @@ export function Modulos() {
                   : `Módulo ${e.modulo.numero}`}
               </span>
               <span
-                className="font-titulo leading-[1.3] text-marfim"
-                style={{ fontSize: "clamp(16px, 4vw, 21px)" }}
+                className="font-titulo text-realce leading-[1.3] text-marfim"
               >
                 {e.modulo.titulo}
               </span>
@@ -87,13 +85,13 @@ export function Modulos() {
                 preenchimento={`linear-gradient(90deg, rgba(${e.rgb},.55), ${e.destaque})`}
                 larguraMaxima={420}
               />
-              <span className="text-[13px]" style={{ color: e.destaque }}>
+              <span className="text-apoio" style={{ color: e.destaque }}>
                 {e.concluidas}/{e.total} aulas
               </span>
             </span>
 
             <span
-              className="flex min-h-[32px] flex-none items-center justify-center gap-[7px] whitespace-nowrap rounded-pilula px-[14px] py-2 text-[12px] font-bold cel:h-[38px] cel:w-[38px] cel:min-h-[38px] cel:gap-0 cel:rounded-full cel:p-0"
+              className="flex min-h-[32px] flex-none items-center justify-center gap-[7px] whitespace-nowrap rounded-pilula px-[14px] py-2 text-apoio font-bold cel:h-[38px] cel:w-[38px] cel:min-h-[38px] cel:gap-0 cel:rounded-full cel:p-0"
               style={{
                 color: e.liberado ? "#000000" : "rgba(255,255,255,.85)",
                 background: e.liberado ? "rgba(255,255,255,.88)" : "rgba(255,255,255,.16)",

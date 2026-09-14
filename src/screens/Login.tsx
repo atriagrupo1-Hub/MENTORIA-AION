@@ -88,7 +88,7 @@ export function Login() {
                 />
               </span>
               <span
-                className="font-mono text-[9px] tracking-[.1em]"
+                className="font-mono text-rotulo tracking-rotulo"
                 style={{ color: "rgba(255,255,255,.6)" }}
               >
                 foto da mentora
@@ -97,22 +97,22 @@ export function Login() {
             </span>
             <span
               aria-label="Perfil verificado"
-              className="absolute right-[10px] top-[10px] grid h-8 w-8 place-items-center rounded-full text-[16px] text-white"
+              className="absolute right-[10px] top-[10px] grid h-8 w-8 place-items-center rounded-full text-realce text-white"
               style={{ background: cores.verificado, border: "2px solid #05070f" }}
             >
               ✓
             </span>
           </span>
 
-          <p className="mb-2 mt-0 text-[11px] uppercase tracking-[.3em] text-marfim">Mentoria</p>
+          <p className="mb-2 mt-0 text-rotulo uppercase tracking-rotulo text-marfim">Mentoria</p>
           <p
-            className="m-0 font-titulo font-semibold leading-[1.15] tracking-[.1em]"
+            className="m-0 font-titulo font-semibold leading-[1.15] tracking-rotulo"
             style={{ fontSize: tipografia.marcaLogin, color: "#ffffff" }}
           >
             CAMINHO DO DESBLOQUEIO
           </p>
           <p
-            className="mb-0 mt-[5px] font-titulo font-semibold leading-[1.15] tracking-[.1em]"
+            className="mb-0 mt-[5px] font-titulo font-semibold leading-[1.15] tracking-rotulo"
             style={{ fontSize: tipografia.marcaLogin, color: "#ffffff" }}
           >
             PARA BÊNÇÃOS ILIMITADAS
@@ -130,13 +130,12 @@ export function Login() {
           }}
         >
           <h1
-            className="m-0 text-center font-bold leading-[1.2] text-white"
-            style={{ fontSize: "clamp(25px, 6vw, 31px)" }}
+            className="text-heroi m-0 text-center font-bold leading-[1.2] text-white"
           >
             Bem-vinda de volta
           </h1>
           <p
-            className="mb-[22px] mt-2 text-center text-[14px]"
+            className="mb-[22px] mt-2 text-center text-corpo"
             style={{ color: cores.textoSecundario }}
           >
             Entre para continuar sua jornada
@@ -144,7 +143,7 @@ export function Login() {
 
           <label
             htmlFor="aluna-nome"
-            className="mb-2 block text-[12px] font-bold"
+            className="mb-2 block text-apoio font-bold"
             style={{ color: "rgba(243,236,225,.75)" }}
           >
             Seu nome
@@ -171,7 +170,7 @@ export function Login() {
 
           <label
             htmlFor="aluna-codigo"
-            className="mb-2 block text-[12px] font-bold"
+            className="mb-2 block text-apoio font-bold"
             style={{ color: "rgba(243,236,225,.75)" }}
           >
             Seu código
@@ -202,7 +201,7 @@ export function Login() {
               onClick={() => setMostrarCodigo((v) => !v)}
               aria-label={mostrarCodigo ? "Ocultar código" : "Mostrar código"}
               title={mostrarCodigo ? "Ocultar código" : "Mostrar código"}
-              className="absolute right-[6px] top-1/2 grid h-[42px] w-[42px] -translate-y-1/2 place-items-center border-none bg-transparent text-[17px]"
+              className="absolute right-[6px] top-1/2 grid h-[42px] w-[42px] -translate-y-1/2 place-items-center border-none bg-transparent text-realce"
               style={{ color: "rgba(255,255,255,.8)", cursor: "pointer" }}
             >
               {mostrarCodigo ? "◎" : "◉"}
@@ -210,7 +209,7 @@ export function Login() {
           </div>
 
           {erro ? (
-            <p className="mb-0 mt-3 text-[14px]" style={{ color: "#e6b8a0" }}>
+            <p className="mb-0 mt-3 text-corpo" style={{ color: "#e6b8a0" }}>
               {erro}
             </p>
           ) : null}
@@ -218,7 +217,7 @@ export function Login() {
           <button
             type="submit"
             disabled={entrando}
-            className="relative mt-[22px] flex min-h-[56px] w-full items-center justify-center rounded-pilula border-none px-[54px] py-4 text-[17px] font-bold transition-opacity hover:opacity-90"
+            className="relative mt-[22px] flex min-h-[56px] w-full items-center justify-center rounded-pilula border-none px-[54px] py-4 text-realce font-bold transition-opacity hover:opacity-90"
             style={{
               color: "#000000",
               background: "#ffffff",
@@ -229,7 +228,7 @@ export function Login() {
             {entrando ? "Entrando..." : "Entrar na mentoria"}
             <span
               aria-hidden="true"
-              className="absolute right-2 top-1/2 grid h-[38px] w-[38px] -translate-y-1/2 place-items-center rounded-full text-[17px]"
+              className="absolute right-2 top-1/2 grid h-[38px] w-[38px] -translate-y-1/2 place-items-center rounded-full text-realce"
               style={{ color: "#000000", background: "rgba(26,20,8,.14)" }}
             >
               →
@@ -238,14 +237,14 @@ export function Login() {
 
           <div className="my-[22px] mb-4 flex items-center gap-3">
             <span className="h-px flex-1" style={{ background: "rgba(243,236,225,.12)" }} />
-            <span className="text-[12px]" style={{ color: cores.textoSecundarioForte }}>
+            <span className="text-apoio" style={{ color: cores.textoSecundarioForte }}>
               ambiente exclusivo
             </span>
             <span className="h-px flex-1" style={{ background: "rgba(243,236,225,.12)" }} />
           </div>
 
           <p
-            className="m-0 text-center text-[13px] leading-[1.6]"
+            className="m-0 text-center text-apoio leading-[1.6]"
             style={{ color: "rgba(243,236,225,.5)" }}
           >
             Acesso reservado às alunas da mentoria.
@@ -256,11 +255,11 @@ export function Login() {
           {SELOS.map((selo) => (
             <span
               key={selo.rotulo}
-              className="flex flex-col items-center gap-[7px] text-[12px] tracking-[.04em]"
+              className="flex flex-col items-center gap-[7px] text-apoio tracking-rotulo"
               style={{ color: cores.textoSecundarioForte }}
             >
               <span
-                className="grid h-[26px] w-[26px] place-items-center rounded-full text-[12px]"
+                className="grid h-[26px] w-[26px] place-items-center rounded-full text-apoio"
                 style={{
                   color: "rgba(255,255,255,.7)",
                   border: "1px solid rgba(255,255,255,.35)",

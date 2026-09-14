@@ -102,16 +102,16 @@ export function Inicio() {
           </div>
 
           <div className="flex flex-col gap-1 px-[2px] pt-3">
-            <p className="m-0 text-[11px] uppercase tracking-[.2em] text-white/55">
+            <p className="m-0 text-rotulo uppercase tracking-rotulo text-white/55">
               {kicker}
             </p>
-            <p className="m-0 text-[13px] text-white/60">
+            <p className="m-0 text-apoio text-white/60">
               Módulo {retomada.modulo.numero} — {retomada.modulo.titulo}
             </p>
-            <h2 className="m-0 text-[15px] font-bold leading-[1.3] text-white">
+            <h2 className="m-0 text-corpo font-bold leading-[1.3] text-white">
               Aula {retomada.aula.numero} — {retomada.aula.titulo}
             </h2>
-            <p className="m-0 text-[13px] text-white/55">
+            <p className="m-0 text-apoio text-white/55">
               {rotuloDuracao(retomada.modulo, retomada.aula)} ·{" "}
               {retomando
                 ? `faltam ${faltamMinutos(retomada)} min`
@@ -128,7 +128,7 @@ export function Inicio() {
                   `/aula/${retomada.modulo.numero}/${retomada.aula.ordem}`,
                 )
               }
-              className="flex min-h-[56px] min-w-[240px] flex-1 items-center justify-center gap-3 rounded-pilula border-none bg-white px-[26px] py-4 text-[17px] font-bold text-black transition-opacity hover:opacity-[.86] cel:w-full cel:min-w-0"
+              className="flex min-h-[56px] min-w-[240px] flex-1 items-center justify-center gap-3 rounded-pilula border-none bg-white px-[26px] py-4 text-realce font-bold text-black transition-opacity hover:opacity-[.86] cel:w-full cel:min-w-0"
               style={{ cursor: "pointer" }}
             >
               <Play />
@@ -136,7 +136,7 @@ export function Inicio() {
             </button>
             <button
               onClick={() => navegar(`/modulo/${retomada.modulo.numero}`)}
-              className="flex min-h-[56px] min-w-[240px] flex-1 items-center justify-center gap-3 rounded-pilula border-none px-[26px] py-4 text-[17px] font-bold text-white cel:w-full cel:min-w-0"
+              className="flex min-h-[56px] min-w-[240px] flex-1 items-center justify-center gap-3 rounded-pilula border-none px-[26px] py-4 text-realce font-bold text-white cel:w-full cel:min-w-0"
               style={{
                 background: "rgba(255,255,255,.22)",
                 backdropFilter: "blur(10px)",
@@ -178,7 +178,7 @@ export function Inicio() {
                     })
                   }
                   aria-label={seta.rotulo}
-                  className="h-14 w-14 rounded-full text-[22px] text-marfim-corpo"
+                  className="h-14 w-14 rounded-full text-titulo text-marfim-corpo"
                   style={{
                     background:
                       "radial-gradient(150% 240% at 50% 140%, rgba(255,255,255,.24) 0%, rgba(44,34,16,.7) 38%, #0a0805 78%)",
@@ -242,12 +242,12 @@ export function Inicio() {
                       />
                       <span className="absolute inset-x-[18px] bottom-[18px] flex flex-col gap-2">
                         <span
-                          className="text-[12px] uppercase tracking-[.26em]"
+                          className="text-rotulo uppercase tracking-rotulo"
                           style={{ color: e.destaque }}
                         >
                           Módulo {e.modulo.numero}
                         </span>
-                        <span className="font-titulo text-[25px] leading-[1.15] text-marfim">
+                        <span className="font-titulo text-titulo leading-[1.15] text-marfim">
                           {e.modulo.titulo}
                         </span>
                       </span>
@@ -255,7 +255,7 @@ export function Inicio() {
                   )}
 
                   <span
-                    className="absolute left-1/2 top-1/2 flex min-h-[32px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-[7px] whitespace-nowrap rounded-pilula px-[15px] py-2 text-[12px] font-bold"
+                    className="absolute left-1/2 top-1/2 flex min-h-[32px] -translate-x-1/2 -translate-y-1/2 items-center justify-center gap-[7px] whitespace-nowrap rounded-pilula px-[15px] py-2 text-apoio font-bold"
                     style={{
                       color: e.liberado ? "#000000" : "rgba(255,255,255,.85)",
                       background: e.liberado
@@ -277,7 +277,7 @@ export function Inicio() {
                 </span>
 
                 <span className="flex flex-col gap-2">
-                  <span className="flex justify-between text-[15px] text-[#9a9287]">
+                  <span className="flex justify-between text-corpo text-[#9a9287]">
                     <span>{e.total} aulas</span>
                     <span style={{ color: e.destaque }}>
                       {rotuloConcluidas(e.concluidas)}

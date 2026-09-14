@@ -26,7 +26,7 @@ export function Moldura() {
         className="flex min-h-screen items-center justify-center px-6"
         style={{ background: "#000000" }}
       >
-        <p className="m-0 text-[15px]" style={{ color: cores.textoSecundario }}>
+        <p className="m-0 text-corpo" style={{ color: cores.textoSecundario }}>
           Carregando sua jornada…
         </p>
       </div>
@@ -42,20 +42,19 @@ export function Moldura() {
         style={{ background: "#000000" }}
       >
         <p
-          className="m-0 max-w-[460px] font-titulo leading-[1.3] text-marfim"
-          style={{ fontSize: "clamp(21px, 5vw, 27px)" }}
+          className="m-0 max-w-[460px] font-titulo text-titulo leading-[1.3] text-marfim"
         >
           Não conseguimos carregar seu conteúdo agora.
         </p>
         <p
-          className="m-0 max-w-[460px] text-[15px] leading-[1.6]"
+          className="m-0 max-w-[460px] text-corpo"
           style={{ color: cores.textoSecundario }}
         >
           Suas aulas estão guardadas. Tente de novo em alguns instantes.
         </p>
         <button
           onClick={() => void recarregar()}
-          className="min-h-[52px] rounded-pilula border-none px-7 text-[16px] font-bold"
+          className="min-h-[52px] rounded-pilula border-none px-7 text-realce font-bold"
           style={{ color: "#000000", background: "#ffffff", cursor: "pointer" }}
         >
           Tentar de novo

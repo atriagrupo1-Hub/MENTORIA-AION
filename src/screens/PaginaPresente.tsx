@@ -45,7 +45,7 @@ export function PaginaPresente() {
       <div className="mb-[26px] flex flex-wrap items-center gap-[14px]">
         <button
           onClick={() => navegar("/presentes")}
-          className="flex min-h-[52px] items-center justify-center gap-[10px] rounded-pilula border-none px-[22px] py-[15px] text-[16px] font-bold text-white"
+          className="flex min-h-[52px] items-center justify-center gap-[10px] rounded-pilula border-none px-[22px] py-[15px] text-realce font-bold text-white"
           style={{
             background: "rgba(255,255,255,.16)",
             backdropFilter: "blur(10px)",
@@ -55,17 +55,16 @@ export function PaginaPresente() {
         >
           ‹ Voltar aos presentes
         </button>
-        <p className="m-0 text-[15px] text-terciario">
+        <p className="m-0 text-corpo text-terciario">
           Início / Presentes / {indice + 1}
         </p>
       </div>
 
-      <p className="mb-2 mt-0 text-[13px] uppercase tracking-[.3em] text-[rgba(255,255,255,.4)]">
+      <p className="mb-2 mt-0 text-rotulo uppercase tracking-rotulo text-[rgba(255,255,255,.4)]">
         Presente {indice + 1}
       </p>
       <h1
-        className="mb-[26px] mt-0 font-titulo font-semibold leading-[1.16] text-marfim"
-        style={{ fontSize: "clamp(26px, 6.4vw, 42px)" }}
+        className="text-heroi mb-[26px] mt-0 font-titulo font-semibold text-marfim"
       >
         {presente.titulo}
       </h1>
@@ -104,7 +103,7 @@ export function PaginaPresente() {
               <button
                 onClick={() => setTocando(true)}
                 aria-label="Assistir"
-                className="flex min-h-[56px] items-center justify-center gap-3 rounded-pilula border-none bg-white px-[26px] py-4 text-[17px] font-bold text-black hover:opacity-[.86]"
+                className="flex min-h-[56px] items-center justify-center gap-3 rounded-pilula border-none bg-white px-[26px] py-4 text-realce font-bold text-black hover:opacity-[.86]"
                 style={{ cursor: "pointer" }}
               >
                 <Play tamanho={14} />
@@ -122,7 +121,7 @@ export function PaginaPresente() {
           }}
         >
           <Cadeado largura={32} cor="rgba(243,236,225,.26)" corArco="rgba(243,236,225,.3)" />
-          <p className="m-0 text-[15px] text-[rgba(243,236,225,.6)]">
+          <p className="m-0 text-corpo text-[rgba(243,236,225,.6)]">
             Este presente será disponibilizado aqui.
           </p>
         </div>
@@ -133,10 +132,10 @@ export function PaginaPresente() {
           className="flex-[1_1_320px] rounded-cartao-lg p-[26px]"
           style={{ background: cores.cartao, border: "1px solid rgba(255,255,255,.2)" }}
         >
-          <h3 className="mb-[14px] mt-0 font-titulo text-[27px] text-marfim">
+          <h3 className="mb-[14px] mt-0 font-titulo text-titulo text-marfim">
             Sobre este presente
           </h3>
-          <p className="m-0 text-[18px] leading-[1.7] text-[#b9ac9a]">
+          <p className="m-0 text-secao leading-[1.7] text-[#b9ac9a]">
             {presente.descricao || "Este presente será disponibilizado aqui."}
           </p>
         </div>
@@ -145,7 +144,7 @@ export function PaginaPresente() {
           className="flex-[1_1_260px] rounded-cartao-lg p-[26px]"
           style={{ background: cores.cartao, border: "1px solid rgba(255,255,255,.2)" }}
         >
-          <h3 className="mb-[14px] mt-0 font-titulo text-[27px] text-marfim">
+          <h3 className="mb-[14px] mt-0 font-titulo text-titulo text-marfim">
             Outros presentes
           </h3>
           <div className="flex flex-col gap-2">
@@ -170,7 +169,7 @@ export function PaginaPresente() {
                   }}
                 >
                   <span
-                    className="grid h-[34px] flex-[0_0_34px] place-items-center rounded-full text-[15px]"
+                    className="grid h-[34px] flex-[0_0_34px] place-items-center rounded-full text-corpo"
                     style={{
                       color: "#ffffff",
                       border: "1px solid rgba(255,255,255,.5)",
@@ -179,10 +178,10 @@ export function PaginaPresente() {
                     {i + 1}
                   </span>
                   <span className="flex flex-1 flex-col gap-1">
-                    <span className="text-[16px] leading-[1.35] text-[#e8e0d3]">
+                    <span className="text-realce text-[#e8e0d3]">
                       {outroLiberado ? outro.presente.titulo : `Presente ${i + 1}`}
                     </span>
-                    <span className="text-[14px] text-[#7d7466]">
+                    <span className="text-corpo text-[#7d7466]">
                       {outroLiberado ? "Assistir" : "Em breve"}
                     </span>
                   </span>
@@ -190,7 +189,7 @@ export function PaginaPresente() {
               );
             })}
             {todos.length === 0 ? (
-              <p className="m-0 text-[14px] text-[rgba(243,236,225,.45)]">
+              <p className="m-0 text-corpo text-[rgba(243,236,225,.45)]">
                 Em breve, presentes nesta categoria.
               </p>
             ) : null}

@@ -71,10 +71,10 @@ export function Cabecalho({
         className="flex flex-col gap-1 border-none bg-transparent p-0 text-left cel:flex-[1_1_100%] cel:items-center cel:text-center"
         style={{ cursor: "pointer" }}
       >
-        <span className="font-titulo text-[23px] font-semibold text-marfim cel:text-[17px]">
+        <span className="font-titulo text-titulo font-semibold text-marfim cel:text-realce">
           Caminho do Desbloqueio
         </span>
-        <span className="text-[11px] uppercase tracking-[.28em] text-[rgba(255,255,255,.4)] cel:text-[9px] cel:tracking-[.22em]">
+        <span className="text-rotulo uppercase tracking-marca text-[rgba(255,255,255,.4)]">
           Bênçãos Ilimitadas
         </span>
       </button>
@@ -100,7 +100,7 @@ export function Cabecalho({
 
       <div className="flex min-w-[190px] items-center gap-3 cel:hidden">
         <div className="min-w-[110px] flex-1">
-          <div className="mb-[6px] flex justify-between text-[13px] text-[#a89f92]">
+          <div className="mb-[6px] flex justify-between text-apoio text-[#a89f92]">
             <span>Seu progresso</span>
             <span style={{ color: "#ffffff" }}>{percentualGeral}%</span>
           </div>
