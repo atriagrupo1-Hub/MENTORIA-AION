@@ -361,44 +361,46 @@ export type ComentarioPublico = {
   texto: string;
   posicaoSegundos: number;
   criadoEm: string;
+  /** Nulo quer dizer anônimo — comentário escrito antes da mudança. */
+  autoraNome: string | null;
   minha: boolean;
 };
 
 /**
- * Comentários de uma aula. A view não traz autoria — o anonimato é
- * privilégio de coluna no banco, não escolha da tela. `meus_comentarios`
- * diz quais são da própria aluna, para ela poder editar e remover.
+ * Comentários de uma aula, numa viagem só.
+ *
+ * Eram duas: a view `comentarios_publicos`, que não trazia autoria, e
+ * `meus_comentarios`, para saber quais eram dela. O navegador cruzava
+ * os identificadores depois. Duas idas ao banco por aula aberta, e a
+ * lista só aparecia quando a segunda voltasse — parte do que fazia a
+ * seção parecer lenta.
+ *
+ * `comentarios_da_aula()` responde as duas coisas de uma vez, e traz o
+ * nome. O anonimato continua sendo do banco, não da tela: a coluna da
+ * autoria segue inalcançável pelo navegador, e a função só devolve o
+ * nome de quem escreveu sabendo que ele apareceria.
  */
 export async function comentariosDaAula(aulaId: string): Promise<ComentarioPublico[]> {
-  const [publicos, meus] = await Promise.all([
-    supabase
-      .from("comentarios_publicos")
-      .select("*")
-      .eq("aula_id", aulaId)
-      .order("criado_em", { ascending: false }),
-    supabase.rpc("meus_comentarios", { p_aula: aulaId }),
-  ]);
+  const { data, error } = await supabase.rpc("comentarios_da_aula", { p_aula: aulaId });
+  if (error) throw new Error(`comentarios: ${error.message}`);
 
-  if (publicos.error) throw new Error(`comentarios: ${publicos.error.message}`);
-
-  const meusIds = new Set(
-    (meus.data ?? []).map((c: { id: string }) => c.id),
-  );
-
-  return (publicos.data ?? []).map(
+  return (data ?? []).map(
     (c: {
       id: string;
       aula_id: string;
       texto: string;
       posicao_segundos: number;
       criado_em: string;
+      autora_nome: string | null;
+      minha: boolean;
     }) => ({
       id: c.id,
       aulaId: c.aula_id,
       texto: c.texto,
       posicaoSegundos: c.posicao_segundos,
       criadoEm: c.criado_em,
-      minha: meusIds.has(c.id),
+      autoraNome: c.autora_nome,
+      minha: c.minha,
     }),
   );
 }

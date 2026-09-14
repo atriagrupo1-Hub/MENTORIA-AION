@@ -280,6 +280,9 @@ export function TelaAula() {
       texto,
       posicaoSegundos: 0,
       criadoEm: new Date().toISOString(),
+      // Só serve para o `minha` abaixo; a linha provisória mostra
+      // "Você", como todas as dela.
+      autoraNome: null,
       minha: true,
     };
     setComentarios((atuais) => [provisorio, ...atuais]);
@@ -647,7 +650,7 @@ export function TelaAula() {
 
           <div className="mt-3 flex items-center">
             <span className="flex-1 text-apoio" style={{ color: SUAVE }}>
-              Seu nome não será exibido
+              Seu nome aparecerá no comentário
             </span>
             {comentarios.length > 0 ? (
               <button
@@ -676,8 +679,14 @@ export function TelaAula() {
                   className="py-4"
                   style={{ borderTop: "1px solid rgba(255,255,255,.08)" }}
                 >
+                  {/*
+                    Três casos, e o terceiro é o que importa: nulo quer
+                    dizer comentário escrito quando o aplicativo ainda
+                    prometia anonimato. Esses continuam anônimos para
+                    sempre — a promessa valia na hora em que foi feita.
+                  */}
                   <p className="m-0 text-apoio font-bold text-white">
-                    {c.minha ? "Você" : "Anônimo"}
+                    {c.minha ? "Você" : (c.autoraNome ?? "Anônimo")}
                   </p>
                   <p className="mb-0 mt-2 text-corpo text-white/85">
                     {c.texto}
