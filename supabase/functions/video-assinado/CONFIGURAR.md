@@ -31,25 +31,47 @@ o endereço circulando num grupo de mensagens.
 
 ---
 
-## Passo 1 — criar a chave, no Cloudflare
+## Passo 1 — criar a chave
 
-No painel do Cloudflare, em **Stream → Settings → Signing keys**, crie
-uma chave. Guarde os dois valores que ele mostra **uma única vez**:
+**Não procure no painel: não existe botão para isto.** A chave de
+assinatura do Stream só nasce pela API — é assim para todo mundo, não é
+falta de permissão na sua conta.
 
-- o **ID da chave** (uma sequência curta);
-- a **chave privada em JWK**, que vem já em base64 — uma linha longa.
+Você vai precisar de duas coisas antes:
 
-Se a tela do painel não oferecer a criação, o mesmo se faz pela API:
+**O ID da conta.** Abra o painel do Cloudflare e olhe o endereço na
+barra do navegador: `dash.cloudflare.com/<ID-DA-CONTA>/...`. É aquela
+sequência longa de letras e números. Ela também aparece na coluna da
+direita, na página inicial da conta, como *Account ID*.
+
+**Um token da API.** No painel: seu ícone no canto superior direito →
+**My Profile** → **API Tokens** → **Create Token** → **Create Custom
+Token**. Em *Permissions* escolha **Account** · **Cloudflare Stream** ·
+**Edit**. Em *Account Resources* escolha a sua conta. Criar, e copiar o
+token — ele também aparece uma vez só.
+
+Com os dois em mãos, rode no terminal, dentro da pasta do projeto:
 
 ```
-POST https://api.cloudflare.com/client/v4/accounts/<CONTA>/stream/keys
+bash supabase/functions/video-assinado/criar-chave.sh
 ```
 
-A resposta traz `result.id` e `result.jwk`. São exatamente os dois
-valores acima.
+Ele pergunta os dois valores (o token não aparece enquanto você digita,
+como uma senha) e imprime o que você precisa colar no passo 2.
 
-> Se você perder a chave privada, não há como recuperá-la. Crie outra e
-> troque o segredo no Supabase; a antiga pode ser apagada depois.
+Preferindo fazer à mão, é uma chamada só:
+
+```
+curl -X POST \
+  "https://api.cloudflare.com/client/v4/accounts/<ID-DA-CONTA>/stream/keys" \
+  -H "Authorization: Bearer <TOKEN>"
+```
+
+A resposta traz `result.id` e `result.jwk`. São os dois valores do
+passo seguinte.
+
+> A chave privada não é mostrada de novo. Perdendo, crie outra e troque
+> o segredo no Supabase; a antiga pode ser apagada depois.
 
 ## Passo 2 — guardar a chave no Supabase
 
@@ -74,15 +96,19 @@ Enquanto os vídeos aceitarem endereço sem assinatura, assinar não muda
 nada: o identificador antigo continua tocando. Em cada vídeo, ligue
 **Require Signed URLs**.
 
-Pela API, um vídeo de cada vez:
+Isto o painel faz: abra o vídeo em **Stream → Videos**, e nas opções
+dele ligue *Require Signed URLs*. Nos vídeos que você ainda vai subir,
+dá para já subir com a exigência ligada — é uma opção do envio.
+
+Para não repetir cinquenta vezes, há um roteiro:
 
 ```
-POST https://api.cloudflare.com/client/v4/accounts/<CONTA>/stream/<VIDEO>
-     {"requireSignedURLs": true}
+bash supabase/functions/video-assinado/exigir-assinatura.sh
 ```
 
-Nos vídeos que você ainda vai subir, dá para já subir com a exigência
-ligada — é uma opção do envio.
+Sem argumento ele **só lista** os vídeos e diz quais estão abertos.
+Passando um identificador, fecha aquele. Com `--todos`, fecha o que
+ainda estiver aberto.
 
 **Faça este passo por último**, e comece por uma aula só. Assim dá para
 conferir que ela toca antes de fechar as outras 49.
