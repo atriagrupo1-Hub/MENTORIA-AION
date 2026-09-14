@@ -34,9 +34,17 @@ import { cores, paleta } from "@/design/tokens";
  * largura de um monitor, sobraria uma tira do meio da arte e nada mais.
  */
 
+/*
+ * 44 pixels de altura, e não 34.
+ *
+ * É a medida mínima que Apple e Google publicam para alvo de toque, e
+ * ela não é arbitrária: é o tamanho da polpa do dedo. Abaixo disso, a
+ * aluna erra — e errar num botão que flutua sobre a capa, com o dedo
+ * tapando o que ele mesmo está tentando acertar, erra mais ainda.
+ */
 const NAV: React.CSSProperties = {
-  minHeight: 34,
-  padding: "8px 11px",
+  minHeight: 44,
+  padding: "8px 14px",
   fontSize: 13,
   fontWeight: 700,
   whiteSpace: "nowrap",
@@ -52,7 +60,7 @@ const NAV: React.CSSProperties = {
 /** Pílula redonda para ‹ e ›: sobre a arte, ocupam pouco e continuam alcançáveis. */
 const SETA: React.CSSProperties = {
   ...NAV,
-  width: 34,
+  width: 44,
   padding: 0,
   display: "grid",
   placeItems: "center",

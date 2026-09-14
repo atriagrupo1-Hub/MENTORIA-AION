@@ -208,7 +208,7 @@ export function Login() {
               onClick={() => setMostrarCodigo((v) => !v)}
               aria-label={mostrarCodigo ? "Ocultar código" : "Mostrar código"}
               title={mostrarCodigo ? "Ocultar código" : "Mostrar código"}
-              className="absolute right-2 top-1/2 grid h-[42px] w-[42px] -translate-y-1/2 place-items-center border-none bg-transparent text-realce"
+              className="absolute right-2 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center border-none bg-transparent text-realce"
               style={{ color: "rgba(255,255,255,.8)", cursor: "pointer" }}
             >
               {mostrarCodigo ? "◎" : "◉"}
@@ -225,9 +225,21 @@ export function Login() {
             type="submit"
             disabled={entrando}
             className="relative mt-6 flex min-h-[56px] w-full items-center justify-center rounded-pilula border-none px-14 py-4 text-realce font-bold transition-opacity hover:opacity-90"
+            /*
+             * O único dourado do aplicativo, e de propósito.
+             *
+             * Todo o resto é preto e branco — foi assim que a tela
+             * parou de parecer amadora. Mas esta é a tela de entrada,
+             * onde só existe uma coisa a fazer, e onde a marca se
+             * apresenta. Um dourado sozinho, num botão único, não é
+             * decoração: é o destino da tela dito em cor.
+             *
+             * Do lado de dentro o preto e branco continua inteiro.
+             */
             style={{
-              color: "#000000",
-              background: "#ffffff",
+              color: cores.ouroTexto,
+              background: cores.botaoOuro,
+              boxShadow: "0 10px 30px -12px rgba(212,177,112,.55)",
               cursor: entrando ? "wait" : "pointer",
               opacity: entrando ? 0.7 : 1,
             }}
@@ -236,7 +248,7 @@ export function Login() {
             <span
               aria-hidden="true"
               className="absolute right-2 top-1/2 grid h-[38px] w-[38px] -translate-y-1/2 place-items-center rounded-full text-realce"
-              style={{ color: "#000000", background: "rgba(26,20,8,.14)" }}
+              style={{ color: cores.ouroTexto, background: "rgba(26,20,8,.14)" }}
             >
               →
             </span>

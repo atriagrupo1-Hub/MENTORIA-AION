@@ -485,7 +485,7 @@ export function TelaAula() {
               onClick={() => void alternarCurtida(aula.id)}
               aria-label={curtiu(aula.id) ? "Descurtir" : "Curtir"}
               aria-pressed={curtiu(aula.id)}
-              className="flex h-[42px] items-center gap-2 border-none bg-transparent px-4 text-realce hover:opacity-80"
+              className="flex h-11 items-center gap-2 border-none bg-transparent px-4 text-realce hover:opacity-80"
               style={{ color: curtiu(aula.id) ? "#ffffff" : SUAVE, cursor: "pointer" }}
             >
               {curtiu(aula.id) ? "♥" : "♡"}
@@ -500,7 +500,7 @@ export function TelaAula() {
                 });
               }}
               aria-label="Ir para os comentários"
-              className="flex h-[42px] items-center gap-2 border-none bg-transparent px-4 text-corpo hover:opacity-80"
+              className="flex h-11 items-center gap-2 border-none bg-transparent px-4 text-corpo hover:opacity-80"
               style={{ color: SUAVE, cursor: "pointer" }}
             >
               <span className="text-realce leading-none">💬</span>
@@ -516,7 +516,7 @@ export function TelaAula() {
             <button
               onClick={irParaAnterior}
               aria-label="Aula anterior"
-              className="grid h-[42px] w-[42px] place-items-center rounded-full bg-transparent text-secao hover:opacity-80"
+              className="grid h-11 w-11 place-items-center rounded-full bg-transparent text-secao hover:opacity-80"
               style={{ border: `1px solid ${LINHA}`, color: SUAVE, cursor: "pointer" }}
             >
               ←
@@ -525,7 +525,7 @@ export function TelaAula() {
             <button
               onClick={marcarConcluida}
               aria-pressed={feita}
-              className="flex h-[42px] items-center gap-2 rounded-pilula px-5 text-corpo font-semibold hover:opacity-90"
+              className="flex h-11 items-center gap-2 rounded-pilula px-5 text-corpo font-semibold hover:opacity-90"
               style={{
                 color: feita ? "#000000" : "#ffffff",
                 background: feita ? "#ffffff" : "transparent",
@@ -540,7 +540,7 @@ export function TelaAula() {
             <button
               onClick={irParaProxima}
               aria-label="Próxima aula"
-              className="grid h-[42px] w-[42px] place-items-center rounded-full bg-transparent text-secao hover:opacity-80"
+              className="grid h-11 w-11 place-items-center rounded-full bg-transparent text-secao hover:opacity-80"
               style={{ border: `1px solid ${LINHA}`, color: SUAVE, cursor: "pointer" }}
             >
               →
@@ -579,7 +579,7 @@ export function TelaAula() {
               <button
                 onClick={() => setPainel("")}
                 aria-label="Fechar"
-                className="h-[30px] w-[30px] border-none bg-transparent text-realce text-white/60 hover:text-white"
+                className="grid h-11 w-11 place-items-center border-none bg-transparent text-realce text-white/60 hover:text-white"
                 style={{ cursor: "pointer" }}
               >
                 ✕

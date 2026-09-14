@@ -71,7 +71,7 @@ export function Cabecalho({
     >
       <button
         onClick={() => navegar("/inicio")}
-        className="flex flex-col gap-1 border-none bg-transparent p-0 text-left cel:flex-[1_1_100%] cel:items-center cel:text-center"
+        className="flex min-h-11 flex-col justify-center gap-1 border-none bg-transparent p-0 text-left cel:flex-[1_1_100%] cel:items-center cel:text-center"
         style={{ cursor: "pointer" }}
       >
         <span className="font-titulo text-titulo font-semibold text-marfim cel:text-realce">
