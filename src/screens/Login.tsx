@@ -95,10 +95,17 @@ export function Login() {
               </span>
               <Capa caminhos={["/assets/marca/mentora.png"]} alt="Foto da mentora" />
             </span>
+            {/*
+              Branco, e não o azul de rede social.
+              Depois que o dourado saiu, este selo era a única cor viva
+              do aplicativo inteiro — e justamente num azul que todo
+              mundo reconhece de outro lugar. O preto e branco é a regra
+              da casa; o selo segue a regra como o resto.
+            */}
             <span
               aria-label="Perfil verificado"
-              className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full text-realce text-white"
-              style={{ background: cores.verificado, border: "2px solid #05070f" }}
+              className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full text-realce"
+              style={{ background: cores.verificado, color: "#000000", border: "2px solid #05070f" }}
             >
               ✓
             </span>

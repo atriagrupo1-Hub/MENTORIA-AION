@@ -23,7 +23,6 @@ export default {
         "concluido-selo": "#5cc98a",
         alerta: "#e6a89a",
         "alerta-forte": "#b4453c",
-        verificado: "#1d9bf0",
       },
       fontFamily: {
         titulo: ["'Cormorant Garamond'", "Georgia", "serif"],

@@ -25,7 +25,8 @@ export const cores = {
   concluidoSelo: "#5cc98a",
   alerta: "#e6a89a",
   alertaForte: "#b4453c",
-  verificado: "#1d9bf0",
+  /* Selo da foto da mentora. Branco: ver o comentário em Login.tsx. */
+  verificado: "#ffffff",
   divisoria: "rgba(255,255,255,.08)",
   placeholderCapa: "linear-gradient(160deg, #131c33, #060911 60%, #101830)",
 } as const;
