@@ -107,7 +107,7 @@ export function PaginaModulo() {
   const iniciar = () => abrirAula(proxima >= 0 ? proxima : 0);
 
   return (
-    <main className="rise-in-rapido pb-24">
+    <main className="entra pb-24">
       {/* ---------- abertura no celular: a arte é a tela ---------- */}
       <section
         className="relative hidden w-full overflow-hidden cel:block"

@@ -6,6 +6,7 @@ import { BarraInferior, ESPACO_DA_BARRA } from "./BarraInferior";
 import { Cabecalho } from "./Cabecalho";
 import { ConviteInstalar } from "./ConviteInstalar";
 import { EsqueletoInicio } from "./Esqueleto";
+import { RolarAoTopo } from "./RolarAoTopo";
 
 /**
  * Casca do aplicativo da aluna: degradê do topo na cor do módulo atual
@@ -77,6 +78,7 @@ export function Moldura() {
       className={`min-h-screen ${naAula ? "" : ESPACO_DA_BARRA}`}
       style={{ background: naAula ? "#000000" : fundoApp(moduloAtual?.numero ?? 0) }}
     >
+      <RolarAoTopo />
       {naAula ? null : (
         <Cabecalho percentualGeral={percentualGeral} soComputador={naPaginaDoModulo} />
       )}

@@ -96,7 +96,7 @@ export function ConviteInstalar() {
       style={{ paddingBottom: "calc(76px + env(safe-area-inset-bottom))" }}
     >
       <div
-        className="rise-in-rapido mx-auto flex max-w-[520px] items-start gap-3 rounded-cartao-lg p-4"
+        className="entra mx-auto flex max-w-[520px] items-start gap-3 rounded-cartao-lg p-4"
         style={{
           background: "linear-gradient(170deg, rgba(16,24,42,.98), rgba(6,9,18,.99))",
           border: "1px solid rgba(255,255,255,.34)",

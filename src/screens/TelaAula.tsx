@@ -207,7 +207,9 @@ export function TelaAula() {
   }
   function fechar() {
     setSaindo(true);
-    window.setTimeout(() => navegar(`/modulo/${modulo!.numero}`), 280);
+    // O mesmo tempo do desaparecimento, em `index.css`. Navegar antes
+    // corta a saída pela metade; depois, deixa a tela apagada parada.
+    window.setTimeout(() => navegar(`/modulo/${modulo!.numero}`), 220);
   }
 
   function irParaAnterior() {
@@ -306,7 +308,7 @@ export function TelaAula() {
       */}
       {tocando && !video ? (
         <div
-          className="rise-in pointer-events-none fixed inset-0 z-[45]"
+          className="entra pointer-events-none fixed inset-0 z-[45]"
           style={{ background: "rgba(0,0,0,.9)" }}
         />
       ) : null}

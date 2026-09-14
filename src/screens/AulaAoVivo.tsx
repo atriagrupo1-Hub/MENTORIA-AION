@@ -19,7 +19,7 @@ export function AulaAoVivo() {
   const aoVivo = catalogo.aoVivo[modulo.id];
 
   return (
-    <main className="rise-in-rapido mx-auto max-w-[1240px] px-7 pb-24 pt-9 cel-sm:px-5">
+    <main className="entra mx-auto max-w-[1240px] px-7 pb-24 pt-9 cel-sm:px-5">
       <div className="mb-7 flex flex-wrap items-center gap-4">
         <button
           onClick={() => navegar(`/modulo/${numero}`)}

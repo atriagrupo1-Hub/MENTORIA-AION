@@ -77,7 +77,7 @@ function EntradaAdmin({
       <div className="flex min-h-screen items-center justify-center px-[18px] py-8">
         <form
           onSubmit={enviar}
-          className="rise-in w-full max-w-[380px] px-7 py-8"
+          className="entra w-full max-w-[380px] px-7 py-8"
           style={{
             background: tema.superficie,
             border: `1px solid ${tema.linhaSuave}`,
@@ -244,7 +244,7 @@ function PainelLogado() {
         </div>
       </div>
 
-      <div className="rise-in-rapido mx-auto max-w-[1180px] px-6 pb-[90px] pt-9">
+      <div className="entra mx-auto max-w-[1180px] px-6 pb-[90px] pt-9">
         <header className="mb-7 flex flex-wrap items-baseline gap-x-4 gap-y-1">
           <h1 className="m-0 text-[27px] font-semibold" style={{ color: tema.texto }}>
             {abaAtiva === "conteudo" ? "Conteúdo da mentoria" : "Alunas da mentoria"}

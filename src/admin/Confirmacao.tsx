@@ -35,7 +35,7 @@ export function Confirmacao({
     >
       <form
         onSubmit={enviar}
-        className="rise-in-rapido w-full max-w-[430px] px-6 py-6"
+        className="entra w-full max-w-[430px] px-6 py-6"
         style={{
           background: tema.superficie,
           border: `1px solid ${tema.perigoLinha}`,

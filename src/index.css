@@ -80,10 +80,26 @@
   }
 }
 
-@keyframes riseIn {
+/*
+ * A entrada de uma tela.
+ *
+ * Eram três: 0,7s, 0,8s e 0,9s, com 14 pixels de subida — e a escolha
+ * entre elas não seguia nada. Sete décimos é muito tempo: no celular,
+ * abrir um módulo levava mais tempo de animação do que de carregamento,
+ * e a aluna esperava o aplicativo terminar de se mostrar.
+ *
+ * Os aplicativos que servem de referência ficam entre 0,2 e 0,3
+ * segundos, e movem pouco. O que faz a troca de tela parecer cara não é
+ * durar mais, é não dar solavanco: a curva sai rápido e freia no fim,
+ * que é como uma coisa com peso se move.
+ *
+ * Seis pixels, e não quatorze. Deslocamento grande lê como enfeite;
+ * pequeno lê como profundidade.
+ */
+@keyframes entra {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -101,16 +117,13 @@
   }
 }
 
-.rise-in {
-  animation: riseIn 0.8s ease both;
-}
-
-.rise-in-lento {
-  animation: riseIn 0.9s ease both;
-}
-
-.rise-in-rapido {
-  animation: riseIn 0.7s ease both;
+/*
+ * Uma só, em toda a casa. Entrada de tela, aviso, convite: se a mesma
+ * coisa acontece, ela tem de acontecer do mesmo jeito — é o que o olho
+ * lê como sistema em vez de acaso.
+ */
+.entra {
+  animation: entra 0.22s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 /*
@@ -158,9 +171,12 @@
   display: none;
 }
 
-/* Saída suave da tela da aula. */
+/*
+ * Saída da tela da aula — o mesmo tempo e a mesma curva da entrada.
+ * Sair mais devagar do que entrar faz a tela parecer presa.
+ */
 .tela-aula {
-  transition: opacity 0.28s ease;
+  transition: opacity 0.22s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
 .tela-aula[data-saindo="1"] {

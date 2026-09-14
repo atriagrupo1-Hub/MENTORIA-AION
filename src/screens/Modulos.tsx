@@ -19,7 +19,7 @@ export function Modulos() {
   const aviso = useAviso();
 
   return (
-    <main className="rise-in mx-auto max-w-[1100px] px-7 pb-24 pt-6 cel-sm:px-5">
+    <main className="entra mx-auto max-w-[1100px] px-7 pb-24 pt-6 cel-sm:px-5">
       <p className="mb-2 mt-0 text-rotulo uppercase tracking-rotulo text-[rgba(255,255,255,.4)]">
         Minha jornada
       </p>

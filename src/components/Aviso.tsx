@@ -25,7 +25,7 @@ export function Aviso({
     <div className="pointer-events-none fixed inset-x-0 bottom-9 z-[90] flex justify-center px-5">
       <div
         role="status"
-        className="rise-in max-w-[560px] rounded-cartao px-7 py-5 text-center text-secao leading-[1.5]"
+        className="entra max-w-[560px] rounded-cartao px-7 py-5 text-center text-secao leading-[1.5]"
         style={{
           color: "#f6efe3",
           background: "linear-gradient(135deg, rgba(22,32,55,.97), rgba(7,10,20,.97))",

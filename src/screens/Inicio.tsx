@@ -50,7 +50,7 @@ export function Inicio() {
   }
 
   return (
-    <main className="rise-in mx-auto max-w-[1360px] px-7 pb-24 pt-6 cel-sm:px-5">
+    <main className="entra mx-auto max-w-[1360px] px-7 pb-24 pt-6 cel-sm:px-5">
       {/*
         O bloco de retomada tem largura própria.
         A página vai a 1360px, o que serve para a fileira de módulos.

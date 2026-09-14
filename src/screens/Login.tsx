@@ -57,7 +57,7 @@ export function Login() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center px-5 py-8">
-      <div className="rise-in-lento w-full max-w-[460px]">
+      <div className="entra w-full max-w-[460px]">
         <div className="mb-6 text-center">
           <span className="relative mb-5 inline-block h-[132px] w-[132px]">
             <span
