@@ -44,9 +44,12 @@ const ABAS = [
 export function Cabecalho({
   percentualGeral,
   soComputador = false,
+  carregando = false,
 }: {
   percentualGeral: number;
   soComputador?: boolean;
+  /** O banco ainda não respondeu: o progresso é uma forma vazia, não um número. */
+  carregando?: boolean;
 }) {
   const navegar = useNavigate();
 
@@ -102,7 +105,12 @@ export function Cabecalho({
         <div className="min-w-[110px] flex-1">
           <div className="mb-2 flex justify-between text-apoio text-[#a89f92]">
             <span>Seu progresso</span>
-            <span style={{ color: "#ffffff" }}>{percentualGeral}%</span>
+            {/*
+              Zero por cento é uma informação, e errada: antes de o banco
+              responder não se sabe quanto ela andou. Um traço não afirma
+              nada, que é o certo enquanto não se sabe.
+            */}
+            <span style={{ color: "#ffffff" }}>{carregando ? "—" : `${percentualGeral}%`}</span>
           </div>
           <div
             className="h-[6px] overflow-hidden rounded-pilula"

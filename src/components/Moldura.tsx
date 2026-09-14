@@ -5,6 +5,7 @@ import { cores, fundoApp } from "@/design/tokens";
 import { BarraInferior, ESPACO_DA_BARRA } from "./BarraInferior";
 import { Cabecalho } from "./Cabecalho";
 import { ConviteInstalar } from "./ConviteInstalar";
+import { EsqueletoInicio } from "./Esqueleto";
 
 /**
  * Casca do aplicativo da aluna: degradê do topo na cor do módulo atual
@@ -20,15 +21,20 @@ export function Moldura() {
   const { percentualGeral, moduloAtual } = useJornada();
   const local = useLocation();
 
+  /*
+   * Carregando, a casca já é a de verdade.
+   *
+   * O cabeçalho e a barra do rodapé não dependem do banco: são o nome
+   * da mentoria e quatro abas, iguais sempre. Mostrá-los no primeiro
+   * quadro é o que faz o aplicativo abrir em vez de piscar — e o que
+   * espera vira só o miolo, com a forma do que está vindo.
+   */
   if (carregando) {
     return (
-      <div
-        className="flex min-h-screen items-center justify-center px-6"
-        style={{ background: "#000000" }}
-      >
-        <p className="m-0 text-corpo" style={{ color: cores.textoSecundario }}>
-          Carregando sua jornada…
-        </p>
+      <div className={`min-h-screen ${ESPACO_DA_BARRA}`} style={{ background: "#000000" }}>
+        <Cabecalho percentualGeral={0} carregando />
+        <EsqueletoInicio />
+        <BarraInferior />
       </div>
     );
   }

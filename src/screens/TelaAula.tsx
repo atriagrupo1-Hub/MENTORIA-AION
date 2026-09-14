@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { useNavigate, useParams } from "react-router-dom";
 import { Aviso } from "@/components/Aviso";
 import { Capa, capaAula, capaModulo } from "@/components/Capa";
+import { EsqueletoComentarios } from "@/components/Esqueleto";
 import { Player } from "@/components/Player";
 import { Play } from "@/components/Icones";
 import { useAviso } from "@/components/useAviso";
@@ -60,6 +61,17 @@ export function TelaAula() {
   const [rascunho, setRascunho] = useState("");
   const [saindo, setSaindo] = useState(false);
   const [comentarios, setComentarios] = useState<ComentarioPublico[]>([]);
+  /*
+   * Esperando não é o mesmo que não existir, e a tela dizia que era.
+   *
+   * Enquanto o servidor não devolvia o endereço do vídeo, `video` era
+   * nulo — o mesmo valor de uma aula sem vídeo cadastrado. A tela lia
+   * esse nulo e escrevia "Vídeo em breve" por alguns instantes, em toda
+   * aula, toda vez. A aluna abria a aula e o aplicativo dizia que ela
+   * não existia ainda.
+   */
+  const [buscandoVideo, setBuscandoVideo] = useState(true);
+  const [buscandoComentarios, setBuscandoComentarios] = useState(true);
   const [video, setVideo] = useState<api.Video | null>(null);
   const [segundos, setSegundos] = useState(0);
 
@@ -81,14 +93,21 @@ export function TelaAula() {
     let valeAinda = true;
     setComentarios([]);
     setVideo(null);
+    setBuscandoVideo(true);
+    setBuscandoComentarios(true);
     void api
       .comentariosDaAula(aulaId)
       .then((lista) => valeAinda && setComentarios(lista))
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => valeAinda && setBuscandoComentarios(false));
     void api
       .videoDaAula(aulaId)
       .then((v) => valeAinda && setVideo(v))
-      .catch(() => undefined);
+      .catch(() => undefined)
+      // `finally` e não `then`: falhando a busca, continua sendo
+      // espera terminada — o que a tela precisa saber é que já não há
+      // o que esperar, não se deu certo.
+      .finally(() => valeAinda && setBuscandoVideo(false));
     return () => {
       valeAinda = false;
     };
@@ -325,7 +344,7 @@ export function TelaAula() {
               />
 
               {/* Aula ainda sem vídeo cadastrado: nada de botão que não toca. */}
-              {tocando ? null : (
+              {tocando || buscandoVideo ? null : (
                 <span
                   className="absolute left-1/2 top-1/2 z-[5] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-[5px] px-4 py-2 text-apoio"
                   style={{
@@ -385,7 +404,7 @@ export function TelaAula() {
             no próprio quadro. Manter as nossas seria oferecer botões
             que não fazem nada.
           */}
-          {video ? null : (
+          {video || buscandoVideo ? null : (
           <div className="relative flex-none">
             <button
               onClick={() => setMenuAberto((v) => !v)}
@@ -641,7 +660,13 @@ export function TelaAula() {
             ) : null}
           </div>
 
-          {comentariosAbertos && comentarios.length > 0 ? (
+          {comentariosAbertos && buscandoComentarios ? (
+            <div className="mt-4">
+              <EsqueletoComentarios />
+            </div>
+          ) : null}
+
+          {comentariosAbertos && !buscandoComentarios && comentarios.length > 0 ? (
             <div className="mt-2 flex flex-col">
               {comentarios.map((c) => (
                 <div
