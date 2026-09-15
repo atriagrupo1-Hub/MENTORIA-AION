@@ -364,6 +364,14 @@ export type ComentarioPublico = {
   /** Nulo quer dizer anônimo — comentário escrito antes da mudança. */
   autoraNome: string | null;
   minha: boolean;
+  /** O comentário que esta linha responde. Nulo = primeiro nível. */
+  respostaA: string | null;
+  /**
+   * Quem escreveu é a instrutora. Vem calculado no banco, e não podia
+   * ser de outro jeito: o papel das outras pessoas não é legível pelo
+   * navegador, então a tela não teria como descobrir sozinha.
+   */
+  ehInstrutor: boolean;
 };
 
 /**
@@ -393,6 +401,8 @@ export async function comentariosDaAula(aulaId: string): Promise<ComentarioPubli
       criado_em: string;
       autora_nome: string | null;
       minha: boolean;
+      resposta_a: string | null;
+      eh_instrutor: boolean;
     }) => ({
       id: c.id,
       aulaId: c.aula_id,
@@ -401,14 +411,25 @@ export async function comentariosDaAula(aulaId: string): Promise<ComentarioPubli
       criadoEm: c.criado_em,
       autoraNome: c.autora_nome,
       minha: c.minha,
+      respostaA: c.resposta_a,
+      ehInstrutor: c.eh_instrutor,
     }),
   );
 }
 
+/**
+ * Escreve um comentário, ou uma resposta a um deles.
+ *
+ * `respostaA` é só o que a tela pede. Quem confere se o pedido vale é o
+ * banco: a resposta tem de apontar para um comentário publicado, da
+ * mesma aula, que não seja ele próprio uma resposta. Alterar o pedido
+ * daqui não abre um segundo nível — a linha não entra.
+ */
 export async function comentar(
   aulaId: string,
   texto: string,
   posicaoSegundos: number,
+  respostaA?: string,
 ): Promise<void> {
   const { data: sessao } = await supabase.auth.getUser();
   if (!sessao.user) throw new Error("sem sessão");
@@ -417,6 +438,7 @@ export async function comentar(
     autora_id: sessao.user.id,
     texto,
     posicao_segundos: Math.round(posicaoSegundos),
+    resposta_a: respostaA ?? null,
   });
   if (error) throw new Error(`comentar: ${error.message}`);
 }

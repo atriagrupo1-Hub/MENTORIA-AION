@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Aviso } from "@/components/Aviso";
 import { Capa, capaAula, capaModulo } from "@/components/Capa";
+import { Conversa } from "@/components/Conversa";
 import { EsqueletoComentarios } from "@/components/Esqueleto";
 import { Player } from "@/components/Player";
 import { Play } from "@/components/Icones";
@@ -28,6 +29,7 @@ function passosDoExercicio(texto: string | null | undefined): string[] {
 
 /** O preto e branco desta tela: uma linha e um cinza, e nada mais. */
 const LINHA = "rgba(255,255,255,.22)";
+
 const SUAVE = "rgba(255,255,255,.62)";
 
 export function TelaAula() {
@@ -267,11 +269,8 @@ export function TelaAula() {
    * campo e a linha provisória some: nada fica no ar dizendo que foi
    * publicado quando não foi.
    */
-  async function enviarComentario(e: FormEvent) {
-    e.preventDefault();
-    const texto = rascunho.trim();
-    if (!texto || !aulaId) return;
-    setRascunho("");
+  async function escrever(texto: string, respostaA?: string) {
+    if (!texto || !aulaId) return false;
     setComentariosAbertos(true);
 
     const provisorio: api.ComentarioPublico = {
@@ -284,18 +283,59 @@ export function TelaAula() {
       // "Você", como todas as dela.
       autoraNome: null,
       minha: true,
+      respostaA: respostaA ?? null,
+      ehInstrutor: estado.aluna?.papel === "admin",
     };
-    setComentarios((atuais) => [provisorio, ...atuais]);
+    // Comentário novo entra em cima, que é onde a lista o mostraria.
+    // Resposta entra no fim, porque é assim que ela é lida: embaixo da
+    // conversa, depois das que vieram antes.
+    setComentarios((atuais) =>
+      respostaA ? [...atuais, provisorio] : [provisorio, ...atuais],
+    );
 
     try {
-      await api.comentar(aulaId, texto, segundoAtual);
+      await api.comentar(aulaId, texto, segundoAtual, respostaA);
       setComentarios(await api.comentariosDaAula(aulaId));
+      return true;
     } catch {
       setComentarios((atuais) => atuais.filter((c) => c.id !== provisorio.id));
-      setRascunho(texto);
-      aviso.mostrar("Não conseguimos publicar seu comentário. Tente de novo.");
+      aviso.mostrar(
+        respostaA
+          ? "Não conseguimos publicar sua resposta. Tente de novo."
+          : "Não conseguimos publicar seu comentário. Tente de novo.",
+      );
+      return false;
     }
   }
+
+  async function enviarComentario(e: FormEvent) {
+    e.preventDefault();
+    const texto = rascunho.trim();
+    if (!texto) return;
+    setRascunho("");
+    if (!(await escrever(texto))) setRascunho(texto);
+  }
+
+  const responder = (pai: string, texto: string) => escrever(texto, pai);
+
+  /*
+   * A lista vem do banco já na ordem certa — conversa por conversa,
+   * pergunta primeiro. Aqui ela só é agrupada, preservando essa ordem,
+   * para que a tela saiba onde termina uma conversa e começa a outra.
+   *
+   * Resposta órfã não existe nesta lista: o banco não devolve resposta
+   * cuja raiz saiu do ar.
+   */
+  const conversas = useMemo(
+    () =>
+      comentarios
+        .filter((c) => !c.respostaA)
+        .map((pai) => ({
+          pai,
+          respostas: comentarios.filter((r) => r.respostaA === pai.id),
+        })),
+    [comentarios],
+  );
 
   return (
     <main
@@ -671,30 +711,16 @@ export function TelaAula() {
             </div>
           ) : null}
 
-          {comentariosAbertos && !buscandoComentarios && comentarios.length > 0 ? (
-            <div className="mt-2 flex flex-col">
-              {comentarios.map((c) => (
-                <div
-                  key={c.id}
-                  className="py-4"
-                  style={{ borderTop: "1px solid rgba(255,255,255,.08)" }}
-                >
-                  {/*
-                    Três casos, e o terceiro é o que importa: nulo quer
-                    dizer comentário escrito quando o aplicativo ainda
-                    prometia anonimato. Esses continuam anônimos para
-                    sempre — a promessa valia na hora em que foi feita.
-                  */}
-                  <p className="m-0 text-apoio font-bold text-white">
-                    {c.minha ? "Você" : (c.autoraNome ?? "Anônimo")}
-                  </p>
-                  <p className="mb-0 mt-2 text-corpo text-white/85">
-                    {c.texto}
-                  </p>
-                </div>
-              ))}
-            </div>
+          {comentariosAbertos && !buscandoComentarios && conversas.length > 0 ? (
+            /*
+              A chave é a aula. Trocando de aula, a conversa é outra: a
+              caixa de resposta que estivesse aberta apontava para um
+              comentário que já não está na tela, e o rascunho dentro
+              dela não tem mais onde ser publicado.
+            */
+            <Conversa key={aulaId} conversas={conversas} aoResponder={responder} />
           ) : null}
+
         </section>
 
         <h2

@@ -82,7 +82,23 @@ export function AbaComentarios({
     void carregar();
   }, [carregar]);
 
+  /*
+   * Quantas respostas caem junto.
+   *
+   * A leitura das alunas esconde a resposta cuja raiz saiu do ar —
+   * senão metade da conversa ficaria pendurada, sem o que ela
+   * respondia. O efeito é real e invisível daqui: ocultar um
+   * comentário some com as respostas dele também. Esta tela precisa
+   * dizer isso antes, não depois.
+   */
+  const respostasDe = (id: string) =>
+    (lista ?? []).filter((c) => c.respostaA === id && c.status === "publicado").length;
+
+  const quantasRespostas = (n: number) =>
+    n === 1 ? "1 resposta" : `${n} respostas`;
+
   async function mudar(c: ComentarioParaModerar, status: ComentarioParaModerar["status"]) {
+    const penduradas = c.respostaA ? 0 : respostasDe(c.id);
     try {
       await moderarComentario(c.id, status);
       // Muda na lista sem recarregar tudo: a administradora costuma
@@ -91,12 +107,18 @@ export function AbaComentarios({
       setLista((atual) =>
         (atual ?? []).map((x) => (x.id === c.id ? { ...x, status } : x)),
       );
+      const junto =
+        penduradas > 0 && status !== "publicado"
+          ? ` ${quantasRespostas(penduradas)} saíram junto.`
+          : "";
       avisar(
         status === "publicado"
-          ? "Comentário de volta ao ar."
+          ? c.respostaA
+            ? "Resposta de volta ao ar."
+            : "Comentário de volta ao ar."
           : status === "oculto"
-            ? "Comentário oculto das alunas."
-            : "Comentário removido.",
+            ? `Comentário oculto das alunas.${junto}`
+            : `Comentário removido.${junto}`,
       );
     } catch (falha) {
       avisar(falha instanceof Error ? falha.message : "Não foi possível moderar.");
@@ -156,6 +178,12 @@ export function AbaComentarios({
                 <span className="text-[15px] font-semibold" style={{ color: tema.texto }}>
                   {c.autoraNome}
                 </span>
+                {c.ehInstrutor ? <span style={etiqueta(tema.textoSecundario)}>instrutor</span> : null}
+                {c.respostaA ? (
+                  <span className="text-[13px]" style={{ color: tema.textoTerciario }}>
+                    ↳ resposta
+                  </span>
+                ) : null}
                 <span style={rotulo}>
                   Módulo {c.moduloNumero} · Aula {c.aulaNumero}
                 </span>
@@ -189,8 +217,13 @@ export function AbaComentarios({
                   <button
                     onClick={() =>
                       pedirConfirmacao({
-                        titulo: "Remover comentário",
-                        mensagem: `O comentário de ${c.autoraNome} sai do ar. O texto continua guardado, e você pode devolvê-lo depois.`,
+                        titulo: c.respostaA ? "Remover resposta" : "Remover comentário",
+                        mensagem:
+                          `${c.respostaA ? "A resposta" : "O comentário"} de ${c.autoraNome} sai do ar. ` +
+                          (!c.respostaA && respostasDe(c.id) > 0
+                            ? `${quantasRespostas(respostasDe(c.id))} embaixo dele saem junto — sem o comentário, elas não teriam o que responder. `
+                            : "") +
+                          "O texto continua guardado, e você pode devolvê-lo depois.",
                         executar: () => void mudar(c, "removido"),
                       })
                     }

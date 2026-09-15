@@ -471,6 +471,9 @@ export type ComentarioParaModerar = {
   texto: string;
   status: "publicado" | "oculto" | "removido";
   criadoEm: string;
+  /** Nulo = comentário de primeiro nível; preenchido = é uma resposta. */
+  respostaA: string | null;
+  ehInstrutor: boolean;
 };
 
 export async function comentariosParaModerar(): Promise<ComentarioParaModerar[]> {
@@ -487,6 +490,8 @@ export async function comentariosParaModerar(): Promise<ComentarioParaModerar[]>
       texto: string;
       status: ComentarioParaModerar["status"];
       criado_em: string;
+      resposta_a: string | null;
+      eh_instrutor: boolean;
     }) => ({
       id: c.id,
       aulaId: c.aula_id,
@@ -497,6 +502,8 @@ export async function comentariosParaModerar(): Promise<ComentarioParaModerar[]>
       texto: c.texto,
       status: c.status,
       criadoEm: c.criado_em,
+      respostaA: c.resposta_a,
+      ehInstrutor: c.eh_instrutor,
     }),
   );
 }
