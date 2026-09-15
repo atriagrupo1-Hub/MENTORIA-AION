@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Capa } from "@/components/Capa";
-import { SilhuetaCadeado, SilhuetaPessoa } from "@/components/Icones";
+import { Chave, SilhuetaCadeado, SilhuetaPessoa } from "@/components/Icones";
 import { useEstado } from "@/data/estado";
 import { cores, tipografia } from "@/design/tokens";
 
@@ -59,56 +58,31 @@ export function Login() {
     <div className="flex min-h-screen flex-col items-center justify-center px-5 py-8">
       <div className="entra w-full max-w-[460px]">
         <div className="mb-6 text-center">
-          <span className="relative mb-5 inline-block h-[132px] w-[132px]">
-            <span
-              className="absolute inset-0 flex flex-col items-center justify-center gap-2 overflow-hidden rounded-full"
-              style={{
-                background: cores.placeholderCapa,
-                border: "2px solid rgba(255,255,255,.75)",
-                boxShadow: "0 0 44px -12px rgba(255,255,255,.6)",
-              }}
-            >
-              <span aria-hidden="true" className="flex flex-col items-center gap-1">
-                <span
-                  style={{
-                    width: 22,
-                    height: 22,
-                    border: "2px solid rgba(255,255,255,.5)",
-                    borderRadius: "50%",
-                  }}
-                />
-                <span
-                  style={{
-                    width: 40,
-                    height: 18,
-                    border: "2px solid rgba(255,255,255,.5)",
-                    borderBottom: "none",
-                    borderRadius: "99px 99px 0 0",
-                  }}
-                />
-              </span>
-              <span
-                className="font-mono text-rotulo tracking-rotulo"
-                style={{ color: "rgba(255,255,255,.6)" }}
-              >
-                foto da mentora
-              </span>
-              <Capa caminhos={["/assets/marca/mentora.png"]} alt="Foto da mentora" />
-            </span>
-            {/*
-              Branco, e não o azul de rede social.
-              Depois que o dourado saiu, este selo era a única cor viva
-              do aplicativo inteiro — e justamente num azul que todo
-              mundo reconhece de outro lugar. O preto e branco é a regra
-              da casa; o selo segue a regra como o resto.
-            */}
-            <span
-              aria-label="Perfil verificado"
-              className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full text-realce"
-              style={{ background: cores.verificado, color: "#000000", border: "2px solid #05070f" }}
-            >
-              ✓
-            </span>
+          {/*
+            A chave, e não um retrato.
+
+            Aqui ficava a foto da mentora. Enquanto ela não chegasse, o
+            que a aluna via ao abrir o aplicativo era um círculo cinza
+            escrito "foto da mentora" — um pedido de arquivo, na porta
+            de entrada de uma mentoria paga.
+
+            O selo de verificado saiu junto, e por consequência: ele é o
+            gesto de rede social que diz "esta pessoa é mesmo quem
+            diz ser". Sem rosto, não há quem verificar; um ✓ pendurado
+            num símbolo não afirma nada.
+
+            O círculo fica. Ele é o que segura o alto da tela, e a borda
+            clara com o brilho em volta era do protótipo.
+          */}
+          <span
+            className="mb-5 inline-grid h-[132px] w-[132px] place-items-center rounded-full"
+            style={{
+              background: cores.placeholderCapa,
+              border: "2px solid rgba(255,255,255,.75)",
+              boxShadow: "0 0 44px -12px rgba(255,255,255,.6)",
+            }}
+          >
+            <Chave altura={64} />
           </span>
 
           <p className="mb-2 mt-0 text-rotulo uppercase tracking-rotulo text-marfim">Mentoria</p>
