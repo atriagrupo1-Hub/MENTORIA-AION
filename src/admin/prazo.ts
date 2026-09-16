@@ -85,3 +85,19 @@ export function estadoDoPrazo(acessoAte: string | null): EstadoPrazo {
     semPrazo: false,
   };
 }
+
+/**
+ * Esta aluna precisa de renovação?
+ *
+ * Verdadeiro quando falta um mês ou menos — e também quando o prazo já
+ * passou. As duas coisas pedem a mesma atitude: falar com ela sobre
+ * renovar. Separar em dois contadores esconderia a mais urgente num
+ * canto, e a lista já distingue as duas na etiqueta de cada linha,
+ * "Faltam 12 dias" de um lado e "Vencido há 3 dias" do outro.
+ *
+ * Sem prazo nunca precisa: acesso sem data de fim não vence.
+ */
+export function precisaRenovar(acessoAte: string | null): boolean {
+  const e = estadoDoPrazo(acessoAte);
+  return !e.semPrazo && (e.perto || e.vencido);
+}

@@ -4,7 +4,7 @@ import * as dados from "./dados";
 import { formatarDigitando, soDigitos } from "./celular";
 import { FichaDaAluna } from "./FichaDaAluna";
 import { botaoOuro, campo, etiqueta, painel as tema, rotulo } from "./estilos";
-import { estadoDoPrazo } from "./prazo";
+import { estadoDoPrazo, precisaRenovar } from "./prazo";
 import type { Painel } from "./usePainel";
 
 /**
@@ -41,12 +41,33 @@ export function AbaAlunas({
   const [salvando, setSalvando] = useState(false);
   const [abertaId, setAbertaId] = useState("");
   const [busca, setBusca] = useState("");
-  const [filtro, setFiltro] = useState<"todas" | "ativas" | "bloqueadas">("todas");
+  const [filtro, setFiltro] = useState<"todas" | "ativas" | "vencendo" | "bloqueadas">("todas");
 
   const totalAulas = catalogo.modulos.reduce((s, m) => s + m.aulas.length, 0);
 
-  const ativas = alunas.filter((a) => a.status === "ativa").length;
-  const bloqueadas = alunas.length - ativas;
+  /*
+   * Três estados que não se sobrepõem, e por isso somam.
+   *
+   * "Ativas" contava também quem já passou do prazo — e o banco NÃO
+   * considera essa pessoa ativa: `conta_ativa()` exige
+   * `acesso_ate > now()`. O painel dizia que ela estava dentro
+   * enquanto o aplicativo a barrava na porta.
+   *
+   * Agora cada aluna cai em exatamente um lugar:
+   *
+   *   bloqueada — vocês fecharam a conta, o prazo não importa
+   *   vencendo  — falta um mês ou menos, ou já venceu: hora de falar
+   *   ativa     — entra hoje, e não vence tão cedo
+   *
+   * Sem sobreposição a soma bate com "Todas", que é o que alguém faz
+   * de cabeça ao olhar quatro números lado a lado.
+   */
+  const estado = (a: (typeof alunas)[number]) =>
+    a.status === "bloqueada" ? "bloqueadas" : precisaRenovar(a.acessoAte) ? "vencendo" : "ativas";
+
+  const bloqueadas = alunas.filter((a) => estado(a) === "bloqueadas").length;
+  const vencendo = alunas.filter((a) => estado(a) === "vencendo").length;
+  const ativas = alunas.filter((a) => estado(a) === "ativas").length;
 
   /*
    * A busca olha nome, nome de acesso e celular.
@@ -58,8 +79,7 @@ export function AbaAlunas({
     const termo = busca.trim().toLowerCase();
     const digitos = soDigitos(busca);
     return alunas.filter((a) => {
-      if (filtro === "ativas" && a.status !== "ativa") return false;
-      if (filtro === "bloqueadas" && a.status !== "bloqueada") return false;
+      if (filtro !== "todas" && estado(a) !== filtro) return false;
       if (!termo) return true;
       return (
         a.nome.toLowerCase().includes(termo) ||
@@ -103,9 +123,12 @@ export function AbaAlunas({
   }
 
   const FILTROS = [
-    { chave: "todas" as const, nome: "Todas", conta: alunas.length },
-    { chave: "ativas" as const, nome: "Ativas", conta: ativas },
-    { chave: "bloqueadas" as const, nome: "Bloqueadas", conta: bloqueadas },
+    { chave: "todas" as const, nome: "Todas", conta: alunas.length, atencao: false },
+    { chave: "ativas" as const, nome: "Ativas", conta: ativas, atencao: false },
+    // O vermelho é a única cor do painel, e quer dizer sempre a mesma
+    // coisa: isto precisa de você. Aceso só quando há alguém.
+    { chave: "vencendo" as const, nome: "Vencendo", conta: vencendo, atencao: vencendo > 0 },
+    { chave: "bloqueadas" as const, nome: "Bloqueadas", conta: bloqueadas, atencao: false },
   ];
 
   return (
@@ -130,7 +153,10 @@ export function AbaAlunas({
                 cursor: "pointer",
               }}
             >
-              <span className="text-[22px] font-bold leading-none" style={{ color: tema.texto }}>
+              <span
+                className="text-[22px] font-bold leading-none"
+                style={{ color: f.atencao ? tema.perigo : tema.texto }}
+              >
                 {f.conta}
               </span>
               <span style={rotulo}>{f.nome}</span>
