@@ -74,6 +74,11 @@ type Estado = {
   moduloVisivel: (modulo: Modulo) => boolean;
   /** Quando a primeira aula do módulo abre. Nulo se já abriu ou se não é dela. */
   moduloAbreEm: (modulo: Modulo) => string | null;
+  /**
+   * Quando esta aula abre. Nulo quando já abriu, quando não é dela, ou
+   * quando ainda não há data marcada no cronograma.
+   */
+  aulaAbreEm: (aulaId: string) => string | null;
   presenteLiberado: (categoriaId: string, presenteId: string) => boolean;
 
   concluida: (aulaId: string) => boolean;
@@ -107,6 +112,8 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
     new Map(),
   );
   const [curtidasSet, setCurtidasSet] = useState<Set<string>>(new Set());
+  /** Aula fechada -> quando abre. Só as que já têm data marcada. */
+  const [aberturas, setAberturas] = useState<Map<string, string>>(new Map());
 
   /** Posição do vídeo em andamento, antes de chegar ao banco. */
   const posicoesLocais = useRef<Map<string, number>>(new Map());
@@ -132,6 +139,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
         setPresentesLib(new Set());
         setModulosDaAluna(new Map());
         setCurtidasSet(new Set());
+        setAberturas(new Map());
         return;
       }
 
@@ -148,17 +156,19 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       }
       setAluna(perfil);
 
-      const [cat, aulas, likes, mods] = await Promise.all([
+      const [cat, aulas, likes, mods, abre] = await Promise.all([
         api.carregarCatalogo(),
         api.minhasAulas(),
         api.curtidas(),
         api.meusModulos(),
+        api.minhasAberturas(),
       ]);
 
       setCatalogo(cat);
       setLiberadas(new Map(aulas.map((a) => [a.aulaId, a])));
       setCurtidasSet(likes);
       setModulosDaAluna(mods);
+      setAberturas(abre);
 
       const idsPresentes = cat.categorias.flatMap((c) => c.presentes.map((p) => p.id));
       setPresentesLib(await api.presentesLiberados(idsPresentes));
@@ -167,6 +177,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       setLiberadas(new Map());
       setPresentesLib(new Set());
       setModulosDaAluna(new Map());
+      setAberturas(new Map());
       setErro(
         falha instanceof Error
           ? `Não conseguimos carregar seus dados. ${falha.message}`
@@ -228,6 +239,11 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       return info.proximaAbertura;
     },
     [modulosDaAluna],
+  );
+
+  const aulaAbreEm = useCallback<Estado["aulaAbreEm"]>(
+    (aulaId) => aberturas.get(aulaId) ?? null,
+    [aberturas],
   );
 
   const concluida = useCallback<Estado["concluida"]>(
@@ -346,6 +362,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       moduloLiberado,
       moduloVisivel,
       moduloAbreEm,
+      aulaAbreEm,
       presenteLiberado,
       concluida,
       percentualAssistido,
@@ -369,6 +386,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       moduloLiberado,
       moduloVisivel,
       moduloAbreEm,
+      aulaAbreEm,
       presenteLiberado,
       concluida,
       percentualAssistido,

@@ -5,7 +5,7 @@ import { Capa, capaModulo } from "@/components/Capa";
 import { Play } from "@/components/Icones";
 import { SemConteudo } from "@/components/SemConteudo";
 import { useAviso } from "@/components/useAviso";
-import { rotuloAcaoModulo, rotuloEstadoModulo } from "@/data/derivados";
+import { quandoAbre, rotuloAcaoModulo, rotuloEstadoModulo } from "@/data/derivados";
 import { useJornada } from "@/data/useJornada";
 import { cores } from "@/design/tokens";
 
@@ -37,7 +37,11 @@ export function Modulos() {
             key={e.modulo.id}
             onClick={() => {
               if (!e.liberado) {
-                aviso.mostrar("Este módulo será liberado no momento certo da sua jornada.");
+                aviso.mostrar(
+                  e.abreEm
+                    ? `Este módulo abre ${quandoAbre(e.abreEm)}.`
+                    : "Este módulo será liberado no momento certo da sua jornada.",
+                );
                 return;
               }
               navegar(`/modulo/${e.modulo.numero}`);
@@ -70,9 +74,17 @@ export function Modulos() {
                 className="text-rotulo uppercase tracking-rotulo"
                 style={{ color: e.destaque }}
               >
+                {/*
+                  Módulo fechado mostrava só "Módulo 3", sem mais nada.
+                  Agora mostra o dia, quando a aluna já tem um marcado.
+                  Sem data, segue só o número — que continua sendo a
+                  verdade: não há o que prometer ainda.
+                */}
                 {e.liberado
                   ? `Módulo ${e.modulo.numero} · ${rotuloEstadoModulo(e)}`
-                  : `Módulo ${e.modulo.numero}`}
+                  : e.abreEm
+                    ? `Módulo ${e.modulo.numero} · ${rotuloEstadoModulo(e, e.abreEm)}`
+                    : `Módulo ${e.modulo.numero}`}
               </span>
               <span
                 className="font-titulo text-realce leading-[1.3] text-marfim"
@@ -120,7 +132,7 @@ export function Modulos() {
                   />
                 </span>
               )}
-              <span className="cel:hidden">{rotuloAcaoModulo(e)}</span>
+              <span className="cel:hidden">{rotuloAcaoModulo(e, e.abreEm)}</span>
             </span>
           </button>
         ))}

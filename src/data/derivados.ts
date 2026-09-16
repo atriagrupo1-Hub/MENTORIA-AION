@@ -5,6 +5,40 @@ export function percentual(feito: number, total: number): number {
   return total ? Math.round((feito / total) * 100) : 0;
 }
 
+/**
+ * Quando a aula abre, do jeito que a aluna pensa a data.
+ *
+ * Perto, ela conta em dias: "hoje", "amanhã", "em 3 dias". Longe, ela
+ * quer a data — e este cronograma vai até maio de 2027, então o ano
+ * entra quando não é o atual. Sem o ano, "12 de maio" numa lista que
+ * atravessa a virada é uma pegadinha.
+ *
+ * A conta é por DIA no calendário, não por 24 horas. Uma aula que abre
+ * às 3 da manhã de amanhã está a poucas horas daqui, e dizer "hoje"
+ * porque ainda não deu um dia inteiro seria mentira — a aluna que
+ * abrir o aplicativo hoje à noite não vai encontrar nada.
+ */
+export function quandoAbre(iso: string, agora: Date = new Date()): string {
+  const data = new Date(iso);
+  if (Number.isNaN(data.getTime())) return "em breve";
+
+  const meiaNoite = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const dias = Math.round(
+    (meiaNoite(data).getTime() - meiaNoite(agora).getTime()) / 86_400_000,
+  );
+
+  if (dias <= 0) return "hoje";
+  if (dias === 1) return "amanhã";
+  if (dias <= 6) return `em ${dias} dias`;
+
+  const mesmoAno = data.getFullYear() === agora.getFullYear();
+  return data.toLocaleDateString("pt-BR", {
+    day: "numeric",
+    month: "long",
+    ...(mesmoAno ? {} : { year: "numeric" }),
+  });
+}
+
 export type EstadoModulo = {
   modulo: Modulo;
   liberado: boolean;
@@ -15,12 +49,20 @@ export type EstadoModulo = {
   emAndamento: boolean;
   destaque: string;
   rgb: string;
+  /**
+   * Quando o módulo abre, para quem ainda não o tem.
+   *
+   * Nulo quando já está liberado, ou quando o cronograma dela ainda não
+   * marcou data para nenhuma aula dele.
+   */
+  abreEm: string | null;
 };
 
 export function estadoDoModulo(
   modulo: Modulo,
   liberado: boolean,
   concluida: (aulaId: string) => boolean,
+  abreEm: string | null = null,
 ): EstadoModulo {
   const total = modulo.aulas.length;
   const concluidas = modulo.aulas.filter((a) => concluida(a.id)).length;
@@ -36,6 +78,7 @@ export function estadoDoModulo(
     emAndamento: liberado && concluidas > 0 && !completo,
     destaque: cor.destaque,
     rgb: cor.rgb,
+    abreEm: liberado ? null : abreEm,
   };
 }
 
@@ -48,15 +91,15 @@ export function estadoDoModulo(
  * mesma linha, num rótulo de onze pixels que existe para ser lido de
  * relance.
  */
-export function rotuloEstadoModulo(e: EstadoModulo): string {
-  if (!e.liberado) return "Libera em breve";
+export function rotuloEstadoModulo(e: EstadoModulo, abreEm?: string | null): string {
+  if (!e.liberado) return abreEm ? `Libera ${quandoAbre(abreEm)}` : "Libera em breve";
   if (e.completo) return "Concluído";
   if (e.concluidas > 0) return "Em andamento";
   return "Disponível";
 }
 
-export function rotuloAcaoModulo(e: EstadoModulo): string {
-  if (!e.liberado) return "Libera em breve";
+export function rotuloAcaoModulo(e: EstadoModulo, abreEm?: string | null): string {
+  if (!e.liberado) return abreEm ? `Libera ${quandoAbre(abreEm)}` : "Libera em breve";
   return e.completo ? "Assistir de novo" : "Assistir agora";
 }
 

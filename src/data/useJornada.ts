@@ -14,6 +14,7 @@ export function useJornada() {
     catalogo,
     moduloLiberado,
     moduloVisivel,
+    moduloAbreEm,
     aulaBloqueada,
     concluida,
     posicaoSegundos,
@@ -32,7 +33,7 @@ export function useJornada() {
     const meus = catalogo.modulos.filter(moduloVisivel);
 
     const modulos: EstadoModulo[] = meus.map((m) =>
-      estadoDoModulo(m, moduloLiberado(m), concluida),
+      estadoDoModulo(m, moduloLiberado(m), concluida, moduloAbreEm(m)),
     );
 
     const totalAulas = meus.reduce((s, m) => s + m.aulas.length, 0);
@@ -59,6 +60,7 @@ export function useJornada() {
     catalogo,
     moduloLiberado,
     moduloVisivel,
+    moduloAbreEm,
     aulaBloqueada,
     concluida,
     posicaoSegundos,

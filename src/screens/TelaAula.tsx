@@ -9,11 +9,35 @@ import { Play } from "@/components/Icones";
 import { useAviso } from "@/components/useAviso";
 import * as api from "@/data/api";
 import type { ComentarioPublico } from "@/data/api";
+import { quandoAbre } from "@/data/derivados";
 import { rotuloDuracao, useEstado } from "@/data/estado";
 import { cores, paleta } from "@/design/tokens";
 
-const VELOCIDADES = ["0,5x", "0,75x", "Normal", "1,25x", "1,5x", "1,75x", "2x"];
-const RESOLUCOES = ["Automática (720p)", "360p", "480p", "720p", "1080p"];
+/*
+ * As velocidades, com o número que o vídeo entende.
+ *
+ * Antes era só uma lista de rótulos: o menu girava o texto e o vídeo
+ * seguia igual. "Normal" e não "1x" porque é a palavra que a aluna
+ * procura quando quer desfazer o que mexeu.
+ *
+ * A resolução saiu. Ela também não fazia nada, e ligá-la seria pior:
+ * fora do Safari daria para escolher a faixa, dentro do Safari não —
+ * o mesmo botão funcionando no Android e não no iPhone é pior que
+ * botão nenhum. O Cloudflare já escolhe a faixa pela conexão, que é o
+ * que a aluna quer sem saber que quer.
+ */
+const VELOCIDADES = [
+  { rotulo: "0,5x", valor: 0.5 },
+  { rotulo: "0,75x", valor: 0.75 },
+  { rotulo: "Normal", valor: 1 },
+  { rotulo: "1,25x", valor: 1.25 },
+  { rotulo: "1,5x", valor: 1.5 },
+  { rotulo: "1,75x", valor: 1.75 },
+  { rotulo: "2x", valor: 2 },
+] as const;
+
+/** "Normal" é onde toda aula começa. */
+const VELOCIDADE_NORMAL = 2;
 
 /**
  * Os passos do exercício, como a administradora escreveu no painel:
@@ -48,14 +72,14 @@ export function TelaAula() {
     registrarPosicao,
     posicaoSegundos,
     aulaBloqueada,
+    aulaAbreEm,
     moduloLiberado,
     moduloVisivel,
   } = estado;
 
   const [tocando, setTocando] = useState(false);
   const [menuAberto, setMenuAberto] = useState(false);
-  const [velocidade, setVelocidade] = useState(2);
-  const [resolucao, setResolucao] = useState(0);
+  const [velocidade, setVelocidade] = useState(VELOCIDADE_NORMAL);
   const [painel, setPainel] = useState<"" | "exercicio">("");
   const [comentariosAbertos, setComentariosAbertos] = useState(false);
   const secaoComentarios = useRef<HTMLElement>(null);
@@ -86,7 +110,35 @@ export function TelaAula() {
     setTocando(false);
     setSegundos(0);
     setPainel("");
+    setMenuAberto(false);
+    // A velocidade NÃO volta ao normal aqui, de propósito: quem escolheu
+    // 1,5x quer 1,5x na aula seguinte também. Trocar de aula não é
+    // mudar de ideia.
   }, [numeroModulo, ordem]);
+
+  /*
+   * Menu aberto fecha ao tocar fora, e no Esc.
+   *
+   * Sem isto ele só fecha tocando no próprio botão de novo — e no
+   * celular, onde não há "fora" evidente, a aluna toca na tela, nada
+   * acontece, e o painel fica pairando sobre o vídeo.
+   */
+  const menuVelocidade = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!menuAberto) return;
+    const foraDaqui = (e: MouseEvent | TouchEvent) => {
+      if (!menuVelocidade.current?.contains(e.target as Node)) setMenuAberto(false);
+    };
+    const escape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuAberto(false);
+    };
+    document.addEventListener("pointerdown", foraDaqui);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", foraDaqui);
+      document.removeEventListener("keydown", escape);
+    };
+  }, [menuAberto]);
 
   // Comentários e endereço do vídeo vêm do banco, por aula. O endereço
   // só é devolvido depois de o servidor conferir a liberação.
@@ -377,6 +429,7 @@ export function TelaAula() {
                 />
               }
               comecarEm={posicaoSegundos(aula.id)}
+              velocidade={VELOCIDADES[velocidade].valor}
               aoTocar={setTocando}
               aoProgredir={aoProgredir}
             />
@@ -444,62 +497,69 @@ export function TelaAula() {
             {aula.numero}. {aula.titulo}
           </h1>
           {/*
-            Velocidade e resolução do app nunca tocaram no vídeo: são do
-            protótipo. O player do Cloudflare traz as duas de verdade,
-            no próprio quadro. Manter as nossas seria oferecer botões
-            que não fazem nada.
+            Velocidade, e só ela.
+
+            Este menu girava dois rótulos — velocidade e resolução — e
+            não tocava no vídeo. E aparecia justamente onde não havia
+            vídeo nenhum: a condição estava invertida, então ele se
+            escondia na única aula que tinha o que controlar.
+
+            Agora a velocidade é real e o menu aparece quando há vídeo.
+            A aluna de mentoria revê aula: querer 1,5x numa que ela já
+            viu, ou 0,75x num trecho difícil, é o pedido mais comum de
+            quem estuda por vídeo.
+
+            Não deixei para os controles do próprio navegador porque
+            eles não são os mesmos em toda parte — no Chrome a
+            velocidade está escondida atrás de três pontinhos, no
+            iPhone só aparece em tela cheia. Um toque, igual em todo
+            aparelho, é o que se espera de uma área de membros paga.
           */}
-          {video || buscandoVideo ? null : (
-          <div className="relative flex-none">
+          {video ? (
+          <div ref={menuVelocidade} className="relative flex-none">
             <button
               onClick={() => setMenuAberto((v) => !v)}
-              aria-label="Opções do player"
-              className="flex h-10 w-[34px] flex-col items-center justify-center gap-1 border-none bg-transparent hover:opacity-70"
-              style={{ cursor: "pointer" }}
+              aria-label="Velocidade do vídeo"
+              aria-expanded={menuAberto}
+              className="flex h-10 min-w-[44px] items-center justify-center rounded-botao border-none bg-transparent px-2 text-apoio font-semibold hover:opacity-70"
+              style={{ color: "#ffffff", cursor: "pointer" }}
             >
-              {[0, 1, 2].map((i) => (
-                <span key={i} className="h-1 w-1 rounded-full bg-white" />
-              ))}
+              {VELOCIDADES[velocidade].rotulo}
             </button>
 
             {menuAberto ? (
               <div
-                className="absolute right-0 top-11 z-40 w-[300px] max-w-[calc(100vw-32px)] rounded-botao p-2"
+                role="menu"
+                className="absolute right-0 top-11 z-40 w-[200px] max-w-[calc(100vw-32px)] rounded-botao p-2"
                 style={{
                   background: "#1b1b1b",
                   border: "1px solid rgba(255,255,255,.1)",
                   boxShadow: "0 24px 50px rgba(0,0,0,.7)",
                 }}
               >
-                {[
-                  {
-                    rotulo: "Velocidade",
-                    valor: VELOCIDADES[velocidade],
-                    ciclar: () => setVelocidade((v) => (v + 1) % VELOCIDADES.length),
-                  },
-                  {
-                    rotulo: "Resolução",
-                    valor: RESOLUCOES[resolucao],
-                    ciclar: () => setResolucao((v) => (v + 1) % RESOLUCOES.length),
-                  },
-                ].map((item) => (
+                {VELOCIDADES.map((v, i) => (
                   <button
-                    key={item.rotulo}
-                    onClick={item.ciclar}
-                    className="flex min-h-[52px] w-full items-center rounded-lg border-none bg-transparent px-3 hover:bg-white/[.07]"
+                    key={v.rotulo}
+                    role="menuitemradio"
+                    aria-checked={i === velocidade}
+                    onClick={() => {
+                      setVelocidade(i);
+                      setMenuAberto(false);
+                    }}
+                    className="flex min-h-[48px] w-full items-center rounded-lg border-none bg-transparent px-3 hover:bg-white/[.07]"
                     style={{ cursor: "pointer" }}
                   >
-                    <span className="flex-1 text-left text-realce text-white">
-                      {item.rotulo}
+                    <span className="flex-1 text-left text-corpo text-white">{v.rotulo}</span>
+                    {/* Uma marca e não negrito: o que está valendo se vê de relance. */}
+                    <span className="text-corpo text-white" style={{ opacity: i === velocidade ? 1 : 0 }}>
+                      ✓
                     </span>
-                    <span className="text-corpo text-white/60">{item.valor}</span>
-                    <span className="ml-3 text-realce text-white/60">›</span>
                   </button>
                 ))}
               </div>
             ) : null}
           </div>
-          )}
+          ) : null}
         </div>
 
         <p className="mb-0 mt-1 text-corpo text-white/55">
@@ -734,6 +794,7 @@ export function TelaAula() {
           {modulo.aulas.map((outra) => {
             const feitaOutra = concluida(outra.id);
             const travada = aulaBloqueada(modulo, outra);
+            const abreEm = travada ? aulaAbreEm(outra.id) : null;
             const assistido = estado.percentualAssistido(outra.id);
             const atual = outra.ordem === ordem;
             return (
@@ -741,7 +802,12 @@ export function TelaAula() {
                 key={outra.id}
                 onClick={() => {
                   if (travada) {
-                    aviso.mostrar("Esta aula será liberada no momento certo da sua jornada.");
+                    const abre = aulaAbreEm(outra.id);
+                    aviso.mostrar(
+                      abre
+                        ? `Esta aula abre ${quandoAbre(abre)}.`
+                        : "Esta aula será liberada no momento certo da sua jornada.",
+                    );
                     return;
                   }
                   navegar(`/aula/${modulo.numero}/${outra.ordem}`);
@@ -849,7 +915,9 @@ export function TelaAula() {
                   <span className="text-apoio text-white/50">
                     {rotuloDuracao(modulo, outra)} ·{" "}
                     {travada
-                      ? "Bloqueada"
+                      ? abreEm
+                        ? `Abre ${quandoAbre(abreEm)}`
+                        : "Bloqueada"
                       : feitaOutra
                         ? "Concluída"
                         : assistido > 0

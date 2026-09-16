@@ -7,6 +7,7 @@ import {
   estadoDoModulo,
   rotuloBotaoModulo,
   rotuloConcluidas,
+  quandoAbre,
   rotuloEstadoModulo,
   type EstadoModulo,
 } from "@/data/derivados";
@@ -73,7 +74,15 @@ const SUAVE = "rgba(255,255,255,.55)";
 export function PaginaModulo() {
   const { mi } = useParams();
   const numero = Number(mi);
-  const { catalogo, moduloLiberado, moduloVisivel, aulaBloqueada, concluida } = useEstado();
+  const {
+    catalogo,
+    moduloLiberado,
+    moduloVisivel,
+    moduloAbreEm,
+    aulaBloqueada,
+    concluida,
+    aulaAbreEm,
+  } = useEstado();
   const navegar = useNavigate();
   const aviso = useAviso();
 
@@ -84,7 +93,7 @@ export function PaginaModulo() {
     return <main className="p-8">Módulo não encontrado.</main>;
   }
 
-  const e = estadoDoModulo(modulo, moduloLiberado(modulo), concluida);
+  const e = estadoDoModulo(modulo, moduloLiberado(modulo), concluida, moduloAbreEm(modulo));
   const cor = paleta(modulo.numero);
   const aoVivo = catalogo.aoVivo[modulo.id];
   const proxima = modulo.aulas.findIndex((a) => !concluida(a.id));
@@ -106,7 +115,12 @@ export function PaginaModulo() {
     const aula = modulo!.aulas[ordem];
     if (!aula) return;
     if (aulaBloqueada(modulo!, aula)) {
-      aviso.mostrar("Esta aula será liberada no momento certo da sua jornada.");
+      const abre = aulaAbreEm(aula.id);
+      aviso.mostrar(
+        abre
+          ? `Esta aula abre ${quandoAbre(abre)}.`
+          : "Esta aula será liberada no momento certo da sua jornada.",
+      );
       return;
     }
     navegar(`/aula/${modulo!.numero}/${ordem}`);
@@ -155,7 +169,7 @@ export function PaginaModulo() {
 
         <div className="absolute inset-x-5 bottom-6">
           <p className="m-0 text-rotulo uppercase tracking-rotulo" style={{ color: SUAVE }}>
-            Módulo {modulo.numero} · {rotuloEstadoModulo(e)}
+            Módulo {modulo.numero} · {rotuloEstadoModulo(e, e.abreEm)}
           </p>
           {modulo.tituloNaArte ? null : (
             <h1
@@ -218,7 +232,7 @@ export function PaginaModulo() {
 
             <div className="flex flex-[1_1_420px] flex-col gap-3">
               <p className="m-0 text-rotulo uppercase tracking-rotulo" style={{ color: SUAVE }}>
-                Módulo {modulo.numero} · {rotuloEstadoModulo(e)}
+                Módulo {modulo.numero} · {rotuloEstadoModulo(e, e.abreEm)}
               </p>
               <h1
                 className="text-titulo m-0 font-titulo font-semibold text-marfim"
@@ -251,6 +265,17 @@ export function PaginaModulo() {
             {modulo.aulas.map((aula) => {
               const feita = concluida(aula.id);
               const travada = aulaBloqueada(modulo, aula);
+              /*
+               * "Bloqueada" não era informação, era um muro. O banco
+               * sabe o dia; sem mostrá-lo, a aluna fica oito meses sem
+               * saber se falta uma semana ou meio ano.
+               *
+               * Sem data marcada continua "Bloqueada", e isso também é
+               * a verdade: quer dizer que o cronograma dela ainda não
+               * chegou nesta aula. Inventar um "em breve" ali seria
+               * prometer o que ninguém marcou.
+               */
+              const abre = travada ? aulaAbreEm(aula.id) : null;
               return (
                 <LinhaDaAula
                   key={aula.id}
@@ -259,7 +284,13 @@ export function PaginaModulo() {
                   alt={`Capa da Aula ${aula.numero} — ${aula.titulo}`}
                   titulo={`${aula.numero}. ${aula.titulo}`}
                   detalhe={`${rotuloDuracao(modulo, aula)} · ${
-                    travada ? "Bloqueada" : feita ? "Concluída" : "Disponível"
+                    travada
+                      ? abre
+                        ? `Abre ${quandoAbre(abre)}`
+                        : "Bloqueada"
+                      : feita
+                        ? "Concluída"
+                        : "Disponível"
                   }`}
                   travada={travada}
                   feita={feita}

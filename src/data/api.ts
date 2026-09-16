@@ -200,6 +200,28 @@ export async function meusModulos(): Promise<Map<string, ModuloDaAluna>> {
   return mapa;
 }
 
+/**
+ * Quando cada aula ainda fechada abre, para quem está logada.
+ *
+ * Vem por função porque `acessos` não é concedida ao navegador — e não
+ * vai ser: aquela tabela diz quem tem acesso a quê, de todas as alunas.
+ * A função devolve um par, aula e data, só da própria.
+ *
+ * Aula sem data marcada não aparece aqui, e isso é uma resposta: quer
+ * dizer que o cronograma dela ainda não foi montado para essa aula. A
+ * tela continua dizendo que abre "no momento certo" nesses casos, que
+ * é a verdade — ninguém marcou ainda.
+ */
+export async function minhasAberturas(): Promise<Map<string, string>> {
+  const { data, error } = await supabase.rpc("minhas_aberturas");
+  if (error) throw new Error(`minhas_aberturas: ${error.message}`);
+  const mapa = new Map<string, string>();
+  for (const l of (data ?? []) as Array<{ aula_id: string; abre_em: string }>) {
+    mapa.set(l.aula_id, l.abre_em);
+  }
+  return mapa;
+}
+
 export async function carregarCatalogo(): Promise<Catalogo> {
   const [modulos, aulas, categorias, presentes, aoVivo] = await Promise.all([
     supabase.from("modulos").select("*").order("ordem"),

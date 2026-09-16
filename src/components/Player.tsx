@@ -34,6 +34,14 @@ type Props = {
   /** Onde retomar, em segundos. Zero começa do início. */
   comecarEm?: number;
   /**
+   * Velocidade de reprodução. 1 é o normal.
+   *
+   * Vem de fora porque quem desenha o menu é a tela da aula; o player
+   * só obedece. O que ele garante é que a escolha sobreviva à troca de
+   * fonte — ver o efeito lá embaixo.
+   */
+  velocidade?: number;
+  /**
    * Pede um endereço novo ao servidor e devolve se conseguiu.
    *
    * Com URL assinada o endereço tem prazo. Expirando com a aula aberta,
@@ -70,6 +78,7 @@ export function Player({
   identificador,
   capa,
   comecarEm = 0,
+  velocidade = 1,
   aoRenovar,
   aoTocar,
   aoProgredir,
@@ -89,6 +98,8 @@ export function Player({
   const ultimaRenovacao = useRef(0);
   /** Há um pedido de endereço em curso. */
   const renovando = useRef(false);
+  /** A velocidade escolhida, à mão de quem religa a fonte. */
+  const velocidadeAtual = useRef(1);
   /*
    * Conta as renovações, e serve só para religar a fonte.
    *
@@ -113,12 +124,32 @@ export function Player({
    * enquanto não conseguir carregar; sem ela, seria um pedido por
    * tentativa, em rajada.
    */
+  /*
+   * A função de renovar, guardada.
+   *
+   * A fonte do vídeo não pode depender da identidade desta função. Se
+   * ela dependesse, bastaria a tela da aula passar uma função escrita
+   * na hora — `aoRenovar={async () => ...}`, que é o jeito natural de
+   * escrever — para a fonte ser religada a cada render: o vídeo
+   * recomeçaria do zero sem parar, e ninguém ligaria uma coisa à
+   * outra. Hoje a tela passa uma função estável e nada disso acontece;
+   * amanhã é uma linha de distância.
+   *
+   * Descobri isso montando a prova da velocidade: no banco de ensaio eu
+   * passei a função solta, e a velocidade escolhida voltava sozinha ao
+   * normal — porque a fonte recarregava por baixo e o navegador zera a
+   * velocidade junto. O sintoma era outro; a causa era esta.
+   */
+  const renovarRef = useRef(aoRenovar);
+  renovarRef.current = aoRenovar;
+
   const renovar = useCallback(async () => {
     // Um pedido já em curso: o erro que chega agora é o mesmo de antes,
     // repetido pela biblioteca. Esperar é melhor que declarar falha.
     if (renovando.current) return;
     const agora = Date.now();
-    if (!aoRenovar || agora - ultimaRenovacao.current < 30_000) {
+    const pedir = renovarRef.current;
+    if (!pedir || agora - ultimaRenovacao.current < 30_000) {
       setFalhou(true);
       return;
     }
@@ -129,14 +160,23 @@ export function Player({
       if (v.currentTime > 0) retomarDe.current = v.currentTime;
       tocavaAntes.current = !v.paused;
     }
-    const deuCerto = await aoRenovar().catch(() => false);
+    const deuCerto = await pedir().catch(() => false);
     renovando.current = false;
     if (!deuCerto) {
       setFalhou(true);
       return;
     }
     setTentativa((n) => n + 1);
-  }, [aoRenovar]);
+    // Sem dependências de propósito: tudo o que muda é lido por ref.
+    // É isto que mantém a fonte do vídeo estável entre renders.
+  }, []);
+
+  const aplicarVelocidade = useCallback(() => {
+    const v = video.current;
+    if (v && v.playbackRate !== velocidadeAtual.current) {
+      v.playbackRate = velocidadeAtual.current;
+    }
+  }, []);
 
   // ---- a fonte ----
   useEffect(() => {
@@ -149,6 +189,7 @@ export function Player({
     // biblioteca faria: é o mesmo caminho do vídeo nativo do iOS.
     if (v.canPlayType("application/vnd.apple.mpegurl")) {
       v.src = manifesto;
+      aplicarVelocidade();
       // No Safari o erro chega como evento do próprio vídeo: endereço
       // vencido devolve 403, e o elemento dispara `error`.
       const aoErrar = () => void renovar();
@@ -169,6 +210,7 @@ export function Player({
       if (cancelado || !atual) return;
       if (!Hls.isSupported()) {
         atual.src = manifesto;
+        aplicarVelocidade();
         return;
       }
       const hls = new Hls({ enableWorker: true });
@@ -185,12 +227,57 @@ export function Player({
       });
       hls.loadSource(manifesto);
       hls.attachMedia(atual);
+      // Logo depois de ligar a fonte, e não antes: `attachMedia` é
+      // justamente o que acabou de zerar a velocidade.
+      aplicarVelocidade();
     });
     return () => {
       cancelado = true;
       dispensar?.();
     };
-  }, [identificador, tentativa, renovar]);
+    // `renovar` e `aplicarVelocidade` são estáveis — ambas são
+    // `useCallback` sem dependências. Estão listadas por honestidade
+    // com a regra dos efeitos, não porque mudem.
+  }, [identificador, tentativa, renovar, aplicarVelocidade]);
+
+  // ---- velocidade ----
+  /*
+   * A velocidade escolhida some sozinha três vezes, e cada uma tem uma
+   * causa diferente:
+   *
+   *   1. O `hls.js` chega depois. Ele é buscado num pacote à parte, e
+   *      quando enfim `attachMedia` acontece, a velocidade volta ao
+   *      normal. Quem escolheu 1,5x antes de a biblioteca carregar —
+   *      que é a fração de segundo logo ao abrir a aula — perdia a
+   *      escolha.
+   *   2. O endereço assinado vence e o player pede outro. Fonte nova,
+   *      velocidade zerada, no meio de uma aula de quarenta minutos.
+   *   3. Trocar de aula monta outra fonte.
+   *
+   * Nos três o menu continuaria dizendo 1,5x enquanto o vídeo corre no
+   * normal — que é pior do que não ter o recurso.
+   *
+   * Por isso não basta aplicar quando a aluna escolhe. Aplica-se
+   * também toda vez que uma fonte termina de carregar e ao dar play,
+   * que são os momentos em que o navegador acabou de zerar.
+   */
+  useEffect(() => {
+    velocidadeAtual.current = velocidade;
+    aplicarVelocidade();
+  }, [velocidade, aplicarVelocidade]);
+
+  useEffect(() => {
+    const v = video.current;
+    if (!v) return;
+    v.addEventListener("loadedmetadata", aplicarVelocidade);
+    v.addEventListener("canplay", aplicarVelocidade);
+    v.addEventListener("play", aplicarVelocidade);
+    return () => {
+      v.removeEventListener("loadedmetadata", aplicarVelocidade);
+      v.removeEventListener("canplay", aplicarVelocidade);
+      v.removeEventListener("play", aplicarVelocidade);
+    };
+  }, [aplicarVelocidade]);
 
   // ---- retomar de onde parou ----
   useEffect(() => {
