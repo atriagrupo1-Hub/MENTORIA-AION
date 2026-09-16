@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Catalogo, Modulo } from "@/data/tipos";
 import type { PedidoConfirmacao } from "./Confirmacao";
+import { Calendario } from "./Calendario";
 import * as dados from "./dados";
 import { botaoNeutro, botaoOuro, botaoRemover, campo, painel as tema } from "./estilos";
 import { dataCurta } from "./prazo";
@@ -196,7 +197,6 @@ export function CronogramaDaAluna({
   }
 
   const numero = { ...campo, minHeight: 44, width: 88, padding: "0 12px", textAlign: "center" as const };
-  const data = { ...campo, minHeight: 44, padding: "0 12px" };
 
   return (
     <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,.1)" }}>
@@ -355,11 +355,9 @@ export function CronogramaDaAluna({
           <span className="text-[11px] uppercase tracking-[.14em] text-[rgba(255,255,255,.45)]">
             Começando em
           </span>
-          <input
-            type="date"
-            value={inicio}
-            onChange={(e) => setInicio(e.target.value)}
-            style={data}
+          <Calendario
+            valor={doCampoData(inicio)}
+            aoEscolher={(d) => setInicio(paraCampoData(d))}
           />
         </label>
         <span className="text-[13px] text-[rgba(255,255,255,.5)]">
@@ -459,9 +457,7 @@ function LinhaAula({
 }) {
   const abertaAgora = atribuida && (abreEm === null || new Date(abreEm).getTime() <= Date.now());
 
-  async function mudar(v: string) {
-    const d = doCampoData(v);
-    if (!d) return;
+  async function mudar(d: Date) {
     const falha = await executar(() => dados.definirAbertura(alunaId, aulaId, d));
     avisar(falha ?? `Data alterada para ${dataCurta(d.toISOString())}.`);
   }
@@ -489,17 +485,16 @@ function LinhaAula({
 
       {atribuida ? (
         <>
-          <input
-            type="date"
-            value={abreEm ? paraCampoData(new Date(abreEm)) : paraCampoData(hoje())}
-            onChange={(e) => void mudar(e.target.value)}
-            style={{
-              ...campo,
-              minHeight: 34,
-              padding: "0 8px",
-              fontSize: 12,
-              opacity: abertaAgora ? 0.6 : 1,
-            }}
+          {/*
+            O campo de data do navegador saía daqui por dois motivos.
+            O calendário dele abria só por um ícone minúsculo, e o
+            campo gravava a cada tecla — digitar "22" no dia mandava
+            duas gravações, e a resposta da primeira reescrevia o campo
+            no meio da digitação. Agora grava uma vez, ao escolher.
+          */}
+          <Calendario
+            valor={abreEm ? new Date(abreEm) : null}
+            aoEscolher={(d) => void mudar(d)}
           />
           {!abertaAgora ? (
             <button
