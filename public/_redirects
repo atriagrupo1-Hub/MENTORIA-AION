@@ -1,5 +1,26 @@
-# A área de membros é uma página só, com rotas do lado do navegador.
-# Sem esta linha, abrir /inicio ou /modulo/3 direto — ou recarregar a
-# página numa dessas rotas — devolve 404, porque o arquivo não existe no
-# disco. Aqui toda rota entrega o index.html e o roteador resolve.
-/*    /index.html   200
+# Onde o aplicativo atende — e onde ele não atende.
+#
+# O domínio souaion.com não é só da mentoria. Por isso aqui existem
+# exatamente duas portas, e a raiz não é uma delas:
+#
+#   /appmentoria/*      a área da aluna
+#   /admappmentoria/*   o painel
+#   qualquer outra coisa   404
+#
+# As duas entregam o mesmo index.html, e o roteador do navegador
+# resolve o resto. Sem estas linhas, abrir /appmentoria/inicio direto —
+# ou recarregar a página estando nela — devolveria 404, porque esse
+# arquivo não existe no disco.
+#
+# Os arquivos de verdade (/assets/..., /sw.js, o manifesto, os ícones)
+# são servidos antes destas regras, por existirem. Não precisam de
+# linha.
+#
+# Não há regra final pegando tudo, e é de propósito: souaion.com puro e
+# qualquer endereço inventado caem no 404. Quem não sabe o caminho não
+# descobre por tentativa.
+
+/appmentoria             /index.html   200
+/appmentoria/*           /index.html   200
+/admappmentoria          /index.html   200
+/admappmentoria/*        /index.html   200

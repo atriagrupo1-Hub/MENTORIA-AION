@@ -1,84 +1,115 @@
-# Trocar o endereço do aplicativo
+# O endereço do aplicativo
 
-Hoje o aplicativo responde em `mentoria-aion.pages.dev`. Trocar por um
-domínio próprio são três passos, e **nenhum deles é no código** — o
-aplicativo não tem o endereço escrito em lugar nenhum, usa sempre
-caminhos relativos.
+Hoje o aplicativo atende em dois caminhos, e em mais nenhum:
 
-Dois desses passos derrubam o aplicativo em silêncio se ficarem para
-trás, e é por isso que este arquivo existe.
+| Endereço | O que é |
+|---|---|
+| `souaion.com/appmentoria` | a área da aluna |
+| `souaion.com/admappmentoria` | o painel da equipe |
+| `souaion.com` | nada — 404 |
 
----
+O código não sabe o nome do domínio. Ele monta os endereços a partir de
+onde a tela está aberta, e os dois caminhos estão em **um arquivo só**,
+`src/enderecos.ts`. Trocar o caminho amanhã é mudar duas linhas; trocar
+o domínio não encosta em linha nenhuma.
 
-## 1 · Apontar o domínio para a Cloudflare Pages
-
-No painel da Cloudflare: **Workers & Pages → o projeto → Custom
-domains → Set up a domain**.
-
-Se o domínio já estiver na mesma conta Cloudflare, ela cria o registro
-sozinha. Se estiver em outro lugar — Registro.br, GoDaddy —, ela mostra
-o CNAME para você copiar para lá.
-
-O certificado leva de alguns minutos a algumas horas. Até ele ficar
-pronto, o endereço novo pode mostrar aviso de segurança. **Não é
-problema no aplicativo**; é só esperar.
-
-O endereço antigo continua funcionando. Os dois convivem.
+O que o código **não** pode fazer sozinho são os três passos abaixo.
+Eles moram em painéis de outras empresas, e cada um quebra uma coisa
+diferente — **em silêncio**, que é o que torna esta lista necessária.
 
 ---
 
-## 2 · Avisar o Supabase — este é o que quebra o login
+## 1 · Cloudflare Pages — ligar o domínio ao projeto
 
-As três funções do servidor — `entrar`, `cadastrar-aluna` e
-`video-assinado` — só respondem a endereços que estão numa lista.
-Endereço fora da lista recebe a resposta, e o navegador joga fora antes
-de a página ver: **a aluna digita o código, clica em entrar, e não
-acontece nada.** Sem mensagem de erro, sem pista.
+**Onde:** Cloudflare → Workers & Pages → `mentoria-aion` → **Custom domains**
+→ *Set up a custom domain*.
 
-No painel do Supabase: **Edge Functions → Secrets → `ORIGENS_PERMITIDAS`**
+Acrescente **`souaion.com`**. O Cloudflare cria o registro de DNS sozinho,
+porque o domínio já é da sua conta. Leva alguns minutos e o certificado
+sai junto.
 
-Ponha os dois endereços, separados por vírgula e sem espaço:
+Acrescente também **`www.souaion.com`** se quiser que quem digitar o
+`www` chegue no mesmo lugar.
+
+> **O que isso significa:** o projeto da mentoria passa a atender o
+> domínio inteiro. `souaion.com` puro devolve 404 de propósito — quem
+> não conhece o caminho não descobre por tentativa. No dia em que você
+> quiser um site de vendas ali, ele entra neste mesmo projeto, na raiz,
+> e os dois caminhos continuam funcionando sem mudar nada.
+
+**Se pular:** nada acontece. O endereço novo simplesmente não existe.
+
+---
+
+## 2 · Supabase — dizer que o endereço novo é de confiança
+
+**Onde:** Supabase → projeto **APP MENTORIA** → *Edge Functions* →
+**Secrets**.
+
+Encontre `ORIGENS_PERMITIDAS` e ponha o endereço novo junto do antigo,
+separados por vírgula, **sem espaço e sem barra no fim**:
 
 ```
-https://SEU-DOMINIO.com.br,https://mentoria-aion.pages.dev
+https://souaion.com,https://www.souaion.com,https://mentoria-aion.pages.dev
 ```
 
-Os dois, e não só o novo. Enquanto o domínio novo não estiver no ar
-para valer, você vai querer continuar entrando pelo antigo — e no dia
-em que quiser fechar o antigo, é só tirar da lista.
+Depois de salvar, **publique as três funções de novo** (`entrar`,
+`cadastrar-aluna`, `cadastrar-colaborador`) — um segredo novo só vale
+para a próxima publicação.
 
-> Se este segredo ainda não existe, as funções aceitam qualquer
-> endereço. Funciona, mas é uma porta a menos: crie-o.
-
----
-
-## 3 · Avisar o Cloudflare Stream — este derruba os vídeos
-
-Se você tiver configurado **Allowed Origins** nos vídeos, o domínio
-novo precisa entrar lá também. Senão a aula abre, o player aparece, e o
-vídeo não começa.
-
-No painel da Cloudflare: **Stream → o vídeo → Settings → Allowed
-Origins**. É por vídeo, e é por isso que vale decidir o domínio **antes**
-de subir os 49 vídeos que faltam.
+**Se pular:** este é o pior dos três, porque ninguém entende o que
+aconteceu. A tela de entrada abre perfeitamente, a pessoa digita o
+código, clica, e **nada acontece**. Nenhum erro, nenhuma mensagem. O
+navegador recusou a resposta antes de o aplicativo vê-la. Você vai
+procurar defeito no código e o defeito está nesta linha.
 
 ---
 
-## Depois de trocar
+## 3 · Cloudflare Stream — liberar o vídeo no endereço novo
 
-Entre pelo endereço novo e confira, nesta ordem:
+**Onde:** Cloudflare → Stream → cada vídeo → *Settings* → **Allowed
+Origins**.
 
-1. **A tela de login abre** — passo 1 certo.
-2. **O login funciona** — passo 2 certo.
-3. **Um vídeo toca** — passo 3 certo.
+Ponha `souaion.com` (e `www.souaion.com`, se usar).
 
-Falhando o 2, é a lista de origens. Falhando o 3, é o Stream.
+> ⚠️ **Faça isto ANTES de subir os 49 vídeos que faltam.** O *Allowed
+> Origins* é configurado **por vídeo**. Com 1 vídeo no ar é um campo;
+> com 50, são cinquenta campos preenchidos à mão.
 
-## Sobre quem já instalou o aplicativo
+**Se pular:** a aula abre, a capa aparece, o botão de play responde — e
+o vídeo não roda. Sem erro que explique.
 
-Quem instalou pelo endereço antigo continua no antigo — para o celular,
-são dois aplicativos diferentes. Precisa desinstalar e instalar de novo
-pelo endereço novo.
+---
 
-Hoje isso não afeta ninguém: nenhuma aluna está cadastrada. **É mais um
-motivo para trocar o domínio antes de mandar o acesso para a turma.**
+## Como conferir, em três minutos
+
+1. `souaion.com` → tem de devolver **404**.
+2. `souaion.com/appmentoria` → tela de entrada.
+3. Entre com uma conta de aluna. Se travar no código, **é o passo 2**.
+4. Abra uma aula com vídeo. Se não rodar, **é o passo 3**.
+5. `souaion.com/admappmentoria` → painel.
+6. Abra a ficha de uma aluna e clique em **Enviar o acesso**: a mensagem
+   tem de dizer `Entre por aqui: https://souaion.com/appmentoria`. Se
+   disser outra coisa, você está olhando uma versão antiga em cache —
+   confira o número da versão no canto do painel.
+
+---
+
+## O endereço antigo
+
+`mentoria-aion.pages.dev` continua funcionando, de graça, e é a sua
+rede de segurança: se algo der errado com o domínio novo, você ainda
+entra no painel por lá. Ninguém precisa saber que ele existe.
+
+Só não o use para convidar alunas — o convite que o painel gera sempre
+aponta para o endereço de onde **você** estava quando clicou. Se abrir o
+painel pelo `pages.dev`, o convite vai levar a aluna para o `pages.dev`.
+
+---
+
+## As alunas que já receberam o endereço antigo
+
+Nenhuma, hoje. Se um dia forem, o caminho é reenviar o convite pelo
+painel — **Ficha da aluna → Enviar o acesso** — estando em
+`souaion.com/admappmentoria`. A mensagem sai com o endereço novo, o nome
+de acesso e o código dela.

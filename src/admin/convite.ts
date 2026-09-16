@@ -1,4 +1,5 @@
 import { linkWhatsApp } from "./celular";
+import { enderecoDaMentoria } from "@/enderecos";
 
 /**
  * O convite que a aluna recebe.
@@ -10,21 +11,15 @@ import { linkWhatsApp } from "./celular";
  * código e a aluna escreve dizendo que o acesso não funciona, e alguém
  * gasta meia hora procurando um defeito que não existe.
  *
- * O endereço vem de `window.location.origin`, e não de uma
- * configuração. O painel mora no mesmo domínio que a área da aluna
- * (`/admin`), então o endereço certo é sempre aquele de onde a tela
- * está sendo aberta agora. Uma configuração seria um segundo lugar
- * para o endereço ficar desatualizado no dia em que o domínio mudar —
- * e ele vai mudar.
+ * O endereço é montado na hora, e não guardado numa configuração. O
+ * painel mora no mesmo domínio que a área da aluna — ele em
+ * `/admappmentoria`, ela em `/appmentoria` — então basta juntar a
+ * origem de onde esta tela está aberta com o caminho dela. Uma
+ * configuração seria um segundo lugar para o endereço envelhecer no
+ * dia em que o domínio mudar, e ele já mudou uma vez.
  */
 
 const MENTORIA = "Caminho do Desbloqueio";
-
-/** Onde o aplicativo está agora. Sem barra no fim. */
-export function enderecoDoApp(): string {
-  if (typeof window === "undefined") return "";
-  return window.location.origin.replace(/\/+$/, "");
-}
 
 export function mensagemDeBoasVindas({
   nome,
@@ -39,7 +34,7 @@ export function mensagemDeBoasVindas({
   return [
     `Olá, ${primeiro}! Seu acesso à mentoria ${MENTORIA} está pronto.`,
     "",
-    `Entre por aqui: ${enderecoDoApp()}`,
+    `Entre por aqui: ${enderecoDaMentoria()}`,
     `Nome de acesso: ${login}`,
     `Código: ${codigo}`,
     "",
