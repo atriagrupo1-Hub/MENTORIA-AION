@@ -691,3 +691,64 @@ export async function renovarAcesso(alunaId: string, p: Prazo): Promise<string |
   }
   return (data as string | null) ?? null;
 }
+
+// =====================================================================
+// Liberar para a turma inteira
+// =====================================================================
+
+export type Liberacao = { liberadas: number; jaTinham: number };
+
+/**
+ * Dá esta aula a todas as alunas que ainda não a têm.
+ *
+ * Quem já tem fica com a data que já tinha. Isso é garantido pelo banco,
+ * num `on conflict do nothing` — e não pela intenção de quem clica.
+ * Fosse pela intenção, um dia alguém liberaria uma aula para a turma e
+ * jogaria todas as datas ajustadas à mão para a mesma data, sem aviso e
+ * sem volta.
+ *
+ * `abreEm` nulo abre agora para quem receber.
+ */
+export async function liberarAulaParaTodas(
+  aulaId: string,
+  abreEm: Date | null,
+): Promise<Liberacao> {
+  const { data, error } = await supabase.rpc("liberar_aula_para_todas", {
+    p_aula: aulaId,
+    p_abre_em: abreEm ? abreEm.toISOString() : null,
+  });
+  if (error) throw new Error(`liberar: ${error.message}`);
+  const l = (Array.isArray(data) ? data[0] : data) as
+    | { liberadas: number; ja_tinham: number }
+    | null;
+  return { liberadas: l?.liberadas ?? 0, jaTinham: l?.ja_tinham ?? 0 };
+}
+
+/** O mesmo para um presente. Quem já o alcança pelo acervo ou pela
+ *  categoria não ganha linha nova — seria permissão que não muda nada. */
+export async function liberarPresenteParaTodas(presenteId: string): Promise<Liberacao> {
+  const { data, error } = await supabase.rpc("liberar_presente_para_todas", {
+    p_presente: presenteId,
+  });
+  if (error) throw new Error(`liberar: ${error.message}`);
+  const l = (Array.isArray(data) ? data[0] : data) as
+    | { liberados: number; ja_tinham: number }
+    | null;
+  return { liberadas: l?.liberados ?? 0, jaTinham: l?.ja_tinham ?? 0 };
+}
+
+/** "3 alunas receberam. 2 já tinham." — a frase que a tela mostra depois. */
+export function resumoDaLiberacao(l: Liberacao, oQue: "aula" | "presente"): string {
+  const alvo = oQue === "aula" ? "a aula" : "o presente";
+  if (l.liberadas === 0) {
+    return l.jaTinham === 0
+      ? "Nenhuma aluna cadastrada ainda."
+      : `Ninguém recebeu: todas as ${l.jaTinham} já tinham ${alvo}.`;
+  }
+  const receberam =
+    l.liberadas === 1 ? "1 aluna recebeu" : `${l.liberadas} alunas receberam`;
+  if (l.jaTinham === 0) return `${receberam}.`;
+  return `${receberam}. Outra${l.jaTinham === 1 ? "" : "s"} ${l.jaTinham} já tinha${
+    l.jaTinham === 1 ? "" : "m"
+  }.`;
+}

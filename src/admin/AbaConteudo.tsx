@@ -49,7 +49,7 @@ export function AbaConteudo({
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
-  const { catalogo, midiaAulas, executar } = painel;
+  const { catalogo, midiaAulas, alunas, executar } = painel;
   const [expandido, setExpandido] = useState(true);
   const [novoModulo, setNovoModulo] = useState("");
   const [novaAulaEm, setNovaAulaEm] = useState("");
@@ -120,27 +120,15 @@ export function AbaConteudo({
 
       {!expandido ? null : (
         <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,.1)" }}>
-          <form
-            onSubmit={adicionarModulo}
-            className="mb-[22px] flex flex-wrap gap-[10px] rounded-[14px] p-4"
-            style={{
-              background: "rgba(255,255,255,.03)",
-              border: "1px solid rgba(255,255,255,.1)",
-            }}
-          >
-            <input
-              type="text"
-              value={novoModulo}
-              onChange={(e) => setNovoModulo(e.target.value)}
-              placeholder="Nome do novo módulo"
-              aria-label="Nome do novo módulo"
-              style={{ ...campo, flex: "2 1 260px" }}
-            />
-            <button type="submit" style={{ ...botaoOuro, flex: "0 0 auto" }}>
-              Adicionar módulo
-            </button>
-          </form>
-
+          {/*
+            O formulário de criar vive DEPOIS do último item, e não
+            antes do primeiro.
+            
+            Criar um módulo é raro; percorrer a lista é o que se faz
+            todo dia. No topo, ele empurrava os onze módulos para baixo
+            em toda visita. No fim, está exatamente onde a mão para
+            quando alguém chega ao final da lista pensando "falta um".
+          */}
           <div className="flex flex-col gap-3">
             {catalogo.modulos.map((modulo) => (
               <div
@@ -183,15 +171,6 @@ export function AbaConteudo({
                       style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
                     >
                       {editando === `m:${modulo.id}` ? "Cancelar edição" : "Editar nome"}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setNovaAulaEm(novaAulaEm === modulo.id ? "" : modulo.id);
-                        setNovaAula("");
-                      }}
-                      style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
-                    >
-                      {novaAulaEm === modulo.id ? "Fechar" : "Adicionar aula"}
                     </button>
                     <button
                       onClick={async () =>
@@ -278,44 +257,6 @@ export function AbaConteudo({
                   </form>
                 ) : null}
 
-                {novaAulaEm === modulo.id ? (
-                  <form
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      if (!novaAula.trim()) {
-                        avisar("Informe o nome da aula.");
-                        return;
-                      }
-                      const falha = await executar(() =>
-                        dados.criarAula(
-                          modulo.id,
-                          novaAula.trim(),
-                          modulo.aulas.length + 1,
-                          modulo.aulas.length,
-                        ),
-                      );
-                      if (!falha) setNovaAula("");
-                      avisar(falha ?? "Aula adicionada.");
-                    }}
-                    className="mt-3 flex flex-wrap gap-2"
-                  >
-                    <input
-                      type="text"
-                      value={novaAula}
-                      onChange={(e) => setNovaAula(e.target.value)}
-                      placeholder="Nome da nova aula"
-                      aria-label="Nome da nova aula"
-                      style={{ ...campo, flex: "2 1 240px", minHeight: 44, fontSize: 14 }}
-                    />
-                    <button
-                      type="submit"
-                      style={{ ...botaoOuro, minHeight: 44, padding: "0 20px", fontSize: 14 }}
-                    >
-                      Salvar aula
-                    </button>
-                  </form>
-                ) : null}
-
                 <div className="mt-[10px] flex flex-col">
                   {modulo.aulas.map((aula) => {
                     const midia = midiaAulas.get(aula.id);
@@ -385,6 +326,63 @@ export function AbaConteudo({
                             }}
                           >
                             {conteudoDe === aula.id ? "Fechar conteúdo" : "Conteúdo"}
+                          </button>
+                          {/*
+                            Liberar para a turma inteira.
+                            
+                            Criar uma aula não a dá a ninguém — liberação
+                            é por aluna, e é isso que permite cronograma
+                            diferente para cada uma. Mas no caso mais
+                            comum, a aula nova que TODAS devem ter, isso
+                            custava uma ida à ficha de cada uma.
+                            
+                            Quem já tem a aula NÃO é tocada: fica com a
+                            data que já tinha. A confirmação diz os dois
+                            números antes, para a conta poder ser
+                            conferida.
+                          */}
+                          <button
+                            onClick={() => {
+                              const semAula = alunas.filter((a) => !a.cronograma.has(aula.id));
+                              if (alunas.length === 0) {
+                                avisar("Nenhuma aluna cadastrada ainda.");
+                                return;
+                              }
+                              if (semAula.length === 0) {
+                                avisar(
+                                  alunas.length === 1
+                                    ? "A única aluna já tem esta aula."
+                                    : `Todas as ${alunas.length} alunas já têm esta aula.`,
+                                );
+                                return;
+                              }
+                              const jaTem = alunas.length - semAula.length;
+                              pedirConfirmacao({
+                                titulo: `Liberar a Aula ${aula.numero} para todas?`,
+                                mensagem:
+                                  `"${aula.titulo}" será liberada, aberta desde já, para ` +
+                                  `${semAula.length === 1 ? "1 aluna" : `${semAula.length} alunas`}.` +
+                                  (jaTem > 0
+                                    ? ` Outra${jaTem === 1 ? "" : "s"} ${jaTem} já ${
+                                        jaTem === 1 ? "tem" : "têm"
+                                      } a aula e não ${jaTem === 1 ? "será alterada" : "serão alteradas"}.`
+                                    : "") +
+                                  " Depois você pode ajustar a data de cada uma no Curso dela.",
+                                executar: async () => {
+                                  let resumo = "";
+                                  const falha = await executar(async () => {
+                                    resumo = dados.resumoDaLiberacao(
+                                      await dados.liberarAulaParaTodas(aula.id, null),
+                                      "aula",
+                                    );
+                                  });
+                                  avisar(falha ?? resumo);
+                                },
+                              });
+                            }}
+                            style={BOTAO_LINHA}
+                          >
+                            Liberar para todas
                           </button>
                           <button
                             onClick={() => {
@@ -576,9 +574,87 @@ export function AbaConteudo({
                       </div>
                     );
                   })}
+
+                  {/*
+                    Criar a aula nova mora aqui, no fim da lista, e está
+                    sempre à vista.
+                    
+                    Antes era um botão no cabeçalho do módulo que abria
+                    um formulário ACIMA das aulas — quem chegava ao fim
+                    da lista pensando "falta uma" tinha de voltar ao
+                    topo, achar o botão, e a aula nascia longe de onde
+                    ia aparecer. Agora o campo está onde a aula vai
+                    ficar.
+                  */}
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const titulo = (novaAulaEm === modulo.id ? novaAula : "").trim();
+                      if (!titulo) {
+                        avisar("Informe o nome da aula.");
+                        return;
+                      }
+                      const falha = await executar(() =>
+                        dados.criarAula(
+                          modulo.id,
+                          titulo,
+                          modulo.aulas.length + 1,
+                          modulo.aulas.length,
+                        ),
+                      );
+                      if (!falha) setNovaAula("");
+                      avisar(falha ?? "Aula adicionada.");
+                    }}
+                    className="mt-3 flex flex-wrap gap-2"
+                  >
+                    <input
+                      type="text"
+                      value={novaAulaEm === modulo.id ? novaAula : ""}
+                      onFocus={() => {
+                        // Um campo por módulo, e o texto é de quem tem o
+                        // foco: sem isto, digitar no Módulo 3 apareceria
+                        // nos onze campos ao mesmo tempo.
+                        if (novaAulaEm !== modulo.id) {
+                          setNovaAulaEm(modulo.id);
+                          setNovaAula("");
+                        }
+                      }}
+                      onChange={(e) => setNovaAula(e.target.value)}
+                      placeholder={`Nova aula no Módulo ${modulo.numero}`}
+                      aria-label={`Nome da nova aula do Módulo ${modulo.numero}`}
+                      style={{ ...campo, flex: "2 1 240px", minHeight: 42, fontSize: 13 }}
+                    />
+                    <button
+                      type="submit"
+                      style={{ ...botaoNeutro, minHeight: 42, padding: "0 18px", fontSize: 13 }}
+                    >
+                      Adicionar aula
+                    </button>
+                  </form>
                 </div>
               </div>
             ))}
+
+            <form
+              onSubmit={adicionarModulo}
+              className="flex flex-wrap gap-[10px] rounded-[14px] p-4"
+              style={{
+                background: "transparent",
+                border: "1px dashed rgba(255,255,255,.16)",
+              }}
+            >
+              <input
+                type="text"
+                value={novoModulo}
+                onChange={(e) => setNovoModulo(e.target.value)}
+                placeholder="Nome do novo módulo"
+                aria-label="Nome do novo módulo"
+                style={{ ...campo, flex: "2 1 260px" }}
+              />
+              <button type="submit" style={{ ...botaoOuro, flex: "0 0 auto" }}>
+                Adicionar módulo
+              </button>
+            </form>
           </div>
         </div>
       )}

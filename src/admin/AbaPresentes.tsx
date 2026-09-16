@@ -34,7 +34,7 @@ export function AbaPresentes({
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
-  const { catalogo, midiaPresentes, executar } = painel;
+  const { catalogo, midiaPresentes, alunas, executar } = painel;
   const [expandido, setExpandido] = useState(true);
   const [novaCategoria, setNovaCategoria] = useState("");
   const [novoPresenteEm, setNovoPresenteEm] = useState("");
@@ -146,17 +146,6 @@ export function AbaPresentes({
                       {editando === `c:${categoria.id}` ? "Cancelar edição" : "Editar nome"}
                     </button>
                     <button
-                      onClick={() => {
-                        setNovoPresenteEm(
-                          novoPresenteEm === categoria.id ? "" : categoria.id,
-                        );
-                        setNovoPresente("");
-                      }}
-                      style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
-                    >
-                      {novoPresenteEm === categoria.id ? "Fechar" : "Adicionar presente"}
-                    </button>
-                    <button
                       onClick={async () =>
                         avisar(
                           (await executar(() =>
@@ -239,43 +228,6 @@ export function AbaPresentes({
                   </form>
                 ) : null}
 
-                {novoPresenteEm === categoria.id ? (
-                  <form
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      if (!novoPresente.trim()) {
-                        avisar("Informe o nome do presente.");
-                        return;
-                      }
-                      const falha = await executar(() =>
-                        dados.criarPresente(
-                          categoria.id,
-                          novoPresente.trim(),
-                          categoria.presentes.length,
-                        ),
-                      );
-                      if (!falha) setNovoPresente("");
-                      avisar(falha ?? "Presente adicionado.");
-                    }}
-                    className="mt-3 flex flex-wrap gap-2"
-                  >
-                    <input
-                      type="text"
-                      value={novoPresente}
-                      onChange={(e) => setNovoPresente(e.target.value)}
-                      placeholder="Nome do novo presente"
-                      aria-label="Nome do novo presente"
-                      style={{ ...campo, flex: "2 1 240px", minHeight: 44, fontSize: 14 }}
-                    />
-                    <button
-                      type="submit"
-                      style={{ ...botaoOuro, minHeight: 44, padding: "0 20px", fontSize: 14 }}
-                    >
-                      Salvar presente
-                    </button>
-                  </form>
-                ) : null}
-
                 <div className="mt-[10px] flex flex-col">
                   {categoria.presentes.map((presente) => {
                     const midia = midiaPresentes.get(presente.id);
@@ -333,6 +285,47 @@ export function AbaPresentes({
                             style={BOTAO_LINHA}
                           >
                             {editando === `p:${presente.id}` ? "Cancelar" : "Editar"}
+                          </button>
+                          {/*
+                            Liberar para a turma inteira.
+                            
+                            Aqui "já tem" é mais largo que uma linha
+                            igual: a aluna alcança um presente pelo
+                            acervo inteiro, pela categoria dele, ou por
+                            ele mesmo. O banco confere os três antes de
+                            criar qualquer coisa — por isso a tela não
+                            tenta adivinhar o número antes, e mostra o
+                            que de fato aconteceu depois.
+                          */}
+                          <button
+                            onClick={() => {
+                              if (alunas.length === 0) {
+                                avisar("Nenhuma aluna cadastrada ainda.");
+                                return;
+                              }
+                              pedirConfirmacao({
+                                titulo: `Liberar ${presente.titulo} para todas?`,
+                                mensagem:
+                                  `O presente será liberado para as alunas que ainda não o ` +
+                                  `têm, de ${alunas.length} cadastrada${
+                                    alunas.length === 1 ? "" : "s"
+                                  }. Quem já o alcança — pelo acervo, pela categoria ou por ` +
+                                  "ele mesmo — não é alterada.",
+                                executar: async () => {
+                                  let resumo = "";
+                                  const falha = await executar(async () => {
+                                    resumo = dados.resumoDaLiberacao(
+                                      await dados.liberarPresenteParaTodas(presente.id),
+                                      "presente",
+                                    );
+                                  });
+                                  avisar(falha ?? resumo);
+                                },
+                              });
+                            }}
+                            style={BOTAO_LINHA}
+                          >
+                            Liberar para todas
                           </button>
                           <button
                             onClick={() =>
@@ -534,6 +527,52 @@ export function AbaPresentes({
                       </div>
                     );
                   })}
+
+                  {/*
+                    Criar o presente novo mora aqui, no fim da lista, e
+                    está sempre à vista — pelo mesmo motivo da aula: era
+                    um botão no cabeçalho que abria um campo ACIMA da
+                    lista, longe de onde o presente ia aparecer.
+                  */}
+                  <form
+                    onSubmit={async (e) => {
+                      e.preventDefault();
+                      const titulo = (novoPresenteEm === categoria.id ? novoPresente : "").trim();
+                      if (!titulo) {
+                        avisar("Informe o nome do presente.");
+                        return;
+                      }
+                      const falha = await executar(() =>
+                        dados.criarPresente(categoria.id, titulo, categoria.presentes.length),
+                      );
+                      if (!falha) setNovoPresente("");
+                      avisar(falha ?? "Presente adicionado.");
+                    }}
+                    className="mt-3 flex flex-wrap gap-2"
+                  >
+                    <input
+                      type="text"
+                      value={novoPresenteEm === categoria.id ? novoPresente : ""}
+                      onFocus={() => {
+                        // Um campo por categoria: o texto é de quem tem
+                        // o foco, senão digitar numa apareceria em todas.
+                        if (novoPresenteEm !== categoria.id) {
+                          setNovoPresenteEm(categoria.id);
+                          setNovoPresente("");
+                        }
+                      }}
+                      onChange={(e) => setNovoPresente(e.target.value)}
+                      placeholder={`Novo presente em ${categoria.titulo}`}
+                      aria-label={`Nome do novo presente em ${categoria.titulo}`}
+                      style={{ ...campo, flex: "2 1 240px", minHeight: 42, fontSize: 13 }}
+                    />
+                    <button
+                      type="submit"
+                      style={{ ...botaoNeutro, minHeight: 42, padding: "0 18px", fontSize: 13 }}
+                    >
+                      Adicionar presente
+                    </button>
+                  </form>
                 </div>
               </div>
             ))}
