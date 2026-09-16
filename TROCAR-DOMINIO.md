@@ -22,14 +22,49 @@ diferente — **em silêncio**, que é o que torna esta lista necessária.
 ## 1 · Cloudflare Pages — ligar o domínio ao projeto
 
 **Onde:** Cloudflare → Workers & Pages → `mentoria-aion` → **Custom domains**
-→ *Set up a custom domain*.
+→ *Set up a custom domain* → `souaion.com`.
 
-Acrescente **`souaion.com`**. O Cloudflare cria o registro de DNS sozinho,
-porque o domínio já é da sua conta. Leva alguns minutos e o certificado
+### O Pages vai parar em "Verifying" — e isso é normal
+
+Mesmo com o domínio na sua própria conta, o Pages costuma parar em
+**Verifying**, com um *Complete DNS setup* pedindo um CNAME. Ele não
+cria o registro sozinho quando **já existe alguma coisa na raiz** — e
+existe: todo domínio novo na Cloudflare nasce com um registro-marcador
+ali. O Pages procura um registro apontando para ele, encontra o outro, e
+fica esperando.
+
+O aviso de "até 48 horas" na faixa azul é texto padrão. Dentro da mesma
+conta, isto fecha em minutos.
+
+### O registro
+
+**Cloudflare → souaion.com → DNS → Records**
+
+**Primeiro, apague o que já está na raiz.** Procure a linha cujo *Name* é
+`souaion.com` (ou `@`) — vai ser um `A` ou um `AAAA`. Apague. A
+Cloudflare não deixa um CNAME conviver com A/AAAA no mesmo nome, e é
+essa disputa que segura a verificação.
+
+**Depois, *Add record*:**
+
+| Campo | Valor |
+|---|---|
+| Type | `CNAME` |
+| Name | `@` |
+| Target | `mentoria-aion.pages.dev` |
+| Proxy status | **Proxied** (nuvem laranja) |
+
+> **Por que `@`.** A tela do Pages mostra o campo *Name* vazio, e é o
+> que mais confunde nesta etapa: para o domínio-raiz o que se digita é
+> `@`. E sim, CNAME na raiz é proibido no DNS comum — a Cloudflare
+> resolve isso achatando o registro (*CNAME flattening*), então ali é
+> válido.
+
+Para o `www` também: outro CNAME, *Name* `www`, mesmo *Target*,
+proxiado — e acrescente `www.souaion.com` em *Custom domains*.
+
+Por fim, volte ao Pages e clique em **Check DNS records**. O certificado
 sai junto.
-
-Acrescente também **`www.souaion.com`** se quiser que quem digitar o
-`www` chegue no mesmo lugar.
 
 > **O que isso significa:** o projeto da mentoria passa a atender o
 > domínio inteiro. `souaion.com` puro devolve 404 de propósito — quem
@@ -38,6 +73,10 @@ Acrescente também **`www.souaion.com`** se quiser que quem digitar o
 > e os dois caminhos continuam funcionando sem mudar nada.
 
 **Se pular:** nada acontece. O endereço novo simplesmente não existe.
+
+**Como saber que fechou:** `souaion.com` e `mentoria-aion.pages.dev`
+passam a resolver para a mesma faixa de endereços. Enquanto estiverem em
+faixas diferentes, o registro ainda não é o certo.
 
 ---
 
