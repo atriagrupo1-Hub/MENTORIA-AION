@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import * as dados from "./dados";
 import type { AlunaAdmin, ComentarioDaAutora, Ficha } from "./dados";
 import { formatar, formatarDigitando, linkWhatsApp, soDigitos } from "./celular";
+import { convitePeloWhatsApp } from "./convite";
 import { colunaDaAluna, estadoDoPrazo } from "./prazo";
 import { ehAdmin, type Papel } from "./papeis";
 import type { PedidoConfirmacao } from "./Confirmacao";
@@ -108,6 +109,23 @@ export function FichaDaAluna({
   const coluna = colunaDaAluna(aluna.status, aluna.acessoAte);
   const prazo = estadoDoPrazo(aluna.acessoAte);
   const zap = linkWhatsApp(aluna.celular, `Olá, ${aluna.nome.split(" ")[0]}!`);
+  /*
+   * Dois botões e não um, porque são duas conversas diferentes.
+   *
+   * "Chamar" é falar com ela — perguntar como está indo, cobrar uma
+   * aula parada. "Enviar o acesso" é a mensagem com endereço, nome de
+   * acesso e código, que se manda no primeiro dia e de novo toda vez
+   * que ela diz "perdi meu código".
+   *
+   * Um botão só, carregando o código sempre, faria toda conversa
+   * começar com a senha dela — e um botão só sem o código deixaria o
+   * "perdi meu código" sendo digitado à mão, que é o que acontecia.
+   */
+  const convite = convitePeloWhatsApp(aluna.celular, {
+    nome: aluna.nome,
+    login: aluna.login,
+    codigo: aluna.codigo,
+  });
 
   const carregar = useCallback(async () => {
     try {
@@ -346,6 +364,22 @@ export function FichaDaAluna({
             style={{ ...botaoOuro, display: "inline-flex", alignItems: "center", textDecoration: "none" }}
           >
             Chamar no WhatsApp
+          </a>
+        ) : null}
+
+        {convite ? (
+          <a
+            href={convite}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              ...botaoNeutro,
+              display: "inline-flex",
+              alignItems: "center",
+              textDecoration: "none",
+            }}
+          >
+            Enviar o acesso
           </a>
         ) : null}
 

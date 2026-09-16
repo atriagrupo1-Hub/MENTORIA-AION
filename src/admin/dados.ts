@@ -161,12 +161,21 @@ export async function salvarConfiguracao(c: Configuracao): Promise<void> {
   if (error) throw new Error(`configuração: ${error.message}`);
 }
 
+/**
+ * Cria a aluna e devolve o identificador dela.
+ *
+ * O identificador importa: cadastrar é o primeiro de três passos — a
+ * conta, o curso e o prazo — e os outros dois precisam saber de quem
+ * estão falando. Antes esta função jogava fora o que a Edge Function
+ * devolvia, e quem quisesse continuar tinha de recarregar a lista
+ * inteira e procurar a aluna nova pelo nome.
+ */
 export async function cadastrarAluna(
   nome: string,
   login: string,
   codigo: string,
   celular: string,
-): Promise<{ ok: true } | { ok: false; mensagem: string }> {
+): Promise<{ ok: true; id: string } | { ok: false; mensagem: string }> {
   const { data: sessao } = await supabase.auth.getSession();
   if (!sessao.session) return { ok: false, mensagem: "Sua sessão expirou. Entre de novo." };
 
@@ -181,9 +190,10 @@ export async function cadastrarAluna(
     body: JSON.stringify({ nome, login, codigo, celular }),
   });
 
-  if (resposta.ok) return { ok: true };
-
   const corpo = await resposta.json().catch(() => ({}));
+
+  if (resposta.ok) return { ok: true, id: String(corpo?.id ?? "") };
+
   return {
     ok: false,
     mensagem: corpo?.mensagem ?? "Não foi possível cadastrar a aluna agora.",
