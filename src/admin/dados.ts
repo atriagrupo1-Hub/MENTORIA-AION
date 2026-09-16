@@ -25,6 +25,10 @@ export type AlunaAdmin = {
   criadaEm: string;
   /** Quando ela entrou pela primeira vez. Nulo = nunca entrou. */
   primeiroAcessoEm: string | null;
+  /** Última renovação. Nulo = nunca renovou. Não mexe em `criadaEm`. */
+  renovadaEm: string | null;
+  /** Quantas vezes já renovou. */
+  renovacoes: number;
   /** A última vez que ela apareceu. */
   ultimoAcessoEm: string | null;
   /** Fim do acesso. Nulo quer dizer sem prazo. */
@@ -74,6 +78,8 @@ export async function listarAlunas(): Promise<AlunaAdmin[]> {
       criada_em: string;
       primeiro_acesso_em: string | null;
       ultimo_acesso_em: string | null;
+      renovada_em: string | null;
+      renovacoes: number | null;
       acesso_ate: string | null;
     }) => ({
       id: p.id,
@@ -85,6 +91,8 @@ export async function listarAlunas(): Promise<AlunaAdmin[]> {
       criadaEm: p.criada_em,
       primeiroAcessoEm: p.primeiro_acesso_em,
       ultimoAcessoEm: p.ultimo_acesso_em,
+      renovadaEm: p.renovada_em,
+      renovacoes: p.renovacoes ?? 0,
       acessoAte: p.acesso_ate,
       cronograma: porAluna.get(p.id) ?? new Map<string, string | null>(),
     }),
@@ -657,4 +665,29 @@ export async function editarAluna(
   };
   const chave = Object.keys(conhecidos).find((k) => error.message.includes(k));
   throw new Error(chave ? conhecidos[chave] : `salvar: ${error.message}`);
+}
+
+/**
+ * Renova o acesso: soma prazo E carimba a renovação, de uma vez só.
+ *
+ * As duas coisas juntas de propósito. Estendendo sem carimbar, a aluna
+ * ganha prazo e não aparece em Renovadas; carimbando sem estender, ela
+ * aparece como renovada sem ter ganhado um dia. Numa função só do
+ * banco, ou acontecem as duas ou não acontece nenhuma.
+ *
+ * A data de entrada não é tocada. Renovar não é entrar de novo.
+ */
+export async function renovarAcesso(alunaId: string, p: Prazo): Promise<string | null> {
+  const { data, error } = await supabase.rpc("renovar_acesso", {
+    p_aluna: alunaId,
+    p_dias: p.dias,
+    p_meses: p.meses,
+    p_anos: p.anos,
+  });
+  if (error) {
+    if (error.message.includes("prazo_vazio")) throw new Error("Informe quanto tempo renovar.");
+    if (error.message.includes("sem_permissao")) throw new Error("Você não tem permissão para isto.");
+    throw new Error(`renovar: ${error.message}`);
+  }
+  return (data as string | null) ?? null;
 }

@@ -56,16 +56,31 @@ export function PrazoDaAluna({
     setAnos("");
   }
 
-  async function aplicar(modo: "definir" | "estender", p: dados.Prazo) {
+  /*
+   * Renovar e acrescentar somam o mesmo tempo, e são coisas diferentes.
+   *
+   * Renovar é a aluna pagando de novo: além do prazo, carimba a
+   * renovação e a põe na coluna Renovadas, para sempre. Acrescentar é
+   * um ajuste de prazo que não é venda — corrigir uma digitação, dar
+   * uma semana porque o sistema ficou fora do ar. Um carimbo indevido
+   * ali sujaria a única lista que diz quem de fato renovou.
+   */
+  async function aplicar(modo: "definir" | "estender" | "renovar", p: dados.Prazo) {
     const falha = await executar(() =>
-      modo === "definir" ? dados.definirAcesso(aluna.id, p) : dados.estenderAcesso(aluna.id, p),
+      modo === "definir"
+        ? dados.definirAcesso(aluna.id, p)
+        : modo === "estender"
+          ? dados.estenderAcesso(aluna.id, p)
+          : dados.renovarAcesso(aluna.id, p),
     );
     if (!falha) limpar();
     avisar(
       falha ??
         (modo === "definir"
           ? `Prazo de ${aluna.nome} definido a partir do cadastro.`
-          : `Tempo acrescentado ao acesso de ${aluna.nome}.`),
+          : modo === "estender"
+            ? `Tempo acrescentado ao acesso de ${aluna.nome}.`
+            : `${aluna.nome} renovada. A data de entrada dela não mudou.`),
     );
   }
 
@@ -140,11 +155,30 @@ export function PrazoDaAluna({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        {/*
+          Renovar vem primeiro e é a ação cheia: é o que se faz quando
+          a aluna paga de novo, e é o caminho mais percorrido dos três.
+        */}
+        <button
+          disabled={vazio}
+          onClick={() => aplicar("renovar", prazo)}
+          style={{
+            ...botaoOuro,
+            minHeight: 42,
+            padding: "0 18px",
+            fontSize: 14,
+            opacity: vazio ? 0.4 : 1,
+            cursor: vazio ? "default" : "pointer",
+          }}
+        >
+          Renovar
+        </button>
+
         <button
           disabled={vazio}
           onClick={() => aplicar("definir", prazo)}
           style={{
-            ...botaoOuro,
+            ...botaoNeutro,
             minHeight: 42,
             padding: "0 18px",
             fontSize: 14,

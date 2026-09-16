@@ -4,7 +4,7 @@ import * as dados from "./dados";
 import { formatarDigitando, soDigitos } from "./celular";
 import { FichaDaAluna } from "./FichaDaAluna";
 import { botaoOuro, campo, etiqueta, painel as tema, rotulo } from "./estilos";
-import { estadoDoPrazo, precisaRenovar } from "./prazo";
+import { colunaDaAluna, estadoDoPrazo, type Coluna } from "./prazo";
 import type { Painel } from "./usePainel";
 
 /**
@@ -41,33 +41,29 @@ export function AbaAlunas({
   const [salvando, setSalvando] = useState(false);
   const [abertaId, setAbertaId] = useState("");
   const [busca, setBusca] = useState("");
-  const [filtro, setFiltro] = useState<"todas" | "ativas" | "vencendo" | "bloqueadas">("todas");
+  const [filtro, setFiltro] = useState<"todas" | Coluna | "renovadas">("todas");
 
   const totalAulas = catalogo.modulos.reduce((s, m) => s + m.aulas.length, 0);
 
   /*
-   * Três estados que não se sobrepõem, e por isso somam.
+   * Quatro colunas que não se sobrepõem, e uma marca que sobrepõe.
    *
-   * "Ativas" contava também quem já passou do prazo — e o banco NÃO
-   * considera essa pessoa ativa: `conta_ativa()` exige
-   * `acesso_ate > now()`. O painel dizia que ela estava dentro
-   * enquanto o aplicativo a barrava na porta.
+   * A regra de qual coluna mora em `colunaDaAluna`, no banco de
+   * conhecimento sobre prazo — aqui é só contar.
    *
-   * Agora cada aluna cai em exatamente um lugar:
-   *
-   *   bloqueada — vocês fecharam a conta, o prazo não importa
-   *   vencendo  — falta um mês ou menos, ou já venceu: hora de falar
-   *   ativa     — entra hoje, e não vence tão cedo
-   *
-   * Sem sobreposição a soma bate com "Todas", que é o que alguém faz
-   * de cabeça ao olhar quatro números lado a lado.
+   * "Renovadas" é diferente das outras quatro, e a tela precisa deixar
+   * isso claro: é uma MARCA, não um estado. Quem renovou uma vez carrega
+   * para sempre, e continua também sendo ativa, ou vencendo, ou o que
+   * for. Por isso aquele número não entra na soma — e por isso ele fica
+   * separado dos outros, depois de um espaço.
    */
-  const estado = (a: (typeof alunas)[number]) =>
-    a.status === "bloqueada" ? "bloqueadas" : precisaRenovar(a.acessoAte) ? "vencendo" : "ativas";
+  const coluna = (a: (typeof alunas)[number]) => colunaDaAluna(a.status, a.acessoAte);
 
-  const bloqueadas = alunas.filter((a) => estado(a) === "bloqueadas").length;
-  const vencendo = alunas.filter((a) => estado(a) === "vencendo").length;
-  const ativas = alunas.filter((a) => estado(a) === "ativas").length;
+  const bloqueadas = alunas.filter((a) => coluna(a) === "bloqueadas").length;
+  const vencidas = alunas.filter((a) => coluna(a) === "vencidas").length;
+  const vencendo = alunas.filter((a) => coluna(a) === "vencendo").length;
+  const ativas = alunas.filter((a) => coluna(a) === "ativas").length;
+  const renovadas = alunas.filter((a) => a.renovacoes > 0).length;
 
   /*
    * A busca olha nome, nome de acesso e celular.
@@ -79,7 +75,8 @@ export function AbaAlunas({
     const termo = busca.trim().toLowerCase();
     const digitos = soDigitos(busca);
     return alunas.filter((a) => {
-      if (filtro !== "todas" && estado(a) !== filtro) return false;
+      if (filtro === "renovadas" && a.renovacoes === 0) return false;
+      if (filtro !== "todas" && filtro !== "renovadas" && coluna(a) !== filtro) return false;
       if (!termo) return true;
       return (
         a.nome.toLowerCase().includes(termo) ||
@@ -122,21 +119,24 @@ export function AbaAlunas({
     avisar(`${cadastrada} foi cadastrada.`);
   }
 
+  // O vermelho é a única cor do painel, e quer dizer sempre a mesma
+  // coisa: isto precisa de você. Aceso só quando há alguém.
   const FILTROS = [
-    { chave: "todas" as const, nome: "Todas", conta: alunas.length, atencao: false },
-    { chave: "ativas" as const, nome: "Ativas", conta: ativas, atencao: false },
-    // O vermelho é a única cor do painel, e quer dizer sempre a mesma
-    // coisa: isto precisa de você. Aceso só quando há alguém.
-    { chave: "vencendo" as const, nome: "Vencendo", conta: vencendo, atencao: vencendo > 0 },
-    { chave: "bloqueadas" as const, nome: "Bloqueadas", conta: bloqueadas, atencao: false },
+    { chave: "todas" as const, nome: "Todas", conta: alunas.length, atencao: false, aparte: false },
+    { chave: "ativas" as const, nome: "Ativas", conta: ativas, atencao: false, aparte: false },
+    { chave: "vencendo" as const, nome: "Vencendo", conta: vencendo, atencao: vencendo > 0, aparte: false },
+    { chave: "vencidas" as const, nome: "Vencidas", conta: vencidas, atencao: vencidas > 0, aparte: false },
+    { chave: "bloqueadas" as const, nome: "Bloqueadas", conta: bloqueadas, atencao: false, aparte: false },
+    // `aparte` afasta este das outras: é marca, não estado, e não soma.
+    { chave: "renovadas" as const, nome: "Renovadas", conta: renovadas, atencao: false, aparte: true },
   ];
 
   return (
     <>
       {/*
-        Os três números que a colaboradora quer antes de procurar
-        alguém. São botões porque cada um também filtra a lista — ler e
-        agir no mesmo lugar poupa explicar onde fica o filtro.
+        Os números que a colaboradora quer antes de procurar alguém. São
+        botões porque cada um também filtra a lista — ler e agir no
+        mesmo lugar poupa explicar onde fica o filtro.
       */}
       <div className="mb-4 flex flex-wrap gap-2">
         {FILTROS.map((f) => {
@@ -151,6 +151,7 @@ export function AbaAlunas({
                 border: `1px solid ${ativo ? tema.linha : tema.linhaSuave}`,
                 borderRadius: 10,
                 cursor: "pointer",
+                marginLeft: f.aparte ? 18 : undefined,
               }}
             >
               <span

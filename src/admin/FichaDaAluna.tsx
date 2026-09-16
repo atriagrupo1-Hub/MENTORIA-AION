@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import * as dados from "./dados";
 import type { AlunaAdmin, ComentarioDaAutora, Ficha } from "./dados";
 import { formatar, formatarDigitando, linkWhatsApp, soDigitos } from "./celular";
+import { colunaDaAluna, estadoDoPrazo } from "./prazo";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import {
   botaoNeutro,
@@ -92,7 +93,8 @@ export function FichaDaAluna({
   const [erro, setErro] = useState("");
   const [gaveta, setGaveta] = useState<"" | "editar" | "curso" | "prazo" | "comentarios">("");
 
-  const bloqueada = aluna.status === "bloqueada";
+  const coluna = colunaDaAluna(aluna.status, aluna.acessoAte);
+  const prazo = estadoDoPrazo(aluna.acessoAte);
   const zap = linkWhatsApp(aluna.celular, `Olá, ${aluna.nome.split(" ")[0]}!`);
 
   const carregar = useCallback(async () => {
@@ -183,7 +185,29 @@ export function FichaDaAluna({
             )}
           </Linha>
 
+          {/*
+            Entrada e renovação lado a lado, e nunca uma no lugar da
+            outra. Quem entrou em março e renovou em setembro é aluna
+            desde março — zerar a entrada apagaria a informação mais
+            simples que existe sobre ela: desde quando ela é aluna.
+          */}
           <Linha nome="Entrou em">{data(aluna.criadaEm)}</Linha>
+
+          <Linha nome="Renovações">
+            {aluna.renovacoes === 0 ? (
+              <span style={{ color: tema.textoSecundario }}>nunca renovou</span>
+            ) : (
+              <>
+                {aluna.renovacoes === 1 ? "1 renovação" : `${aluna.renovacoes} renovações`}
+                {aluna.renovadaEm ? (
+                  <span style={{ color: tema.textoTerciario }}>
+                    {" "}
+                    · última em {data(aluna.renovadaEm)} ({faz(aluna.renovadaEm)})
+                  </span>
+                ) : null}
+              </>
+            )}
+          </Linha>
 
           <Linha nome="Primeiro acesso">
             {aluna.primeiroAcessoEm ? (
@@ -206,6 +230,61 @@ export function FichaDaAluna({
         </div>
 
         <div className="min-w-[260px] flex-1">
+          {/*
+            A situação: o que vocês escolhem, e o que a data decide.
+            
+            Ativa e Bloqueada são escolha — o seletor troca na hora, e a
+            aluna muda de coluna. Vencendo e Vencida NÃO são escolha: são
+            a data do prazo falando. Um seletor que deixasse marcar
+            "Ativa" numa aluna vencida ontem só serviria para o painel
+            mentir, porque o banco a barraria na porta do mesmo jeito.
+            Para mudar essas, muda-se o prazo, logo ali em Prazo de
+            acesso.
+          */}
+          <Linha nome="Situação">
+            <span className="flex flex-wrap items-center gap-2">
+              <select
+                value={aluna.status}
+                aria-label="Situação da aluna"
+                onChange={async (e) => {
+                  const novo = e.target.value as "ativa" | "bloqueada";
+                  const falha = await executar(() => dados.definirStatus(aluna.id, novo));
+                  avisar(
+                    falha ??
+                      (novo === "bloqueada"
+                        ? `${aluna.nome} foi bloqueada.`
+                        : `${aluna.nome} foi desbloqueada.`),
+                  );
+                }}
+                style={{
+                  minHeight: 34,
+                  padding: "0 8px",
+                  fontSize: 13,
+                  color: tema.texto,
+                  background: tema.superficie,
+                  border: `1px solid ${tema.linha}`,
+                  borderRadius: 8,
+                  cursor: "pointer",
+                }}
+              >
+                <option value="ativa">Ativa</option>
+                <option value="bloqueada">Bloqueada</option>
+              </select>
+
+              {coluna === "vencendo" || coluna === "vencidas" ? (
+                <span style={etiqueta(tema.perigo)}>
+                  {coluna === "vencidas" ? "vencida" : "vencendo"}
+                </span>
+              ) : null}
+              {aluna.renovacoes > 0 ? (
+                <span style={etiqueta(tema.textoSecundario)}>renovada</span>
+              ) : null}
+              <span className="text-[12px]" style={{ color: tema.textoTerciario }}>
+                {prazo.semPrazo ? "sem prazo" : prazo.rotulo.toLowerCase()}
+              </span>
+            </span>
+          </Linha>
+
           <Linha nome="Nome de acesso">{aluna.login}</Linha>
           <Linha nome="Código">{aluna.codigo || "—"}</Linha>
           <Linha nome="Celular">
@@ -272,20 +351,6 @@ export function FichaDaAluna({
         </button>
         <button onClick={() => setGaveta(gaveta === "prazo" ? "" : "prazo")} style={botaoNeutro}>
           {gaveta === "prazo" ? "Fechar prazo" : "Prazo de acesso"}
-        </button>
-        <button
-          onClick={async () => {
-            const falha = await executar(() =>
-              dados.definirStatus(aluna.id, bloqueada ? "ativa" : "bloqueada"),
-            );
-            avisar(
-              falha ??
-                (bloqueada ? `${aluna.nome} foi desbloqueada.` : `${aluna.nome} foi bloqueada.`),
-            );
-          }}
-          style={botaoNeutro}
-        >
-          {bloqueada ? "Desbloquear" : "Bloquear"}
         </button>
         <button
           onClick={() =>

@@ -87,6 +87,35 @@ export function estadoDoPrazo(acessoAte: string | null): EstadoPrazo {
 }
 
 /**
+ * Em que coluna esta aluna cai.
+ *
+ * Quatro estados que não se sobrepõem, e por isso somam com "Todas". A
+ * ordem da decisão é a regra:
+ *
+ *   bloqueada — vocês fecharam a conta; o prazo dela não interessa
+ *   vencida   — o prazo passou: o banco já a barra na porta
+ *   vencendo  — falta um mês ou menos: hora de falar com ela
+ *   ativa     — entra hoje, e não vence tão cedo
+ *
+ * "Renovada" NÃO está aqui, e é de propósito: renovar é uma marca que
+ * fica para sempre, não um estado que passa. Uma aluna pode ser
+ * renovada E estar vencendo de novo, seis meses depois. Ela é contada
+ * à parte, e é por isso que aquele número não entra na soma.
+ */
+export type Coluna = "ativas" | "vencendo" | "vencidas" | "bloqueadas";
+
+export function colunaDaAluna(
+  status: "ativa" | "bloqueada",
+  acessoAte: string | null,
+): Coluna {
+  if (status === "bloqueada") return "bloqueadas";
+  const e = estadoDoPrazo(acessoAte);
+  if (e.vencido) return "vencidas";
+  if (e.perto) return "vencendo";
+  return "ativas";
+}
+
+/**
  * Esta aluna precisa de renovação?
  *
  * Verdadeiro quando falta um mês ou menos — e também quando o prazo já
