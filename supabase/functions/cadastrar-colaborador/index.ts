@@ -1,18 +1,19 @@
 /**
- * Edge Function `cadastrar-aluna`
+ * Edge Function `cadastrar-colaborador`
  *
- * Criar uma aluna exige escrever em `auth.users`, e o navegador não pode
- * — só a chave de serviço pode. Por isso esta função existe.
+ * Irmã de `cadastrar-aluna`, e pelo mesmo motivo: criar uma conta exige
+ * escrever em `auth.users`, e o navegador não pode — só a chave de
+ * serviço pode.
  *
- * Diferente de `entrar`, aqui `verify_jwt` fica LIGADO: quem chama já
- * tem sessão. E não basta ter sessão: a função confere, no banco, que a
- * conta de quem chama é da equipe — dono, administrador ou suporte.
- * Ter um token válido de aluna não abre esta porta.
+ * A diferença é quem abre a porta. Ali é a equipe inteira; aqui é só o
+ * dono, conferido no banco e não no token. É a mesma regra que a 0023
+ * grava nas funções de remover, bloquear e trocar código: a promessa de
+ * que só o dono mexe na equipe não pode viver na tela.
  *
- * As alunas não têm e-mail nem senha. O Auth exige um identificador, e
- * ele é derivado do nome de acesso num domínio reservado que não recebe
- * correio. A senha gravada é aleatória e nunca usada: o acesso é sempre
- * pelo código, conferido por `verificar_codigo()`.
+ * E o papel que vem no corpo é conferido contra uma lista de dois. Sem
+ * isso, uma chamada montada à mão com `papel: "dono"` criaria um
+ * segundo dono — que é exatamente a coisa que esta função existe para
+ * impedir.
  */
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -21,7 +22,10 @@ const URL_SUPABASE = Deno.env.get("SUPABASE_URL")!;
 const CHAVE_SERVICO = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 /** Domínio reservado, sem MX: nenhuma mensagem sai daqui. */
-const DOMINIO_INTERNO = "alunas.mentoria-aion.invalid";
+const DOMINIO_INTERNO = "equipe.mentoria-aion.invalid";
+
+/** Os dois papéis que o dono pode criar. `dono` não está aqui. */
+const PAPEIS = ["admin", "suporte"];
 
 const ORIGENS = (Deno.env.get("ORIGENS_PERMITIDAS") ?? "")
   .split(",")
@@ -68,7 +72,6 @@ Deno.serve(async (req) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  // Quem está chamando?
   const { data: quem, error: erroQuem } = await admin.auth.getUser(
     autorizacao.replace("Bearer ", ""),
   );
@@ -76,42 +79,44 @@ Deno.serve(async (req) => {
     return resposta({ erro: "sessao_invalida" }, 401, origem);
   }
 
-  // É da equipe mesmo? A resposta vem do banco, não do token.
-  //
-  // Os três papéis cadastram aluna: o dono, o administrador e o
-  // suporte. Quem não está nesta lista — uma aluna com sessão válida,
-  // por exemplo — para aqui.
-  const EQUIPE = ["dono", "admin", "suporte"];
-
+  // É o dono mesmo? A resposta vem do banco.
   const { data: perfil, error: erroPerfil } = await admin
     .from("profiles")
     .select("papel, status")
     .eq("id", quem.user.id)
     .single();
 
-  if (erroPerfil || !EQUIPE.includes(perfil?.papel) || perfil?.status !== "ativa") {
+  if (erroPerfil || perfil?.papel !== "dono" || perfil?.status !== "ativa") {
     return resposta({ erro: "sem_permissao" }, 403, origem);
   }
 
   let nome = "";
   let login = "";
   let codigo = "";
-  let celular = "";
+  let papel = "";
   try {
     const corpo = await req.json();
     nome = String(corpo?.nome ?? "").trim();
     login = String(corpo?.login ?? "").trim().toLowerCase();
     codigo = String(corpo?.codigo ?? "").trim();
-    // Só os dígitos. Guardar "(11) 98765-4321" faria o mesmo número
-    // virar dois na hora de procurar, e o link do WhatsApp não aceita
-    // pontuação de qualquer jeito.
-    celular = String(corpo?.celular ?? "").replace(/\D/g, "");
+    papel = String(corpo?.papel ?? "").trim();
   } catch {
     return resposta({ erro: "corpo_invalido" }, 400, origem);
   }
 
+  if (!PAPEIS.includes(papel)) {
+    return resposta(
+      { erro: "papel_invalido", mensagem: "Escolha suporte ou administrador." },
+      400,
+      origem,
+    );
+  }
   if (nome.length < 2 || nome.length > 80) {
-    return resposta({ erro: "nome_invalido", mensagem: "Informe o nome da aluna." }, 400, origem);
+    return resposta(
+      { erro: "nome_invalido", mensagem: "Informe o nome de quem vai usar." },
+      400,
+      origem,
+    );
   }
   if (!/^[a-z0-9._-]{2,40}$/.test(login)) {
     return resposta(
@@ -123,25 +128,16 @@ Deno.serve(async (req) => {
       origem,
     );
   }
-  // O celular é opcional — muita aluna vem sem, e travar o cadastro por
-  // causa disso seria pior que o campo vazio. Mas se veio, tem de ser um
-  // número plausível: DDD e o número, ou com o código do país na frente.
-  if (celular && (celular.length < 10 || celular.length > 15)) {
-    return resposta(
-      { erro: "celular_invalido", mensagem: "O celular precisa do DDD. Ex.: 11 98765-4321." },
-      400,
-      origem,
-    );
-  }
-
   if (!/^[0-9]{4,6}$/.test(codigo)) {
     return resposta(
-      { erro: "codigo_invalido", mensagem: "O código tem 4 números." },
+      { erro: "codigo_invalido", mensagem: "O código tem de 4 a 6 números." },
       400,
       origem,
     );
   }
 
+  // O nome de acesso é único no aplicativo inteiro, aluna ou não: é por
+  // ele que `verificar_codigo()` acha a pessoa.
   const { data: jaExiste } = await admin
     .from("profiles")
     .select("id")
@@ -150,7 +146,7 @@ Deno.serve(async (req) => {
 
   if (jaExiste) {
     return resposta(
-      { erro: "login_em_uso", mensagem: "Já existe uma aluna com este nome de acesso." },
+      { erro: "login_em_uso", mensagem: "Já existe alguém com este nome de acesso." },
       409,
       origem,
     );
@@ -158,10 +154,6 @@ Deno.serve(async (req) => {
 
   const senhaDescartavel = crypto.randomUUID() + crypto.randomUUID();
 
-  // A conta do Auth é criada pela API administrativa, que preenche
-  // sozinha as colunas de token — inserir na tabela à mão deixa nulos
-  // que o Auth não sabe ler, e o login falha com "Database error
-  // loading user".
   const { data: conta, error: erroConta } = await admin.auth.admin.createUser({
     email: `${login}@${DOMINIO_INTERNO}`,
     password: senhaDescartavel,
@@ -176,17 +168,9 @@ Deno.serve(async (req) => {
 
   const { error: erroPerfilNovo } = await admin
     .from("profiles")
-    .insert({
-      id: conta.user.id,
-      nome,
-      login,
-      papel: "aluna",
-      status: "ativa",
-      celular: celular || null,
-    });
+    .insert({ id: conta.user.id, nome, login, papel, status: "ativa" });
 
   if (erroPerfilNovo) {
-    // Não deixa conta órfã no Auth.
     await admin.auth.admin.deleteUser(conta.user.id);
     console.error("falha ao criar o perfil", erroPerfilNovo.message);
     return resposta({ erro: "indisponivel" }, 503, origem);
@@ -202,5 +186,5 @@ Deno.serve(async (req) => {
     return resposta({ erro: "indisponivel" }, 503, origem);
   }
 
-  return resposta({ id: conta.user.id, nome, login }, 201, origem);
+  return resposta({ id: conta.user.id, nome, login, papel }, 201, origem);
 });
