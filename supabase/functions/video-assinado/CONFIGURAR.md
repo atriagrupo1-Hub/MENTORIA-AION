@@ -82,7 +82,7 @@ No painel do Supabase, em **Edge Functions → Secrets**, crie:
 | `STREAM_CHAVE_ID` | o ID da chave |
 | `STREAM_CHAVE_JWK` | a chave privada em JWK base64 |
 | `STREAM_MINUTOS` | `120` (opcional — é o padrão) |
-| `ORIGENS_PERMITIDAS` | `https://mentoria-aion.pages.dev` |
+| `ORIGENS_PERMITIDAS` | `https://mentoria-aion.pages.dev` — e o domínio próprio quando houver; ver `TROCAR-DOMINIO.md` |
 
 Cole a chave privada **direto no campo do Supabase**. Não passe por
 nenhum outro lugar no caminho.
