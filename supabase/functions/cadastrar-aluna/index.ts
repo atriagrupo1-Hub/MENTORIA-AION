@@ -90,11 +90,16 @@ Deno.serve(async (req) => {
   let nome = "";
   let login = "";
   let codigo = "";
+  let celular = "";
   try {
     const corpo = await req.json();
     nome = String(corpo?.nome ?? "").trim();
     login = String(corpo?.login ?? "").trim().toLowerCase();
     codigo = String(corpo?.codigo ?? "").trim();
+    // Só os dígitos. Guardar "(11) 98765-4321" faria o mesmo número
+    // virar dois na hora de procurar, e o link do WhatsApp não aceita
+    // pontuação de qualquer jeito.
+    celular = String(corpo?.celular ?? "").replace(/\D/g, "");
   } catch {
     return resposta({ erro: "corpo_invalido" }, 400, origem);
   }
@@ -112,6 +117,17 @@ Deno.serve(async (req) => {
       origem,
     );
   }
+  // O celular é opcional — muita aluna vem sem, e travar o cadastro por
+  // causa disso seria pior que o campo vazio. Mas se veio, tem de ser um
+  // número plausível: DDD e o número, ou com o código do país na frente.
+  if (celular && (celular.length < 10 || celular.length > 15)) {
+    return resposta(
+      { erro: "celular_invalido", mensagem: "O celular precisa do DDD. Ex.: 11 98765-4321." },
+      400,
+      origem,
+    );
+  }
+
   if (!/^[0-9]{4,6}$/.test(codigo)) {
     return resposta(
       { erro: "codigo_invalido", mensagem: "O código tem 4 números." },
@@ -154,7 +170,14 @@ Deno.serve(async (req) => {
 
   const { error: erroPerfilNovo } = await admin
     .from("profiles")
-    .insert({ id: conta.user.id, nome, login, papel: "aluna", status: "ativa" });
+    .insert({
+      id: conta.user.id,
+      nome,
+      login,
+      papel: "aluna",
+      status: "ativa",
+      celular: celular || null,
+    });
 
   if (erroPerfilNovo) {
     // Não deixa conta órfã no Auth.

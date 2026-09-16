@@ -19,8 +19,14 @@ export type AlunaAdmin = {
   login: string;
   codigo: string;
   status: "ativa" | "bloqueada";
+  /** Só dígitos, com DDD. Nulo quer dizer que ninguém preencheu. */
+  celular: string | null;
   /** Quando a aluna foi cadastrada. É a base de contagem do prazo. */
   criadaEm: string;
+  /** Quando ela entrou pela primeira vez. Nulo = nunca entrou. */
+  primeiroAcessoEm: string | null;
+  /** A última vez que ela apareceu. */
+  ultimoAcessoEm: string | null;
   /** Fim do acesso. Nulo quer dizer sem prazo. */
   acessoAte: string | null;
   /** Aulas que ela tem, e quando cada uma abre. Nulo = já aberta. */
@@ -64,7 +70,10 @@ export async function listarAlunas(): Promise<AlunaAdmin[]> {
       nome: string;
       login: string;
       status: "ativa" | "bloqueada";
+      celular: string | null;
       criada_em: string;
+      primeiro_acesso_em: string | null;
+      ultimo_acesso_em: string | null;
       acesso_ate: string | null;
     }) => ({
       id: p.id,
@@ -72,7 +81,10 @@ export async function listarAlunas(): Promise<AlunaAdmin[]> {
       login: p.login,
       codigo: codigos.get(p.id) ?? "",
       status: p.status,
+      celular: p.celular ?? null,
       criadaEm: p.criada_em,
+      primeiroAcessoEm: p.primeiro_acesso_em,
+      ultimoAcessoEm: p.ultimo_acesso_em,
       acessoAte: p.acesso_ate,
       cronograma: porAluna.get(p.id) ?? new Map<string, string | null>(),
     }),
@@ -144,6 +156,7 @@ export async function cadastrarAluna(
   nome: string,
   login: string,
   codigo: string,
+  celular: string,
 ): Promise<{ ok: true } | { ok: false; mensagem: string }> {
   const { data: sessao } = await supabase.auth.getSession();
   if (!sessao.session) return { ok: false, mensagem: "Sua sessão expirou. Entre de novo." };
@@ -156,7 +169,7 @@ export async function cadastrarAluna(
       apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ nome, login, codigo }),
+    body: JSON.stringify({ nome, login, codigo, celular }),
   });
 
   if (resposta.ok) return { ok: true };
@@ -524,4 +537,124 @@ export async function moderarComentario(
     p_status: status,
   });
   if (error) throw new Error(`moderar: ${error.message}`);
+}
+
+// =====================================================================
+// A ficha da aluna
+// =====================================================================
+
+export type Ficha = {
+  aulasAtribuidas: number;
+  aulasAbertas: number;
+  aulasConcluidas: number;
+  comentarios: number;
+  curtidas: number;
+  /** Quando ela mexeu numa aula pela última vez. Nulo = nunca abriu. */
+  ultimaAtividadeEm: string | null;
+  ultimaModulo: number | null;
+  ultimaAula: number | null;
+  ultimaTitulo: string | null;
+};
+
+/**
+ * Os números de uma aluna, numa viagem só.
+ *
+ * Cruza `progresso`, `acessos`, `comentarios` e `curtidas` — tabelas que
+ * o navegador não alcança. Quem cruza é o banco, que confere o papel
+ * `admin` lá dentro antes de devolver qualquer coisa.
+ */
+export async function fichaDaAluna(alunaId: string): Promise<Ficha> {
+  const { data, error } = await supabase.rpc("ficha_da_aluna", { p_aluna: alunaId });
+  if (error) throw new Error(`ficha: ${error.message}`);
+  const l = (Array.isArray(data) ? data[0] : data) as {
+    aulas_atribuidas: number;
+    aulas_abertas: number;
+    aulas_concluidas: number;
+    comentarios: number;
+    curtidas: number;
+    ultima_atividade_em: string | null;
+    ultima_modulo: number | null;
+    ultima_aula: number | null;
+    ultima_titulo: string | null;
+  } | null;
+  return {
+    aulasAtribuidas: l?.aulas_atribuidas ?? 0,
+    aulasAbertas: l?.aulas_abertas ?? 0,
+    aulasConcluidas: l?.aulas_concluidas ?? 0,
+    comentarios: l?.comentarios ?? 0,
+    curtidas: l?.curtidas ?? 0,
+    ultimaAtividadeEm: l?.ultima_atividade_em ?? null,
+    ultimaModulo: l?.ultima_modulo ?? null,
+    ultimaAula: l?.ultima_aula ?? null,
+    ultimaTitulo: l?.ultima_titulo ?? null,
+  };
+}
+
+export type ComentarioDaAutora = {
+  id: string;
+  moduloNumero: number;
+  aulaNumero: number;
+  texto: string;
+  status: "publicado" | "oculto" | "removido";
+  criadoEm: string;
+  ehResposta: boolean;
+};
+
+/** O que esta aluna escreveu, do mais recente para o mais antigo. */
+export async function comentariosDaAutora(alunaId: string): Promise<ComentarioDaAutora[]> {
+  const { data, error } = await supabase.rpc("comentarios_da_autora", { p_aluna: alunaId });
+  if (error) throw new Error(`comentários: ${error.message}`);
+  return (data ?? []).map(
+    (c: {
+      id: string;
+      modulo_numero: number;
+      aula_numero: number;
+      texto: string;
+      status: ComentarioDaAutora["status"];
+      criado_em: string;
+      resposta_a: string | null;
+    }) => ({
+      id: c.id,
+      moduloNumero: c.modulo_numero,
+      aulaNumero: c.aula_numero,
+      texto: c.texto,
+      status: c.status,
+      criadoEm: c.criado_em,
+      ehResposta: c.resposta_a !== null,
+    }),
+  );
+}
+
+/**
+ * Corrigir nome, nome de acesso e celular.
+ *
+ * O nome importa mais do que parece: é ele que as outras alunas veem nos
+ * comentários. Cadastrado errado, ficava errado para sempre.
+ *
+ * A conferência de nome de acesso repetido mora no banco, junto da
+ * escrita. Feita aqui, duas colaboradoras salvando ao mesmo tempo
+ * poderiam passar as duas.
+ */
+export async function editarAluna(
+  alunaId: string,
+  nome: string,
+  login: string,
+  celular: string,
+): Promise<void> {
+  const { error } = await supabase.rpc("editar_aluna", {
+    p_aluna: alunaId,
+    p_nome: nome,
+    p_login: login,
+    p_celular: celular,
+  });
+  if (!error) return;
+  const conhecidos: Record<string, string> = {
+    login_em_uso: "Já existe uma aluna com este nome de acesso.",
+    nome_vazio: "Informe o nome da aluna.",
+    login_vazio: "Informe o nome de acesso.",
+    sem_permissao: "Você não tem permissão para isto.",
+    aluna_nao_encontrada: "Esta aluna não existe mais.",
+  };
+  const chave = Object.keys(conhecidos).find((k) => error.message.includes(k));
+  throw new Error(chave ? conhecidos[chave] : `salvar: ${error.message}`);
 }
