@@ -5,6 +5,7 @@ import { formatarDigitando, soDigitos } from "./celular";
 import { FichaDaAluna } from "./FichaDaAluna";
 import { botaoOuro, campo, etiqueta, painel as tema, rotulo } from "./estilos";
 import { colunaDaAluna, estadoDoPrazo, type Coluna } from "./prazo";
+import type { Papel } from "./papeis";
 import type { Painel } from "./usePainel";
 
 /**
@@ -25,10 +26,13 @@ import type { Painel } from "./usePainel";
 
 export function AbaAlunas({
   painel,
+  meuPapel,
   pedirConfirmacao,
   avisar,
 }: {
   painel: Painel;
+  /** Quem está olhando. O suporte vê a ficha inteira, com menos ações. */
+  meuPapel: Papel | undefined;
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
@@ -323,6 +327,7 @@ export function AbaAlunas({
               {aberta ? (
                 <FichaDaAluna
                   aluna={aluna}
+                  meuPapel={meuPapel}
                   painel={painel}
                   executar={executar}
                   avisar={avisar}

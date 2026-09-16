@@ -3,6 +3,7 @@ import * as dados from "./dados";
 import type { AlunaAdmin, ComentarioDaAutora, Ficha } from "./dados";
 import { formatar, formatarDigitando, linkWhatsApp, soDigitos } from "./celular";
 import { colunaDaAluna, estadoDoPrazo } from "./prazo";
+import { ehAdmin, type Papel } from "./papeis";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import {
   botaoNeutro,
@@ -75,6 +76,7 @@ function Linha({ nome, children }: { nome: string; children: React.ReactNode }) 
 
 export function FichaDaAluna({
   aluna,
+  meuPapel,
   painel,
   executar,
   avisar,
@@ -82,6 +84,15 @@ export function FichaDaAluna({
   aoFechar,
 }: {
   aluna: AlunaAdmin;
+  /**
+   * Quem está olhando.
+   *
+   * A ficha é a mesma para os três papéis — o suporte precisa dela
+   * inteira para atender quem liga. O que muda são as ações: cadastro,
+   * curso e prazo são do administrador. Bloquear, remover e chamar no
+   * WhatsApp continuam à mão de quem atende.
+   */
+  meuPapel: Papel | undefined;
   painel: Painel;
   executar: (f: () => Promise<unknown>) => Promise<string | null>;
   avisar: (m: string) => void;
@@ -92,6 +103,7 @@ export function FichaDaAluna({
   const [comentarios, setComentarios] = useState<ComentarioDaAutora[] | null>(null);
   const [erro, setErro] = useState("");
   const [gaveta, setGaveta] = useState<"" | "editar" | "curso" | "prazo" | "comentarios">("");
+  const podeMexerNoCurso = ehAdmin(meuPapel);
 
   const coluna = colunaDaAluna(aluna.status, aluna.acessoAte);
   const prazo = estadoDoPrazo(aluna.acessoAte);
@@ -337,21 +349,25 @@ export function FichaDaAluna({
           </a>
         ) : null}
 
-        <button
-          onClick={() => setGaveta(gaveta === "editar" ? "" : "editar")}
-          style={botaoNeutro}
-        >
-          {gaveta === "editar" ? "Fechar edição" : "Editar cadastro"}
-        </button>
-        <button
-          onClick={() => setGaveta(gaveta === "curso" ? "" : "curso")}
-          style={botaoNeutro}
-        >
-          {gaveta === "curso" ? "Fechar curso" : "Curso"}
-        </button>
-        <button onClick={() => setGaveta(gaveta === "prazo" ? "" : "prazo")} style={botaoNeutro}>
-          {gaveta === "prazo" ? "Fechar prazo" : "Prazo de acesso"}
-        </button>
+        {podeMexerNoCurso ? (
+          <>
+            <button
+              onClick={() => setGaveta(gaveta === "editar" ? "" : "editar")}
+              style={botaoNeutro}
+            >
+              {gaveta === "editar" ? "Fechar edição" : "Editar cadastro"}
+            </button>
+            <button
+              onClick={() => setGaveta(gaveta === "curso" ? "" : "curso")}
+              style={botaoNeutro}
+            >
+              {gaveta === "curso" ? "Fechar curso" : "Curso"}
+            </button>
+            <button onClick={() => setGaveta(gaveta === "prazo" ? "" : "prazo")} style={botaoNeutro}>
+              {gaveta === "prazo" ? "Fechar prazo" : "Prazo de acesso"}
+            </button>
+          </>
+        ) : null}
         <button
           onClick={() =>
             pedirConfirmacao({

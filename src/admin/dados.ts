@@ -1,5 +1,6 @@
 import { supabase } from "@/data/supabase";
 import type { Catalogo } from "@/data/tipos";
+import { NOME_DO_PAPEL, type PapelNovo } from "./papeis";
 
 /**
  * Dados do painel administrativo.
@@ -189,11 +190,26 @@ export async function cadastrarAluna(
   };
 }
 
+/*
+ * Bloquear e remover aluna passam por função, e não por `update` e
+ * `delete` soltos como antes.
+ *
+ * Não é preciosismo. Escrever direto em `profiles` exige a política do
+ * administrador, e o suporte não a tem — não pode ter: a mesma
+ * permissão que deixa bloquear uma aluna deixaria mexer no papel de
+ * quem quisesse, inclusive no próprio. As funções fazem exatamente as
+ * duas coisas que o suporte pode fazer, e conferem no banco que o alvo
+ * é mesmo uma aluna.
+ */
+
 export async function definirStatus(
   alunaId: string,
   status: "ativa" | "bloqueada",
 ): Promise<void> {
-  const { error } = await supabase.from("profiles").update({ status }).eq("id", alunaId);
+  const { error } = await supabase.rpc("definir_status_aluna", {
+    p_aluna: alunaId,
+    p_status: status,
+  });
   if (error) throw new Error(`bloquear: ${error.message}`);
 }
 
@@ -201,7 +217,7 @@ export async function removerAluna(alunaId: string): Promise<void> {
   // A cascata de `profiles` leva acessos, progresso, curtidas e
   // comentários junto. A linha de `auth.users` fica; removê-la exige a
   // chave de serviço, e a conta sem perfil não entra em lugar nenhum.
-  const { error } = await supabase.from("profiles").delete().eq("id", alunaId);
+  const { error } = await supabase.rpc("remover_aluna", { p_aluna: alunaId });
   if (error) throw new Error(`remover: ${error.message}`);
 }
 
@@ -751,4 +767,175 @@ export function resumoDaLiberacao(l: Liberacao, oQue: "aula" | "presente"): stri
   return `${receberam}. Outra${l.jaTinham === 1 ? "" : "s"} ${l.jaTinham} já tinha${
     l.jaTinham === 1 ? "" : "m"
   }.`;
+}
+
+// =====================================================================
+// A equipe
+//
+// Quem trabalha no painel. Não são alunas: `listarAlunas` filtra por
+// `papel = 'aluna'` e nunca os traz.
+//
+// Só o dono age aqui. As quatro funções abaixo chamam funções do banco
+// que conferem `eh_dono()` lá dentro e devolvem em silêncio quando não
+// é — a tela esconde os botões, e o banco recusa mesmo assim. As duas
+// coisas, não uma.
+// =====================================================================
+
+export type Colaborador = {
+  id: string;
+  nome: string;
+  login: string;
+  papel: "dono" | "admin" | "suporte";
+  status: "ativa" | "bloqueada";
+  /**
+   * Nulo quando quem está olhando não é o dono.
+   *
+   * Não é a tela escondendo: a função no banco devolve nulo. Com o
+   * código na mão, um administrador entraria como o dono, e a regra de
+   * que só o dono mexe na equipe viraria enfeite.
+   */
+  codigo: string | null;
+  criadaEm: string;
+  ultimoAcessoEm: string | null;
+  /** Quem está olhando. Ninguém remove nem bloqueia a si mesmo. */
+  souEu: boolean;
+};
+
+export async function listarEquipe(): Promise<Colaborador[]> {
+  const { data, error } = await supabase.rpc("equipe_do_painel");
+  if (error) throw new Error(`equipe: ${error.message}`);
+  return (data ?? []).map(
+    (c: {
+      id: string;
+      nome: string;
+      login: string;
+      papel: Colaborador["papel"];
+      status: Colaborador["status"];
+      codigo: string | null;
+      criada_em: string;
+      ultimo_acesso_em: string | null;
+      sou_eu: boolean;
+    }) => ({
+      id: c.id,
+      nome: c.nome,
+      login: c.login,
+      papel: c.papel,
+      status: c.status,
+      codigo: c.codigo,
+      criadaEm: c.criada_em,
+      ultimoAcessoEm: c.ultimo_acesso_em,
+      souEu: c.sou_eu,
+    }),
+  );
+}
+
+/**
+ * Cria a conta de um colaborador.
+ *
+ * Passa por Edge Function pelo mesmo motivo que o cadastro de aluna:
+ * escrever em `auth.users` exige a chave de serviço, que não pode viver
+ * no navegador. A diferença é a porta — ali é a equipe, aqui é só o
+ * dono, conferido no banco.
+ */
+export async function cadastrarColaborador(
+  nome: string,
+  login: string,
+  codigo: string,
+  papel: PapelNovo,
+): Promise<{ ok: true } | { ok: false; mensagem: string }> {
+  const { data: sessao } = await supabase.auth.getSession();
+  if (!sessao.session) return { ok: false, mensagem: "Sua sessão expirou. Entre de novo." };
+
+  const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/cadastrar-colaborador`;
+  const resposta = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${sessao.session.access_token}`,
+      apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ nome, login, codigo, papel }),
+  });
+
+  if (resposta.ok) return { ok: true };
+
+  const corpo = await resposta.json().catch(() => ({}));
+  return {
+    ok: false,
+    mensagem: corpo?.mensagem ?? "Não foi possível cadastrar agora.",
+  };
+}
+
+export async function removerColaborador(id: string): Promise<void> {
+  const { error } = await supabase.rpc("remover_colaborador", { p_id: id });
+  if (error) throw new Error(`remover: ${error.message}`);
+}
+
+export async function bloquearColaborador(
+  id: string,
+  status: "ativa" | "bloqueada",
+): Promise<void> {
+  const { error } = await supabase.rpc("bloquear_colaborador", {
+    p_id: id,
+    p_status: status,
+  });
+  if (error) throw new Error(`bloquear: ${error.message}`);
+}
+
+/**
+ * Troca o código de acesso de alguém.
+ *
+ * Zera a contagem de tentativas erradas e solta a tranca de quinze
+ * minutos junto — quem pede código novo costuma ser exatamente quem
+ * acabou de errar cinco vezes, e o código novo não adiantaria nada até
+ * o relógio virar.
+ */
+export async function mudarCodigo(id: string, codigo: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc("mudar_codigo", {
+    p_id: id,
+    p_codigo: codigo,
+  });
+  if (error) throw new Error(`código: ${error.message}`);
+  return data === true;
+}
+
+/** "Suporte", "Administrador", "Dono" — o papel como se fala. */
+export function nomeDoPapel(p: Colaborador["papel"]): string {
+  return NOME_DO_PAPEL[p];
+}
+
+// =====================================================================
+// Responder um comentário, de dentro do painel
+// =====================================================================
+
+/**
+ * Responde um comentário sem sair da aba.
+ *
+ * A resposta entra como qualquer outra: mesma tabela, `resposta_a`
+ * apontando para a raiz, `nome_visivel` no padrão — que é verdadeiro.
+ * Por isso ela sai assinada com o nome real de quem respondeu, e é
+ * assim que a aluna a vê. Não há como responder anonimamente daqui, e é
+ * de propósito: uma resposta da equipe sem nome é pior que nenhuma.
+ *
+ * Quem confere se a resposta vale é o banco. Ela tem de apontar para um
+ * comentário publicado, da mesma aula, que não seja ele próprio uma
+ * resposta — `pode_responder()`. Não existe segundo nível, e mudar o
+ * pedido daqui não cria um.
+ */
+export async function responderComentario(
+  aulaId: string,
+  respostaA: string,
+  texto: string,
+): Promise<void> {
+  const { data: sessao } = await supabase.auth.getUser();
+  if (!sessao.user) throw new Error("sem sessão");
+
+  const { error } = await supabase.from("comentarios").insert({
+    aula_id: aulaId,
+    autora_id: sessao.user.id,
+    texto,
+    posicao_segundos: 0,
+    resposta_a: respostaA,
+  });
+  if (error) throw new Error(`responder: ${error.message}`);
 }

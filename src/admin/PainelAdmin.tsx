@@ -5,7 +5,9 @@ import { useEstado } from "@/data/estado";
 import { AbaAlunas } from "./AbaAlunas";
 import { AbaComentarios } from "./AbaComentarios";
 import { AbaConteudo } from "./AbaConteudo";
+import { AbaEquipe } from "./AbaEquipe";
 import { AbaPresentes } from "./AbaPresentes";
+import { ehAdmin as podeTudo, ehDono, ehEquipe, NOME_DO_PAPEL } from "./papeis";
 import { Confirmacao, type PedidoConfirmacao } from "./Confirmacao";
 import { aba, botaoNeutro, botaoOuro, campo, painel as tema } from "./estilos";
 import { usePainel } from "./usePainel";
@@ -22,12 +24,18 @@ function Marca({ altura = 38 }: { altura?: number }) {
  *
  * A senha `mentoria` do protótipo não existe mais. Quem entra aqui entra
  * com o mesmo nome e código de qualquer aluna; o que abre o painel é o
- * papel `admin` no banco, conferido pelo Supabase. Um token de aluna não
- * passa — e mesmo que a tela fosse burlada, a RLS recusaria cada escrita.
+ * papel no banco, conferido pelo Supabase. Um token de aluna não passa —
+ * e mesmo que a tela fosse burlada, a RLS recusaria cada escrita.
+ *
+ * São três papéis de equipe, e o que muda entre eles é quanto do painel
+ * aparece. O suporte vê Alunas e Comentários; o administrador vê tudo;
+ * só o dono age na aba da equipe. A tela esconde o que a pessoa não
+ * pode fazer — e o banco recusa mesmo assim, porque esconder botão não
+ * é permissão.
  */
 export function PainelAdmin() {
   const { aluna, entrar, sair, carregando: carregandoSessao } = useEstado();
-  const ehAdmin = aluna?.papel === "admin";
+  const daEquipe = ehEquipe(aluna?.papel);
 
   if (carregandoSessao) {
     return (
@@ -39,7 +47,7 @@ export function PainelAdmin() {
     );
   }
 
-  if (!ehAdmin) {
+  if (!daEquipe) {
     return <EntradaAdmin entrar={entrar} logada={Boolean(aluna)} sair={sair} />;
   }
 
@@ -183,13 +191,40 @@ function EntradaAdmin({
   );
 }
 
+type Chave = "alunas" | "conteudo" | "comentarios" | "equipe";
+
+const TITULO: Record<Chave, string> = {
+  alunas: "Alunas da mentoria",
+  conteudo: "Conteúdo da mentoria",
+  comentarios: "Comentários das alunas",
+  equipe: "Quem trabalha no painel",
+};
+
 function PainelLogado() {
-  const { sair } = useEstado();
+  const { aluna, sair } = useEstado();
   const painel = usePainel();
   const aviso = useAviso();
-  const [abaAtiva, setAbaAtiva] = useState<"alunas" | "conteudo" | "comentarios">("alunas");
+  const [abaAtiva, setAbaAtiva] = useState<Chave>("alunas");
   const [subaba, setSubaba] = useState("mentoria");
   const [pedido, setPedido] = useState<PedidoConfirmacao | null>(null);
+
+  const papel = aluna?.papel;
+  const meuNome = aluna?.nome ?? "";
+
+  /*
+   * As abas que esta pessoa vê.
+   *
+   * O suporte fica com duas: as alunas e os comentários. Não é
+   * economia de tela — é o que ele pode fazer. Mostrar "Conteúdo"
+   * para quem o banco vai recusar a cada clique seria pior que não
+   * mostrar.
+   */
+  const ABAS: Array<{ chave: Chave; nome: string }> = [
+    { chave: "alunas", nome: "Alunas" },
+    ...(podeTudo(papel) ? [{ chave: "conteudo" as const, nome: "Conteúdo" }] : []),
+    { chave: "comentarios", nome: "Comentários" },
+    ...(podeTudo(papel) ? [{ chave: "equipe" as const, nome: "Equipe" }] : []),
+  ];
 
   const { catalogo, alunas, carregando, erro } = painel;
   const ativas = alunas.filter((a) => a.status === "ativa").length;
@@ -236,6 +271,16 @@ function PainelLogado() {
             Painel administrativo
           </span>
           <span className="flex-1" />
+          {/*
+            Quem está usando, e com que papel. Numa equipe que divide o
+            mesmo painel, é a diferença entre "isto não funciona" e
+            "isto não é meu para fazer".
+          */}
+          {papel && papel !== "aluna" ? (
+            <span className="text-[11px]" style={{ color: tema.textoSecundario }}>
+              {meuNome} · {NOME_DO_PAPEL[papel]}
+            </span>
+          ) : null}
           <span className="text-[11px]" style={{ color: tema.textoTerciario }}>
             versão {__VERSAO__}
           </span>
@@ -248,20 +293,20 @@ function PainelLogado() {
       <div className="entra mx-auto max-w-[1180px] px-6 pb-[90px] pt-9">
         <header className="mb-7 flex flex-wrap items-baseline gap-x-4 gap-y-1">
           <h1 className="m-0 text-[27px] font-semibold" style={{ color: tema.texto }}>
-            {abaAtiva === "conteudo"
-              ? "Conteúdo da mentoria"
-              : abaAtiva === "comentarios"
-                ? "Comentários das alunas"
-                : "Alunas da mentoria"}
+            {TITULO[abaAtiva]}
           </h1>
           <span className="text-[14px]" style={{ color: tema.textoSecundario }}>
-            {abaAtiva === "comentarios"
-              ? "O que elas escreveram nas aulas"
-              : carregando
-                ? "Carregando…"
-                : abaAtiva === "conteudo"
-                  ? resumoConteudo
-                  : resumoAlunas}
+            {abaAtiva === "equipe"
+              ? ehDono(papel)
+                ? "Você decide quem entra e quem sai"
+                : "Quem tem acesso a este painel"
+              : abaAtiva === "comentarios"
+                ? "O que elas escreveram nas aulas — e onde você responde"
+                : carregando
+                  ? "Carregando…"
+                  : abaAtiva === "conteudo"
+                    ? resumoConteudo
+                    : resumoAlunas}
           </span>
         </header>
 
@@ -283,24 +328,28 @@ function PainelLogado() {
           className="mb-7 flex"
           style={{ borderBottom: `1px solid ${tema.linhaSuave}` }}
         >
-          <button onClick={() => setAbaAtiva("alunas")} style={aba(abaAtiva === "alunas")}>
-            Alunas
-          </button>
-          <button onClick={() => setAbaAtiva("conteudo")} style={aba(abaAtiva === "conteudo")}>
-            Conteúdo
-          </button>
-          <button
-            onClick={() => setAbaAtiva("comentarios")}
-            style={aba(abaAtiva === "comentarios")}
-          >
-            Comentários
-          </button>
+          {ABAS.map((a) => (
+            <button key={a.chave} onClick={() => setAbaAtiva(a.chave)} style={aba(abaAtiva === a.chave)}>
+              {a.nome}
+            </button>
+          ))}
         </div>
 
         {abaAtiva === "comentarios" ? (
-          <AbaComentarios pedirConfirmacao={setPedido} avisar={aviso.mostrar} />
+          <AbaComentarios
+            meuNome={meuNome}
+            pedirConfirmacao={setPedido}
+            avisar={aviso.mostrar}
+          />
+        ) : abaAtiva === "equipe" ? (
+          <AbaEquipe meuPapel={papel} pedirConfirmacao={setPedido} avisar={aviso.mostrar} />
         ) : abaAtiva === "alunas" ? (
-          <AbaAlunas painel={painel} pedirConfirmacao={setPedido} avisar={aviso.mostrar} />
+          <AbaAlunas
+            painel={painel}
+            meuPapel={papel}
+            pedirConfirmacao={setPedido}
+            avisar={aviso.mostrar}
+          />
         ) : (
           <div>
             <div

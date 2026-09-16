@@ -25,7 +25,7 @@ export type PerfilSessao = {
   id: string;
   nome: string;
   login: string;
-  papel: "aluna" | "admin";
+  papel: "aluna" | "dono" | "admin" | "suporte";
   status: "ativa" | "bloqueada";
   primeiroAcessoEm: string | null;
   criadaEm: string;
