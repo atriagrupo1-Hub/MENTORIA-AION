@@ -74,9 +74,14 @@ sai junto.
 
 **Se pular:** nada acontece. O endereço novo simplesmente não existe.
 
-**Como saber que fechou:** `souaion.com` e `mentoria-aion.pages.dev`
-passam a resolver para a mesma faixa de endereços. Enquanto estiverem em
-faixas diferentes, o registro ainda não é o certo.
+**Como saber que fechou:** a linha do domínio em *Custom domains* passa
+de *Verifying* para **Active**, com *SSL enabled*. É esse o sinal.
+
+> **Não compare endereços de IP.** Com o CNAME proxiado, a Cloudflare
+> serve o domínio a partir das faixas dela (`104.21.x`, `172.67.x`), que
+> **não** são as mesmas do `mentoria-aion.pages.dev` (`172.66.x`) — e
+> não têm de ser. Ver faixas diferentes é o comportamento normal de um
+> registro certo, não sinal de problema.
 
 ---
 
