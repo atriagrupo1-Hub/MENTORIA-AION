@@ -90,7 +90,7 @@ export function FichaDaAluna({
   const [ficha, setFicha] = useState<Ficha | null>(null);
   const [comentarios, setComentarios] = useState<ComentarioDaAutora[] | null>(null);
   const [erro, setErro] = useState("");
-  const [gaveta, setGaveta] = useState<"" | "editar" | "liberacoes" | "prazo" | "comentarios">("");
+  const [gaveta, setGaveta] = useState<"" | "editar" | "curso" | "prazo" | "comentarios">("");
 
   const bloqueada = aluna.status === "bloqueada";
   const zap = linkWhatsApp(aluna.celular, `Olá, ${aluna.nome.split(" ")[0]}!`);
@@ -265,10 +265,10 @@ export function FichaDaAluna({
           {gaveta === "editar" ? "Fechar edição" : "Editar cadastro"}
         </button>
         <button
-          onClick={() => setGaveta(gaveta === "liberacoes" ? "" : "liberacoes")}
+          onClick={() => setGaveta(gaveta === "curso" ? "" : "curso")}
           style={botaoNeutro}
         >
-          {gaveta === "liberacoes" ? "Fechar liberações" : "Liberações"}
+          {gaveta === "curso" ? "Fechar curso" : "Curso"}
         </button>
         <button onClick={() => setGaveta(gaveta === "prazo" ? "" : "prazo")} style={botaoNeutro}>
           {gaveta === "prazo" ? "Fechar prazo" : "Prazo de acesso"}
@@ -319,7 +319,7 @@ export function FichaDaAluna({
         />
       ) : null}
 
-      {gaveta === "liberacoes" ? (
+      {gaveta === "curso" ? (
         <CronogramaDaAluna
           aluna={aluna}
           catalogo={painel.catalogo}
