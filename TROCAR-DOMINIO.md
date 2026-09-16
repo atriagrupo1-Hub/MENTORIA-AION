@@ -97,9 +97,23 @@ separados por vírgula, **sem espaço e sem barra no fim**:
 https://souaion.com,https://www.souaion.com,https://mentoria-aion.pages.dev
 ```
 
-Depois de salvar, **publique as três funções de novo** (`entrar`,
-`cadastrar-aluna`, `cadastrar-colaborador`) — um segredo novo só vale
-para a próxima publicação.
+Depois de salvar, **publique as quatro funções de novo** — um segredo
+novo só vale para a próxima publicação:
+
+| Função | Por que ela lê o segredo |
+|---|---|
+| `entrar` | a aluna digitando o código |
+| `cadastrar-aluna` | o botão "Cadastrar e liberar" |
+| `cadastrar-colaborador` | a aba Equipe |
+| `video-assinado` | o endereço assinado do vídeo |
+
+> `video-assinado` é a mais fácil de esquecer, e some sozinha: o login
+> funciona, o cadastro funciona, e o **vídeo não toca** — nem com o
+> Cloudflare Stream configurado certo. Ela não aparece nas telas, então
+> ninguém pensa nela.
+
+Você não precisa da CLI para isso. Peça ao assistente: ele republica as
+quatro a partir dos arquivos do repositório.
 
 **Se pular:** este é o pior dos três, porque ninguém entende o que
 aconteceu. A tela de entrada abre perfeitamente, a pessoa digita o
@@ -114,7 +128,14 @@ procurar defeito no código e o defeito está nesta linha.
 **Onde:** Cloudflare → Stream → cada vídeo → *Settings* → **Allowed
 Origins**.
 
-Ponha `souaion.com` (e `www.souaion.com`, se usar).
+Ponha `souaion.com` — só o nome do domínio: **sem** `https://`, **sem**
+barra, **sem** caminho. Para manter o endereço antigo funcionando
+enquanto testa, ponha os dois: `souaion.com` e `mentoria-aion.pages.dev`.
+
+> **Não encoste ainda no botão *Require Signed URLs***, que fica nessa
+> mesma tela. Ele é o item B6, e é uma armadilha: ligado antes de os
+> segredos `STREAM_CHAVE_ID` e `STREAM_CHAVE_JWK` existirem, o vídeo
+> simplesmente para de tocar. Um assunto de cada vez.
 
 > ⚠️ **Faça isto ANTES de subir os 49 vídeos que faltam.** O *Allowed
 > Origins* é configurado **por vídeo**. Com 1 vídeo no ar é um campo;
