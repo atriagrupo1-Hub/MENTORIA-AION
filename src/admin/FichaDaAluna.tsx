@@ -392,24 +392,35 @@ export function FichaDaAluna({
       ) : null}
 
       {gaveta === "prazo" ? (
-        <PrazoDaAluna
-          aluna={aluna}
-          executar={executar}
-          avisar={avisar}
-          pedirConfirmacao={pedirConfirmacao}
-        />
+        <>
+          <PrazoDaAluna
+            aluna={aluna}
+            executar={executar}
+            avisar={avisar}
+            pedirConfirmacao={pedirConfirmacao}
+          />
+          <Fechar aoFechar={() => setGaveta("")} />
+        </>
       ) : null}
 
+      {/*
+        O curso é a gaveta mais alta do painel: onze módulos, cinquenta
+        aulas. Sair por ela era rolar tudo de volta até o botão que a
+        abriu. Agora a saída está também embaixo, onde a rolagem termina.
+      */}
       {gaveta === "curso" ? (
-        <CronogramaDaAluna
-          aluna={aluna}
-          catalogo={painel.catalogo}
-          midiaAulas={painel.midiaAulas}
-          intervaloPadrao={painel.configuracao.intervaloDias}
-          executar={executar}
-          avisar={avisar}
-          pedirConfirmacao={pedirConfirmacao}
-        />
+        <>
+          <CronogramaDaAluna
+            aluna={aluna}
+            catalogo={painel.catalogo}
+            midiaAulas={painel.midiaAulas}
+            intervaloPadrao={painel.configuracao.intervaloDias}
+            executar={executar}
+            avisar={avisar}
+            pedirConfirmacao={pedirConfirmacao}
+          />
+          <Fechar aoFechar={() => setGaveta("")} />
+        </>
       ) : null}
 
       {gaveta === "comentarios" ? (
@@ -455,8 +466,27 @@ export function FichaDaAluna({
               </div>
             ))
           )}
+          <Fechar aoFechar={() => setGaveta("")} />
         </div>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * A saída de uma gaveta, embaixo.
+ *
+ * O botão que abriu a gaveta continua lá em cima e continua fechando —
+ * mas quem desistiu está com os olhos no fim do que abriu, e rolar de
+ * volta para achar a saída é exatamente o que faz alguém deixar tudo
+ * aberto e ir embora.
+ */
+function Fechar({ aoFechar }: { aoFechar: () => void }) {
+  return (
+    <div className="mt-4">
+      <button type="button" onClick={aoFechar} style={botaoNeutro}>
+        Fechar
+      </button>
     </div>
   );
 }
@@ -533,6 +563,9 @@ function Editar({
       />
       <button type="submit" disabled={salvando} style={{ ...botaoOuro, opacity: salvando ? 0.7 : 1 }}>
         {salvando ? "Salvando…" : "Salvar"}
+      </button>
+      <button type="button" onClick={aoTerminar} style={{ ...botaoNeutro, minHeight: 44 }}>
+        Cancelar
       </button>
     </form>
   );

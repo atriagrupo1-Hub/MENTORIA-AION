@@ -254,6 +254,13 @@ export function AbaConteudo({
                     >
                       Salvar nome
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditando("")}
+                      style={{ ...botaoNeutro, minHeight: 44, padding: "0 18px", fontSize: 14 }}
+                    >
+                      Cancelar
+                    </button>
                   </form>
                 ) : null}
 
@@ -569,6 +576,13 @@ export function AbaConteudo({
                             >
                               Salvar
                             </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditando("")}
+                              style={{ ...botaoNeutro, minHeight: 42, padding: "0 16px", fontSize: 13 }}
+                            >
+                              Cancelar
+                            </button>
                           </form>
                         ) : null}
                       </div>
@@ -630,6 +644,23 @@ export function AbaConteudo({
                     >
                       Adicionar aula
                     </button>
+                    {/*
+                      O cancelar só existe depois que alguém escreveu.
+                      Vazio, ele seria mais um botão em cada um dos onze
+                      módulos sem nada para desfazer.
+                    */}
+                    {novaAulaEm === modulo.id && novaAula.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNovaAula("");
+                          setNovaAulaEm("");
+                        }}
+                        style={{ ...botaoNeutro, minHeight: 42, padding: "0 16px", fontSize: 13 }}
+                      >
+                        Cancelar
+                      </button>
+                    ) : null}
                   </form>
                 </div>
               </div>
@@ -654,6 +685,15 @@ export function AbaConteudo({
               <button type="submit" style={{ ...botaoOuro, flex: "0 0 auto" }}>
                 Adicionar módulo
               </button>
+              {novoModulo.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setNovoModulo("")}
+                  style={{ ...botaoNeutro, minHeight: 44, flex: "0 0 auto" }}
+                >
+                  Cancelar
+                </button>
+              ) : null}
             </form>
           </div>
         </div>

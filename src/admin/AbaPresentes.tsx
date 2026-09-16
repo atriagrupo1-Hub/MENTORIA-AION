@@ -225,6 +225,13 @@ export function AbaPresentes({
                     >
                       Salvar nome
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditando("")}
+                      style={{ ...botaoNeutro, minHeight: 44, padding: "0 18px", fontSize: 14 }}
+                    >
+                      Cancelar
+                    </button>
                   </form>
                 ) : null}
 
@@ -522,6 +529,13 @@ export function AbaPresentes({
                             >
                               Salvar
                             </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditando("")}
+                              style={{ ...botaoNeutro, minHeight: 42, padding: "0 16px", fontSize: 13 }}
+                            >
+                              Cancelar
+                            </button>
                           </form>
                         ) : null}
                       </div>
@@ -572,6 +586,22 @@ export function AbaPresentes({
                     >
                       Adicionar presente
                     </button>
+                    {/*
+                      Só aparece depois que alguém escreveu: vazio, seria
+                      mais um botão em cada categoria sem nada a desfazer.
+                    */}
+                    {novoPresenteEm === categoria.id && novoPresente.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNovoPresente("");
+                          setNovoPresenteEm("");
+                        }}
+                        style={{ ...botaoNeutro, minHeight: 42, padding: "0 16px", fontSize: 13 }}
+                      >
+                        Cancelar
+                      </button>
+                    ) : null}
                   </form>
                 </div>
               </div>
@@ -594,6 +624,15 @@ export function AbaPresentes({
               >
                 Adicionar categoria
               </button>
+              {novaCategoria.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setNovaCategoria("")}
+                  style={{ ...botaoNeutro, flex: "0 0 auto", minHeight: 46, padding: "0 18px" }}
+                >
+                  Cancelar
+                </button>
+              ) : null}
             </form>
           )}
         </div>

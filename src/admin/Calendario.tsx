@@ -248,30 +248,50 @@ export function Calendario({
             })}
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              aoEscolher(hoje);
-              setAberto(false);
-            }}
-            className="mt-2 w-full"
-            style={{
-              minHeight: 32,
-              fontSize: 12,
-              color: tema.textoSecundario,
-              background: "transparent",
-              border: `1px solid ${tema.linhaSuave}`,
-              borderRadius: RAIO,
-              cursor: "pointer",
-            }}
-          >
-            Hoje
-          </button>
+          {/*
+            "Hoje" grava; "Fechar" sai sem gravar.
+            
+            Clicar fora e a tecla Esc já fechavam, e continuam fechando —
+            mas nada na tela dizia isso. Quem abriu o calendário por
+            engano ficava com um mês inteiro na frente da linha que
+            queria ler, sem nenhuma saída à vista.
+          */}
+          <div className="mt-2 flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                aoEscolher(hoje);
+                setAberto(false);
+              }}
+              className="flex-1"
+              style={rodape}
+            >
+              Hoje
+            </button>
+            <button
+              type="button"
+              onClick={() => setAberto(false)}
+              className="flex-1"
+              style={rodape}
+            >
+              Fechar
+            </button>
+          </div>
         </div>
       ) : null}
     </div>
   );
 }
+
+const rodape: React.CSSProperties = {
+  minHeight: 32,
+  fontSize: 12,
+  color: tema.textoSecundario,
+  background: "transparent",
+  border: `1px solid ${tema.linhaSuave}`,
+  borderRadius: RAIO,
+  cursor: "pointer",
+};
 
 const seta: React.CSSProperties = {
   display: "grid",

@@ -3,7 +3,7 @@ import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
 import { formatarDigitando, soDigitos } from "./celular";
 import { FichaDaAluna } from "./FichaDaAluna";
-import { botaoOuro, campo, etiqueta, painel as tema, rotulo } from "./estilos";
+import { botaoNeutro, botaoOuro, campo, etiqueta, painel as tema, rotulo } from "./estilos";
 import { colunaDaAluna, estadoDoPrazo, type Coluna } from "./prazo";
 import type { Papel } from "./papeis";
 import type { Painel } from "./usePainel";
@@ -236,6 +236,25 @@ export function AbaAlunas({
             style={{ ...botaoOuro, flex: "0 0 auto", opacity: salvando ? 0.7 : 1 }}
           >
             {salvando ? "Cadastrando…" : "Cadastrar"}
+          </button>
+          {/*
+            A saída fica junto do que se está preenchendo. O botão lá em
+            cima também fecha, mas quem desistiu está com os olhos aqui
+            embaixo, no último campo — e procurar a saída é o que faz
+            alguém deixar o formulário aberto pelo resto da tarde.
+          */}
+          <button
+            type="button"
+            onClick={() => {
+              setNome("");
+              setLogin("");
+              setCodigo("");
+              setCelular("");
+              setCadastroAberto(false);
+            }}
+            style={{ ...botaoNeutro, flex: "0 0 auto", minHeight: 44 }}
+          >
+            Cancelar
           </button>
         </form>
       ) : null}
