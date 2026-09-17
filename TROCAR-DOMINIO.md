@@ -97,8 +97,14 @@ separados por vírgula, **sem espaço e sem barra no fim**:
 https://souaion.com,https://www.souaion.com,https://mentoria-aion.pages.dev
 ```
 
-Depois de salvar, **publique as quatro funções de novo** — um segredo
-novo só vale para a próxima publicação:
+**Salvar já republica as quatro funções.** Um segredo novo só vale para
+a próxima publicação, e o painel do Supabase faz essa publicação sozinho
+ao gravar — medido: as quatro subiram uma versão, com o código idêntico.
+
+**Como conferir:** em *Edge Functions*, o número em *Version* de cada uma
+sobe em um. Se algum não subir, aí sim republique aquela função.
+
+São estas quatro, e é a lista que vale para quem publicar pela CLI:
 
 | Função | Por que ela lê o segredo |
 |---|---|
@@ -112,8 +118,10 @@ novo só vale para a próxima publicação:
 > Cloudflare Stream configurado certo. Ela não aparece nas telas, então
 > ninguém pensa nela.
 
-Você não precisa da CLI para isso. Peça ao assistente: ele republica as
-quatro a partir dos arquivos do repositório.
+Republicar à mão tem um risco que a CLI e o assistente precisam
+respeitar: `entrar` é a única com `verify_jwt` **desligado** — tem de
+ser, porque quem está entrando ainda não tem sessão. Publicá-la com o
+`verify_jwt` ligado derruba o login de todo mundo de uma vez.
 
 **Se pular:** este é o pior dos três, porque ninguém entende o que
 aconteceu. A tela de entrada abre perfeitamente, a pessoa digita o
