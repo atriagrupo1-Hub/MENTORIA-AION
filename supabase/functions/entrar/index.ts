@@ -95,8 +95,17 @@ Deno.serve(async (req) => {
 
   // Formato antes de tocar no banco: só dígitos, 4 a 6.
   if (!/^[0-9]{4,6}$/.test(codigo)) {
+    /*
+      A mensagem dizia "O código tem 4 números." — o contrário do que a
+      linha acima exige, e falso para qualquer conta com código de 5 ou
+      6 dígitos. Quem tem um código de 6 lia isso e o encurtava, o que
+      não podia dar certo nunca: nos registros do servidor de 17/09 há
+      três 400 seguidos, um atrás do outro, antes da pessoa desistir.
+      Uma mensagem de erro que contradiz a própria regra é pior que
+      nenhuma — ela manda a pessoa para o lado errado.
+    */
     return resposta(
-      { erro: "codigo_invalido", mensagem: "O código tem 4 números." },
+      { erro: "codigo_invalido", mensagem: "O código tem de 4 a 6 números." },
       400,
       origem,
     );

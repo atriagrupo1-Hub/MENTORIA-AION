@@ -149,6 +149,21 @@ export function Login() {
             />
           </div>
 
+          {/*
+            Mesmo caso do painel: o que entra aqui é o nome de acesso
+            que a mentoria entregou, não o e-mail. Sem este aviso, o
+            servidor só consegue responder "Não encontramos este
+            acesso" — correto e inútil para quem está do outro lado.
+          */}
+          {nome.includes("@") ? (
+            <p
+              className="mb-4 mt-[-8px] text-apoio leading-[1.5]"
+              style={{ color: cores.textoSecundario }}
+            >
+              Aqui vai o nome que a mentoria te passou, não o e-mail.
+            </p>
+          ) : null}
+
           <label
             htmlFor="aluna-codigo"
             className="mb-2 block text-apoio font-bold"

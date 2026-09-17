@@ -140,6 +140,26 @@ function EntradaAdmin({
                 placeholder="admin"
                 style={{ ...campo, height: 48, width: "100%" }}
               />
+              {/*
+                Aqui vai o LOGIN, não o e-mail. `verificar_codigo()`
+                procura `profiles.login` e nada mais — o e-mail existe
+                em `auth.users` só porque o Auth exige um por conta.
+                Quem digita o e-mail recebe "Não encontramos este
+                acesso", que é verdade e não ajuda em nada.
+
+                O placeholder já traz a resposta, mas some no instante
+                em que se digita por cima — justamente quando ela faria
+                falta. Isto é aviso, não trava: o botão continua ativo.
+              */}
+              {login.includes("@") ? (
+                <p
+                  className="mb-0 mt-2 text-[13px] leading-[1.5]"
+                  style={{ color: tema.textoSecundario }}
+                >
+                  Aqui vai o seu nome de acesso (por exemplo:{" "}
+                  <strong style={{ color: tema.texto }}>admin</strong>), não o e-mail.
+                </p>
+              ) : null}
 
               <label
                 htmlFor="admin-codigo"
