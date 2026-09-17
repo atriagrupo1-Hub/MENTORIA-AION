@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { botaoNeutro, botaoOuro, painel as tema } from "./estilos";
+import { botaoNeutroGrande, botaoOuro, painel as tema } from "./estilos";
 
 export type PedidoConfirmacao = {
   titulo: string;
@@ -122,7 +122,7 @@ export function Confirmacao({
           <button
             type="button"
             onClick={aoCancelar}
-            style={{ ...botaoNeutro, minHeight: 44, padding: "0 18px", fontSize: 14 }}
+            style={{ ...botaoNeutroGrande }}
           >
             Cancelar
           </button>

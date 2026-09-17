@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { idDoVideo } from "./AbaConteudo";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
-import { botaoNeutro, botaoOuro, botaoRemover, campo, painel as tema } from "./estilos";
+import { botaoNeutro, botaoNeutroGrande, botaoOuro, botaoRemover, campo, painel as tema } from "./estilos";
 import type { Painel } from "./usePainel";
 
 /*
@@ -107,7 +107,7 @@ export function AbaPresentes({
         </span>
         <button
           onClick={() => setExpandido((v) => !v)}
-          style={{ ...botaoNeutro, minHeight: 40, padding: "0 16px" }}
+          style={{ ...botaoNeutroGrande }}
         >
           {expandido ? "Recolher" : "Expandir"}
         </button>
@@ -124,7 +124,7 @@ export function AbaPresentes({
                   background: "rgba(255,255,255,.03)",
                   border: `1px solid ${
                     categoria.bloqueadaGeral
-                      ? "rgba(229,100,92,.28)"
+                      ? tema.perigoLinha
                       : "rgba(255,255,255,.1)"
                   }`,
                 }}
@@ -158,7 +158,7 @@ export function AbaPresentes({
                         setEditando(editando === chave ? "" : chave);
                         setTextoEdicao(categoria.titulo);
                       }}
-                      style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
+                      style={{ ...botaoNeutro }}
                     >
                       {editando === `c:${categoria.id}` ? "Cancelar edição" : "Editar nome"}
                     </button>
@@ -175,7 +175,7 @@ export function AbaPresentes({
                               : `${categoria.titulo} agora tem sua própria subaba.`),
                         )
                       }
-                      style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
+                      style={{ ...botaoNeutro }}
                     >
                       {categoria.destacada ? "Voltar para Presentes" : "Deixar sozinha"}
                     </button>
@@ -206,7 +206,7 @@ export function AbaPresentes({
                                 ),
                             })
                       }
-                      style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
+                      style={{ ...botaoNeutro }}
                     >
                       {categoria.bloqueadaGeral ? "Desbloquear" : "Bloquear para todas"}
                     </button>
@@ -262,7 +262,7 @@ export function AbaPresentes({
                     <button
                       type="button"
                       onClick={() => setEditando("")}
-                      style={{ ...botaoNeutro, minHeight: 44, padding: "0 18px", fontSize: 14 }}
+                      style={{ ...botaoNeutroGrande }}
                     >
                       Cancelar
                     </button>
@@ -431,9 +431,16 @@ export function AbaPresentes({
                               })
                             }
                             style={{
+                              /*
+                                Remontava o estilo à mão com um vermelho
+                                de alfa .28 (1,28:1 — invisível) enquanto
+                                `botaoRemover` já define .75. Duas cores
+                                para a mesma ideia, e a mais fraca na
+                                única ação que não tem volta.
+                              */
                               ...BOTAO_LINHA,
                               color: tema.perigo,
-                              border: "1px solid rgba(229,100,92,.28)",
+                              border: `1px solid ${tema.perigoLinha}`,
                             }}
                           >
                             Remover
@@ -554,7 +561,7 @@ export function AbaPresentes({
                               <button
                                 type="button"
                                 onClick={() => setConteudoDe("")}
-                                style={{ ...botaoNeutro, minHeight: 42, padding: "0 16px" }}
+                                style={{ ...botaoNeutroGrande }}
                               >
                                 Cancelar
                               </button>
@@ -601,7 +608,7 @@ export function AbaPresentes({
                             <button
                               type="button"
                               onClick={() => setEditando("")}
-                              style={{ ...botaoNeutro, minHeight: 42, padding: "0 16px", fontSize: 13 }}
+                              style={{ ...botaoNeutroGrande }}
                             >
                               Cancelar
                             </button>
@@ -651,7 +658,7 @@ export function AbaPresentes({
                     />
                     <button
                       type="submit"
-                      style={{ ...botaoNeutro, minHeight: 42, padding: "0 18px", fontSize: 13 }}
+                      style={{ ...botaoNeutroGrande }}
                     >
                       Adicionar presente
                     </button>
@@ -666,7 +673,7 @@ export function AbaPresentes({
                           setNovoPresente("");
                           setNovoPresenteEm("");
                         }}
-                        style={{ ...botaoNeutro, minHeight: 42, padding: "0 16px", fontSize: 13 }}
+                        style={{ ...botaoNeutroGrande }}
                       >
                         Cancelar
                       </button>
@@ -697,7 +704,7 @@ export function AbaPresentes({
                 <button
                   type="button"
                   onClick={() => setNovaCategoria("")}
-                  style={{ ...botaoNeutro, flex: "0 0 auto", minHeight: 46, padding: "0 18px" }}
+                  style={{ ...botaoNeutroGrande, flex: "0 0 auto" }}
                 >
                   Cancelar
                 </button>

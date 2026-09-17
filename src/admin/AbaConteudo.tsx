@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import type { Aula, Modulo } from "@/data/tipos";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
-import { botaoNeutro, botaoOuro, botaoRemover, campo, painel as tema } from "./estilos";
+import { botaoNeutro, botaoNeutroGrande, botaoOuro, botaoRemover, campo, painel as tema } from "./estilos";
 import type { Painel } from "./usePainel";
 
 /*
@@ -135,7 +135,7 @@ export function AbaConteudo({
         </span>
         <button
           onClick={() => setExpandido((v) => !v)}
-          style={{ ...botaoNeutro, minHeight: 40, padding: "0 16px" }}
+          style={{ ...botaoNeutroGrande }}
         >
           {expandido ? "Recolher" : "Expandir"}
         </button>
@@ -160,7 +160,7 @@ export function AbaConteudo({
                 style={{
                   background: "rgba(255,255,255,.03)",
                   border: `1px solid ${
-                    modulo.bloqueadoGeral ? "rgba(229,100,92,.28)" : "rgba(255,255,255,.1)"
+                    modulo.bloqueadoGeral ? tema.perigoLinha : "rgba(255,255,255,.1)"
                   }`,
                 }}
               >
@@ -191,7 +191,7 @@ export function AbaConteudo({
                         setEditando(editando === chave ? "" : chave);
                         setTextoEdicao(modulo.titulo);
                       }}
-                      style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
+                      style={{ ...botaoNeutro }}
                     >
                       {editando === `m:${modulo.id}` ? "Cancelar edição" : "Editar nome"}
                     </button>
@@ -227,7 +227,7 @@ export function AbaConteudo({
                                 ),
                             })
                       }
-                      style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
+                      style={{ ...botaoNeutro }}
                     >
                       {modulo.bloqueadoGeral ? "Desbloquear módulo" : "Bloquear para todas"}
                     </button>
@@ -244,7 +244,7 @@ export function AbaConteudo({
                               : "O título sai da tela: quem mostra agora é a arte."),
                         )
                       }
-                      style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
+                      style={{ ...botaoNeutro }}
                       title="Use quando a arte da capa já traz o nome do módulo escrito nela, para o título não aparecer duas vezes."
                     >
                       {modulo.tituloNaArte ? "Escrever título na tela" : "Título já está na arte"}
@@ -302,7 +302,7 @@ export function AbaConteudo({
                     <button
                       type="button"
                       onClick={() => setEditando("")}
-                      style={{ ...botaoNeutro, minHeight: 44, padding: "0 18px", fontSize: 14 }}
+                      style={{ ...botaoNeutroGrande }}
                     >
                       Cancelar
                     </button>
@@ -342,10 +342,16 @@ export function AbaConteudo({
                           <button
                             onClick={() => void mover(modulo, aula, -1)}
                             aria-label="Mover para cima"
-                            className="grid h-8 w-8 place-items-center rounded-full bg-transparent text-[14px]"
+                            /*
+                              As duas setas de reordenar eram o último
+                              alvo de 32px do painel, e as únicas que
+                              ficaram com a borda a .14 (1,35:1) quando
+                              a Etapa 3 subiu todas as outras a .36.
+                            */
+                            className="grid h-9 w-9 place-items-center rounded-full bg-transparent text-[14px]"
                             style={{
                               color: "rgba(255,255,255,.7)",
-                              border: "1px solid rgba(255,255,255,.14)",
+                              border: `1px solid ${tema.linha}`,
                               cursor: "pointer",
                             }}
                           >
@@ -354,10 +360,16 @@ export function AbaConteudo({
                           <button
                             onClick={() => void mover(modulo, aula, 1)}
                             aria-label="Mover para baixo"
-                            className="grid h-8 w-8 place-items-center rounded-full bg-transparent text-[14px]"
+                            /*
+                              As duas setas de reordenar eram o último
+                              alvo de 32px do painel, e as únicas que
+                              ficaram com a borda a .14 (1,35:1) quando
+                              a Etapa 3 subiu todas as outras a .36.
+                            */
+                            className="grid h-9 w-9 place-items-center rounded-full bg-transparent text-[14px]"
                             style={{
                               color: "rgba(255,255,255,.7)",
-                              border: "1px solid rgba(255,255,255,.14)",
+                              border: `1px solid ${tema.linha}`,
                               cursor: "pointer",
                             }}
                           >
@@ -504,9 +516,16 @@ export function AbaConteudo({
                               })
                             }
                             style={{
+                              /*
+                                Remontava o estilo à mão com um vermelho
+                                de alfa .28 (1,28:1 — invisível) enquanto
+                                `botaoRemover` já define .75. Duas cores
+                                para a mesma ideia, e a mais fraca na
+                                única ação que não tem volta.
+                              */
                               ...BOTAO_LINHA,
                               color: tema.perigo,
-                              border: "1px solid rgba(229,100,92,.28)",
+                              border: `1px solid ${tema.perigoLinha}`,
                             }}
                           >
                             Remover
@@ -624,7 +643,7 @@ export function AbaConteudo({
                               <button
                                 type="button"
                                 onClick={() => setConteudoDe("")}
-                                style={{ ...botaoNeutro, minHeight: 42, padding: "0 16px" }}
+                                style={{ ...botaoNeutroGrande }}
                               >
                                 Cancelar
                               </button>
@@ -669,7 +688,7 @@ export function AbaConteudo({
                             <button
                               type="button"
                               onClick={() => setEditando("")}
-                              style={{ ...botaoNeutro, minHeight: 42, padding: "0 16px", fontSize: 13 }}
+                              style={{ ...botaoNeutroGrande }}
                             >
                               Cancelar
                             </button>
@@ -730,7 +749,7 @@ export function AbaConteudo({
                     />
                     <button
                       type="submit"
-                      style={{ ...botaoNeutro, minHeight: 42, padding: "0 18px", fontSize: 13 }}
+                      style={{ ...botaoNeutroGrande }}
                     >
                       Adicionar aula
                     </button>
@@ -746,7 +765,7 @@ export function AbaConteudo({
                           setNovaAula("");
                           setNovaAulaEm("");
                         }}
-                        style={{ ...botaoNeutro, minHeight: 42, padding: "0 16px", fontSize: 13 }}
+                        style={{ ...botaoNeutroGrande }}
                       >
                         Cancelar
                       </button>
@@ -779,7 +798,7 @@ export function AbaConteudo({
                 <button
                   type="button"
                   onClick={() => setNovoModulo("")}
-                  style={{ ...botaoNeutro, minHeight: 44, flex: "0 0 auto" }}
+                  style={{ ...botaoNeutroGrande, flex: "0 0 auto" }}
                 >
                   Cancelar
                 </button>

@@ -8,6 +8,7 @@ import {
 import type { PedidoConfirmacao } from "./Confirmacao";
 import {
   botaoNeutro,
+  botaoNeutroGrande,
   botaoOuro,
   botaoRemover,
   aba,
@@ -448,7 +449,7 @@ function Resposta({
         >
           {enviando ? "Enviando…" : "Enviar resposta"}
         </button>
-        <button type="button" onClick={aoCancelar} style={botaoNeutro}>
+        <button type="button" onClick={aoCancelar} style={botaoNeutroGrande}>
           Cancelar
         </button>
       </div>

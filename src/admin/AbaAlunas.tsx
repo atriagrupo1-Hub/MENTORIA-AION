@@ -5,7 +5,7 @@ import { formatarDigitando, soDigitos } from "./celular";
 import { Calendario } from "./Calendario";
 import { convitePeloWhatsApp } from "./convite";
 import { FichaDaAluna } from "./FichaDaAluna";
-import { botaoNeutro, botaoOuro, campo, etiqueta, painel as tema, rotulo } from "./estilos";
+import { botaoNeutro, botaoNeutroGrande, botaoOuro, campo, etiqueta, painel as tema, rotulo } from "./estilos";
 import { colunaDaAluna, estadoDoPrazo, type Coluna } from "./prazo";
 import type { Papel } from "./papeis";
 import type { Painel } from "./usePainel";
@@ -407,7 +407,6 @@ export function AbaAlunas({
                     aria-pressed={escolhido}
                     style={{
                       ...botaoNeutro,
-                      minHeight: 36,
                       color: escolhido ? "#000000" : tema.texto,
                       background: escolhido ? tema.texto : "transparent",
                       border: `1px solid ${escolhido ? tema.texto : tema.linha}`,
@@ -442,7 +441,7 @@ export function AbaAlunas({
               setCelular("");
               setCadastroAberto(false);
             }}
-            style={{ ...botaoNeutro, flex: "0 0 auto", minHeight: 44 }}
+            style={{ ...botaoNeutroGrande, flex: "0 0 auto" }}
           >
             Cancelar
           </button>

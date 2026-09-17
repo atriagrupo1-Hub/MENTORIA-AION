@@ -95,6 +95,26 @@ export const botaoNeutro: React.CSSProperties = {
   cursor: "pointer",
 };
 
+/**
+ * O mesmo botão neutro, na medida de formulário.
+ *
+ * O painel tinha `botaoNeutro` em SETE alturas (32, 34, 36, 40, 42, 44,
+ * 46) e "Cancelar" em cinco medidas diferentes — cada tela remontando a
+ * mesma ideia com números escolhidos na hora. Quem administra a turma
+ * repete essas ações cinquenta vezes por dia, e um botão que muda de
+ * tamanho a cada tela obriga a reler antes de clicar.
+ *
+ * Passam a ser dois: `botaoNeutro` (36px) para o que vive dentro de uma
+ * linha de lista, e este (44px) para rodapé de formulário e para todo
+ * "Cancelar", sem exceção.
+ */
+export const botaoNeutroGrande: React.CSSProperties = {
+  ...botaoNeutro,
+  minHeight: 44,
+  padding: "0 18px",
+  fontSize: 14,
+};
+
 /** Apaga alguma coisa. Nunca preenchido: a cor é aviso, não convite. */
 export const botaoRemover: React.CSSProperties = {
   ...botaoNeutro,

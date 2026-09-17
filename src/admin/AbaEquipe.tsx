@@ -5,6 +5,7 @@ import type { PedidoConfirmacao } from "./Confirmacao";
 import { PAPEIS_QUE_SE_CRIA, NOME_DO_PAPEL, type PapelNovo, type Papel, ehDono } from "./papeis";
 import {
   botaoNeutro,
+  botaoNeutroGrande,
   botaoOuro,
   botaoRemover,
   campo,
@@ -385,7 +386,7 @@ function TrocarCodigo({
           setAberto(false);
           setCodigo("");
         }}
-        style={botaoNeutro}
+        style={botaoNeutroGrande}
       >
         Cancelar
       </button>
@@ -552,7 +553,7 @@ function Cadastro({
         >
           {salvando ? "Criando…" : "Criar acesso"}
         </button>
-        <button type="button" onClick={aoCancelar} style={botaoNeutro}>
+        <button type="button" onClick={aoCancelar} style={botaoNeutroGrande}>
           Cancelar
         </button>
       </div>

@@ -7,7 +7,7 @@ import { colunaDaAluna, estadoDoPrazo } from "./prazo";
 import { ehAdmin, type Papel } from "./papeis";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import {
-  botaoNeutro,
+  botaoNeutro, botaoNeutroGrande,
   botaoOuro,
   botaoRemover,
   campo,
@@ -598,7 +598,7 @@ function Editar({
       <button type="submit" disabled={salvando} style={{ ...botaoOuro, opacity: salvando ? 0.7 : 1 }}>
         {salvando ? "Salvando…" : "Salvar"}
       </button>
-      <button type="button" onClick={aoTerminar} style={{ ...botaoNeutro, minHeight: 44 }}>
+      <button type="button" onClick={aoTerminar} style={{ ...botaoNeutroGrande }}>
         Cancelar
       </button>
     </form>

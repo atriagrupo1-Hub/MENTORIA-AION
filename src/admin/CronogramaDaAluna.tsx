@@ -123,7 +123,13 @@ export function CronogramaDaAluna({
         }
       }
     }
-    return { atribuidas, abertas, abertasSemVideo, proxima };
+    /*
+      O total vinha escrito à mão: `${atribuidas} de 50`. Se o curso
+      ganhar a aula 51, o painel passa a dizer "51 de 50". A AbaAlunas
+      já conta isto do catálogo; esta tela passa a contar também.
+    */
+    const totalDoCurso = catalogo.modulos.reduce((n, m) => n + m.aulas.length, 0);
+    return { atribuidas, abertas, abertasSemVideo, proxima, totalDoCurso };
   }, [aluna.cronograma, catalogo.modulos, midiaAulas, agora]);
 
   const nDias = Math.max(0, Math.min(365, Math.floor(Number(intervalo) || 0)));
@@ -213,7 +219,7 @@ export function CronogramaDaAluna({
         className="mb-4 flex flex-wrap gap-x-8 gap-y-3 rounded-cartao p-4"
         style={{ background: "rgba(11,11,13,.5)", border: "1px solid rgba(255,255,255,.08)" }}
       >
-        <Dado rotulo="Aulas atribuídas" valor={`${resumo.atribuidas} de 50`} />
+        <Dado rotulo="Aulas atribuídas" valor={`${resumo.atribuidas} de ${resumo.totalDoCurso}`} />
         <Dado rotulo="Já abertas" valor={String(resumo.abertas)} />
         <Dado
           rotulo="Abertas sem vídeo"
@@ -234,13 +240,13 @@ export function CronogramaDaAluna({
       <div className="mb-3 flex flex-wrap gap-2">
         <button
           onClick={() => setMarcados(new Set(catalogo.modulos.map((m) => m.id)))}
-          style={{ ...botaoNeutro, minHeight: 34, padding: "0 12px", fontSize: 12 }}
+          style={{ ...botaoNeutro }}
         >
           Todos
         </button>
         <button
           onClick={() => setMarcados(new Set())}
-          style={{ ...botaoNeutro, minHeight: 34, padding: "0 12px", fontSize: 12 }}
+          style={{ ...botaoNeutro }}
         >
           Nenhum
         </button>
@@ -313,7 +319,7 @@ export function CronogramaDaAluna({
                 {suas.length > 0 ? (
                   <button
                     onClick={() => setExpandido(aberto ? "" : m.id)}
-                    style={{ ...botaoNeutro, minHeight: 32, padding: "0 11px", fontSize: 12 }}
+                    style={{ ...botaoNeutro }}
                   >
                     {aberto ? "Fechar" : "Ver datas"}
                   </button>
@@ -519,7 +525,7 @@ function LinhaAula({
                 );
                 avisar(falha ?? "Aula aberta agora.");
               }}
-              style={{ ...botaoNeutro, minHeight: 32, padding: "0 10px", fontSize: 11 }}
+              style={{ ...botaoNeutro }}
             >
               Abrir agora
             </button>
@@ -557,7 +563,7 @@ function LinhaAula({
             const falha = await executar(() => dados.definirAbertura(alunaId, aulaId, null));
             avisar(falha ?? `Aula dada a ${alunaNome}, aberta agora.`);
           }}
-          style={{ ...botaoNeutro, minHeight: 32, padding: "0 10px", fontSize: 11 }}
+          style={{ ...botaoNeutro }}
         >
           Dar esta aula
         </button>

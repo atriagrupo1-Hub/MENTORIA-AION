@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
-import { botaoNeutro, botaoOuro, botaoRemover, campo, painel as tema } from "./estilos";
+import { botaoNeutro, botaoNeutroGrande, botaoOuro, botaoRemover, campo, painel as tema } from "./estilos";
 import { dataCurta, diasAte, diasConcedidos, emPalavras, estadoDoPrazo } from "./prazo";
 
 /**
@@ -146,7 +146,7 @@ export function PrazoDaAluna({
                 setMeses(a.p.meses ? String(a.p.meses) : "");
                 setAnos(a.p.anos ? String(a.p.anos) : "");
               }}
-              style={{ ...botaoNeutro, minHeight: 34, padding: "0 12px", fontSize: 12 }}
+              style={{ ...botaoNeutro }}
             >
               {a.nome}
             </button>
@@ -178,10 +178,7 @@ export function PrazoDaAluna({
           disabled={vazio}
           onClick={() => aplicar("definir", prazo)}
           style={{
-            ...botaoNeutro,
-            minHeight: 42,
-            padding: "0 18px",
-            fontSize: 14,
+            ...botaoNeutroGrande,
             opacity: vazio ? 0.4 : 1,
             cursor: vazio ? "default" : "pointer",
           }}
@@ -193,10 +190,7 @@ export function PrazoDaAluna({
           disabled={vazio}
           onClick={() => aplicar("estender", prazo)}
           style={{
-            ...botaoNeutro,
-            minHeight: 42,
-            padding: "0 18px",
-            fontSize: 14,
+            ...botaoNeutroGrande,
             opacity: vazio ? 0.4 : 1,
             cursor: vazio ? "default" : "pointer",
           }}
