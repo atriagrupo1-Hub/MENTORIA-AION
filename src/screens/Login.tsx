@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { Chave, SilhuetaCadeado, SilhuetaPessoa } from "@/components/Icones";
+import { SilhuetaCadeado, SilhuetaPessoa } from "@/components/Icones";
+import { Marca } from "@/components/Marca";
 import { useEstado } from "@/data/estado";
 import { cores, tipografia } from "@/design/tokens";
 
@@ -59,30 +60,19 @@ export function Login() {
       <div className="entra w-full max-w-[460px]">
         <div className="mb-6 text-center">
           {/*
-            A chave, e não um retrato.
+            A marca, e não um desenho de chave.
 
-            Aqui ficava a foto da mentora. Enquanto ela não chegasse, o
-            que a aluna via ao abrir o aplicativo era um círculo cinza
-            escrito "foto da mentora" — um pedido de arquivo, na porta
-            de entrada de uma mentoria paga.
+            Aqui houve primeiro a foto da mentora (um círculo cinza
+            escrito "foto da mentora", enquanto o arquivo não chegava),
+            depois um círculo com uma chave desenhada. Os dois eram do
+            protótipo: seguravam o alto da tela sem dizer de quem é o
+            produto. O painel já abria com a marca AIÓN; esta porta,
+            que é a que a aluna usa, abria com um ícone genérico.
 
-            O selo de verificado saiu junto, e por consequência: ele é o
-            gesto de rede social que diz "esta pessoa é mesmo quem
-            diz ser". Sem rosto, não há quem verificar; um ✓ pendurado
-            num símbolo não afirma nada.
-
-            O círculo fica. Ele é o que segura o alto da tela, e a borda
-            clara com o brilho em volta era do protótipo.
+            É a mesma marca dos dois lados agora, do mesmo arquivo.
           */}
-          <span
-            className="mb-5 inline-grid h-[132px] w-[132px] place-items-center rounded-full"
-            style={{
-              background: cores.placeholderCapa,
-              border: "2px solid rgba(255,255,255,.75)",
-              boxShadow: "0 0 44px -12px rgba(255,255,255,.6)",
-            }}
-          >
-            <Chave altura={64} />
+          <span className="mb-5 inline-block">
+            <Marca altura={112} />
           </span>
 
           <p className="mb-2 mt-0 text-rotulo uppercase tracking-rotulo text-marfim">Mentoria</p>

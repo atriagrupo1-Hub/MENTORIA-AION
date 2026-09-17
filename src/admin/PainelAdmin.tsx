@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Aviso } from "@/components/Aviso";
+import { Marca } from "@/components/Marca";
 import { useAviso } from "@/components/useAviso";
 import { useEstado } from "@/data/estado";
 import { AbaAlunas } from "./AbaAlunas";
@@ -13,11 +14,6 @@ import { aba, botaoNeutro, botaoOuro, campo, painel as tema } from "./estilos";
 import { usePainel } from "./usePainel";
 
 const FUNDO = tema.fundo;
-
-/** A marca, em branco, uma vez por tela. */
-function Marca({ altura = 38 }: { altura?: number }) {
-  return <img src="/marca-painel.png" alt="AIÓN" height={altura} style={{ height: altura }} />;
-}
 
 /**
  * Painel administrativo.
