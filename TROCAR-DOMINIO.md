@@ -60,8 +60,38 @@ essa disputa que segura a verificação.
 > resolve isso achatando o registro (*CNAME flattening*), então ali é
 > válido.
 
-Para o `www` também: outro CNAME, *Name* `www`, mesmo *Target*,
-proxiado — e acrescente `www.souaion.com` em *Custom domains*.
+### O `www` — redireciona, não serve
+
+Não é obrigatório. O aplicativo funciona inteiro sem ele. Mas quem
+digitar `www.souaion.com` por hábito e não encontrar nada recebe a tela
+de erro do navegador, e conclui que a mentoria saiu do ar.
+
+O jeito de resolver **não** é acrescentar o `www` em *Custom domains*.
+Isso o faria **servir o aplicativo**, e aí existiriam dois endereços
+vivos para a mesma coisa — o que não é cosmético: o convite da aluna é
+montado a partir de onde a tela está aberta. Abrindo o painel pelo
+`www`, o convite sai com `https://www.souaion.com/appmentoria`, e passam
+a circular dois endereços para a mesma mentoria, cada aluna com um.
+
+O certo é o `www` **redirecionar**, em dois passos:
+
+**DNS → Records → Add record:** `CNAME`, *Name* `www`, *Target*
+`souaion.com`, **Proxied**.
+
+**Rules → Redirect Rules → Create rule:** há um modelo pronto,
+**"Redirect from WWW to Root"**. À mão:
+
+| | |
+|---|---|
+| *If* | **Hostname** *equals* `www.souaion.com` |
+| *Then* | **Static redirect** para `https://souaion.com` |
+| | **Preserve path and query string** ligado |
+| | Status **301** |
+
+> O *preserve path* é o que importa: sem ele,
+> `www.souaion.com/appmentoria` cairia na raiz — que é 404.
+
+E **não** acrescente o `www` em *Custom domains*.
 
 Por fim, volte ao Pages e clique em **Check DNS records**. O certificado
 sai junto.
@@ -94,7 +124,7 @@ Encontre `ORIGENS_PERMITIDAS` e ponha o endereço novo junto do antigo,
 separados por vírgula, **sem espaço e sem barra no fim**:
 
 ```
-https://souaion.com,https://www.souaion.com,https://mentoria-aion.pages.dev
+https://souaion.com,https://mentoria-aion.pages.dev
 ```
 
 **Salvar já republica as quatro funções.** Um segredo novo só vale para
