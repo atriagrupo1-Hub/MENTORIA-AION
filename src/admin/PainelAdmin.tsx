@@ -126,7 +126,7 @@ function EntradaAdmin({
                 className="mb-2 block text-[10px] uppercase"
                 style={{ letterSpacing: ".16em", color: tema.textoTerciario }}
               >
-                Seu nome de acesso
+                Seu nome
               </label>
               <input
                 id="admin-login"
@@ -156,7 +156,7 @@ function EntradaAdmin({
                   className="mb-0 mt-2 text-[13px] leading-[1.5]"
                   style={{ color: tema.textoSecundario }}
                 >
-                  Aqui vai o seu nome de acesso (por exemplo:{" "}
+                  Aqui vai o seu nome (por exemplo:{" "}
                   <strong style={{ color: tema.texto }}>admin</strong>), não o e-mail.
                 </p>
               ) : null}
