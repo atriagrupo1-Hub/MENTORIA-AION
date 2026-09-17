@@ -60,6 +60,41 @@
     }
   }
 
+  /*
+   * O foco de teclado, que não existia em lugar nenhum.
+   *
+   * Uma busca por `:focus-visible`, `:focus` e `ring` em todo o `src/`
+   * não devolvia nada, e quatro campos tinham `outline: none` sem
+   * substituto — inclusive o do painel (que é o objeto base de todos os
+   * campos de lá) e o campo onde se digita REMOVER para apagar dado.
+   * Quem navega por teclado percorria 147 botões sem enxergar onde
+   * estava. O contorno padrão do navegador sobre preto é um anel
+   * escuro, e escuro sobre preto não é contorno.
+   *
+   * `:focus-visible` e não `:focus`: o navegador só o aplica quando o
+   * foco veio do teclado. Clicar com o mouse não acende nada, então
+   * nada muda para quem usa o dedo ou o mouse — que é a maioria das
+   * alunas.
+   *
+   * Dois anéis, um escuro por dentro e um claro por fora: assim o foco
+   * aparece tanto sobre o preto do fundo quanto sobre o branco de um
+   * botão preenchido. `outline` e não `border` para não empurrar
+   * layout nenhum.
+   */
+  :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+    border-radius: 4px;
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.9);
+  }
+
+  /* Sem o anel escuro quando o próprio elemento é claro. */
+  .bg-white:focus-visible,
+  [data-claro="sim"]:focus-visible {
+    outline-color: #000000;
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9);
+  }
+
   a {
     color: #e2c485;
     text-decoration: none;

@@ -5,13 +5,23 @@ import * as dados from "./dados";
 import { botaoNeutro, botaoOuro, botaoRemover, campo, painel as tema } from "./estilos";
 import type { Painel } from "./usePainel";
 
+/*
+ * O botão das linhas de aula e de presente.
+ *
+ * Era 32px de altura e 1px de borda a .14 — 1,35:1 contra o fundo, um
+ * contorno que praticamente não existe. E são estes botões que carregam
+ * "Remover" e "Bloquear": sete numa linha só, repetidos cinquenta
+ * vezes. 36px é o mesmo do `botaoNeutro`, que já é a medida do resto do
+ * painel; .36 na borda é o mínimo que a norma pede para o limite de um
+ * controle.
+ */
 const BOTAO_LINHA: React.CSSProperties = {
-  minHeight: 32,
-  padding: "0 11px",
+  minHeight: 36,
+  padding: "0 12px",
   fontSize: 12,
   color: "rgba(255,255,255,.75)",
   background: "none",
-  border: "1px solid rgba(255,255,255,.14)",
+  border: "1px solid rgba(255,255,255,.36)",
   borderRadius: 99,
   cursor: "pointer",
 };
@@ -324,7 +334,7 @@ export function AbaConteudo({
                             >
                               Aula {aula.numero} — {aula.titulo}
                             </span>
-                            <span className="text-[11px] text-[rgba(255,255,255,.4)]">
+                            <span className="text-[11px] text-[rgba(255,255,255,.46)]">
                               {anexos.length ? anexos.join(" · ") : "sem conteúdo anexado"}
                             </span>
                           </span>

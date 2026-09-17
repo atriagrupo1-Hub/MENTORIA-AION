@@ -52,7 +52,13 @@ function passosDoExercicio(texto: string | null | undefined): string[] {
 }
 
 /** O preto e branco desta tela: uma linha e um cinza, e nada mais. */
-const LINHA = "rgba(255,255,255,.22)";
+/*
+ * O contorno de "✓ Concluir", de ← e → e do campo de comentário.
+ * Estava em .22 — 1,79:1, contra os 3:1 que a norma pede para o limite
+ * de um controle. Era a única coisa que dizia onde esses botões
+ * começam e terminam.
+ */
+const LINHA = "rgba(255,255,255,.4)";
 
 const SUAVE = "rgba(255,255,255,.62)";
 
@@ -769,7 +775,7 @@ export function TelaAula() {
               onChange={(e) => setRascunho(e.target.value)}
               placeholder="Adicione seu comentário aqui"
               aria-label="Adicionar comentário"
-              className="min-h-[46px] w-full flex-1 rounded-botao px-4 text-realce text-white outline-none"
+              className="min-h-[46px] w-full flex-1 rounded-botao px-4 text-realce text-white"
               style={{ background: "transparent", border: `1px solid ${LINHA}` }}
             />
             {rascunho.trim() ? (

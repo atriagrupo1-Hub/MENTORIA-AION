@@ -18,16 +18,35 @@ export const painel = {
   /** Cartões e campos: quase preto, o suficiente para separar do fundo. */
   superficie: "#0b0b0d",
   superficieAlta: "#141417",
-  /** Divisórias. A `linha` desenha, a `linhaSuave` apenas separa. */
-  linha: "rgba(255,255,255,.14)",
+  /*
+   * Divisórias. A `linha` desenha, a `linhaSuave` apenas separa.
+   *
+   * `linha` é o contorno de TODO campo e de TODO botão do painel, e
+   * estava em .14 — 1,35:1 contra o fundo. A norma pede 3:1 para o
+   * limite de um controle, e com razão: uma borda que não se vê não
+   * diz onde o botão começa. .36 dá 3,1:1. A `linhaSuave` continua
+   * baixa de propósito: ela não delimita controle, só separa blocos,
+   * e para isso o olho não precisa de contraste.
+   */
+  linha: "rgba(255,255,255,.36)",
   linhaSuave: "rgba(255,255,255,.07)",
   texto: "#ffffff",
   textoSecundario: "rgba(255,255,255,.58)",
-  textoTerciario: "rgba(255,255,255,.36)",
+  /*
+   * Era .36 — 3,14:1, abaixo do mínimo para texto normal, e é a cor de
+   * TODOS os rótulos do painel (o objeto `rotulo`, a `etiqueta` neutra,
+   * a ficha da aluna, a equipe). .46 dá 4,56:1 e passa.
+   */
+  textoTerciario: "rgba(255,255,255,.46)",
   /** O único acento. Atenção, risco, dado que some. */
   perigo: "#e5645c",
   perigoFundo: "rgba(229,100,92,.1)",
-  perigoLinha: "rgba(229,100,92,.4)",
+  /*
+   * A borda do `botaoRemover` — a única marca visual de que uma ação
+   * apaga dado — dava 1,83:1. Praticamente invisível: o que separava
+   * "Remover" de "Editar" era só a cor da letra, a 12px.
+   */
+  perigoLinha: "rgba(229,100,92,.75)",
 } as const;
 
 export const RAIO = 8;
@@ -40,7 +59,15 @@ export const campo: React.CSSProperties = {
   background: painel.superficie,
   border: `1px solid ${painel.linha}`,
   borderRadius: RAIO,
-  outline: "none",
+  /*
+    `outline: none` saiu daqui.
+
+    Este objeto é o campo base de todo o painel — espalhado por mais de
+    vinte lugares, incluindo o campo onde se digita REMOVER para apagar
+    dado. Com ele, quem navegava por teclado não tinha como saber em que
+    campo o cursor estava. O contorno agora vem da regra `:focus-visible`
+    em `index.css`, que só acende quando o foco veio do teclado.
+  */
 };
 
 /** Ação principal. Branco sólido — só uma por bloco. */

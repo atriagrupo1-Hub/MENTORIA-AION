@@ -17,7 +17,12 @@ import { NavLink } from "react-router-dom";
  */
 
 const BRANCO = "#ffffff";
-const APAGADO = "rgba(255,255,255,.42)";
+/*
+ * A cor das abas que não estão ativas — que é a navegação inteira do
+ * celular. Estava em .42: 3,94:1 sobre o fundo da barra, abaixo do
+ * mínimo, num texto de 11px. .55 dá 5,3:1.
+ */
+const APAGADO = "rgba(255,255,255,.55)";
 
 const ABAS = [
   { chave: "inicio", rotulo: "Início", para: "/inicio" },

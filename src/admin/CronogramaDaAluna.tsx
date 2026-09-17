@@ -266,19 +266,29 @@ export function CronogramaDaAluna({
               <div className="flex flex-wrap items-center gap-3 p-3">
                 <button
                   onClick={() => alternarModulo(m.id)}
-                  className="grid h-[20px] w-[20px] flex-none place-items-center rounded-[5px]"
-                  style={{
-                    background: marcado ? tema.texto : "transparent",
-                    border: `1px solid ${marcado ? tema.texto : tema.linha}`,
-                    cursor: "pointer",
-                  }}
+                  /*
+                    Era 20×20 — o menor alvo do painel, e é ele que
+                    decide se a aluna recebe um módulo inteiro. A caixa
+                    desenhada continua com 20px; o que cresceu foi a
+                    área que o dedo acerta.
+                  */
+                  className="grid h-11 w-11 flex-none place-items-center"
+                  style={{ background: "transparent", border: "none", cursor: "pointer" }}
                   aria-label={marcado ? `Tirar o Módulo ${m.numero}` : `Dar o Módulo ${m.numero}`}
                 >
-                  {marcado ? (
-                    <span className="text-[13px] font-bold" style={{ color: "#000000" }}>
-                      ✓
-                    </span>
-                  ) : null}
+                  <span
+                    className="grid h-[20px] w-[20px] place-items-center rounded-[5px]"
+                    style={{
+                      background: marcado ? tema.texto : "transparent",
+                      border: `1px solid ${marcado ? tema.texto : tema.linha}`,
+                    }}
+                  >
+                    {marcado ? (
+                      <span className="text-[13px] font-bold" style={{ color: "#000000" }}>
+                        ✓
+                      </span>
+                    ) : null}
+                  </span>
                 </button>
 
                 <span className="flex min-w-0 flex-[1_1_200px] flex-col gap-[2px]">
@@ -474,7 +484,7 @@ function LinhaAula({
     >
       <span
         className="min-w-0 flex-[1_1_180px] truncate text-[13px]"
-        style={{ color: atribuida ? "#fff" : "rgba(255,255,255,.35)" }}
+        style={{ color: atribuida ? "#fff" : "rgba(255,255,255,.46)" }}
       >
         {titulo}
       </span>

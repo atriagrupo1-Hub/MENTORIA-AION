@@ -19,7 +19,7 @@ import type { ComentarioPublico } from "@/data/api";
  */
 
 /** O preto e branco desta tela: uma linha e um cinza, e nada mais. */
-const LINHA = "rgba(255,255,255,.22)";
+const LINHA = "rgba(255,255,255,.4)";
 const SUAVE = "rgba(255,255,255,.62)";
 
 export type Conversas = { pai: ComentarioPublico; respostas: ComentarioPublico[] }[];
@@ -126,7 +126,7 @@ export function Conversa({
                 onChange={(e) => setRascunho(e.target.value)}
                 placeholder={`Responder a ${pai.minha ? "você" : (pai.autoraNome ?? "Anônimo")}`}
                 aria-label="Escrever resposta"
-                className="min-h-[46px] w-full flex-1 rounded-botao px-4 text-corpo text-white outline-none"
+                className="min-h-[46px] w-full flex-1 rounded-botao px-4 text-corpo text-white"
                 style={{ background: "transparent", border: `1px solid ${LINHA}` }}
               />
               {rascunho.trim() ? (

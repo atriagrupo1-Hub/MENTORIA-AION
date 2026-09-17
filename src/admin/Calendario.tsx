@@ -170,7 +170,7 @@ export function Calendario({
           */
           className="absolute right-0 top-full z-50 mt-1 p-3"
           style={{
-            width: 252,
+            width: 266,
             background: tema.superficieAlta,
             border: `1px solid ${tema.linha}`,
             borderRadius: RAIO + 2,
@@ -230,7 +230,7 @@ export function Calendario({
                   onClick={() => escolher(numero)}
                   aria-label={`${numero} de ${MESES[mes.getMonth()]}`}
                   aria-current={escolhido ? "date" : undefined}
-                  className="grid h-[30px] place-items-center text-[12px]"
+                  className="grid h-[34px] place-items-center text-[13px]"
                   style={{
                     color: escolhido ? "#000" : tema.texto,
                     background: escolhido ? tema.texto : "transparent",
@@ -296,8 +296,8 @@ const rodape: React.CSSProperties = {
 const seta: React.CSSProperties = {
   display: "grid",
   placeItems: "center",
-  width: 30,
-  height: 30,
+  width: 34,
+  height: 34,
   fontSize: 16,
   color: tema.texto,
   background: "transparent",
