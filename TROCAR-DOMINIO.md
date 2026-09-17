@@ -184,17 +184,48 @@ o vídeo não roda. Sem erro que explique.
 
 ---
 
-## Como conferir, em três minutos
+## Como conferir, em cinco minutos
 
-1. `souaion.com` → tem de devolver **404**.
-2. `souaion.com/appmentoria` → tela de entrada.
-3. Entre com uma conta de aluna. Se travar no código, **é o passo 2**.
-4. Abra uma aula com vídeo. Se não rodar, **é o passo 3**.
-5. `souaion.com/admappmentoria` → painel.
-6. Abra a ficha de uma aluna e clique em **Enviar o acesso**: a mensagem
-   tem de dizer `Entre por aqui: https://souaion.com/appmentoria`. Se
-   disser outra coisa, você está olhando uma versão antiga em cache —
-   confira o número da versão no canto do painel.
+O teste é **cadastrar uma aluna**. Não é só a falta de uma conta pronta
+para entrar — é que o cadastro exercita, numa tacada, as três coisas que
+foram mexidas: a Edge Function que depende do segredo, o endereço que o
+convite monta, e o vídeo.
+
+1. **`souaion.com`** → tem de devolver **404**. Página preta, "Não
+   encontrado". Se abrir o aplicativo, o `_redirects` não subiu.
+
+2. **`souaion.com/admappmentoria`** → o painel. Confira o número da
+   versão no canto superior direito: tem de ser o do último envio. Se
+   for mais antigo, o Cloudflare ainda está publicando — espere e
+   recarregue antes de seguir.
+
+3. **Aba Alunas → Cadastrar aluna.** Preencha com um nome qualquer e
+   clique em **Cadastrar e liberar**.
+   - Deu erro ou não aconteceu nada? **É o passo 2** — o
+     `ORIGENS_PERMITIDAS`. Esta tela chama a `cadastrar-aluna`, que só
+     responde a origens conhecidas.
+
+4. **No cartão que aparece**, leia a linha *Entre por aqui*. Tem de
+   dizer `https://souaion.com/appmentoria`.
+   - Disse outra coisa? Você está numa versão antiga em cache, ou abriu
+     o painel pelo endereço velho — o convite sai sempre com o endereço
+     de onde **você** está.
+
+5. **Saia do painel e entre como essa aluna**, em
+   `souaion.com/appmentoria`, com o nome de acesso e o código que você
+   acabou de criar.
+   - Travou no código, sem mensagem nenhuma? **É o passo 2** de novo —
+     desta vez a função `entrar`.
+
+6. **Abra a Aula 1 do Módulo 0** — é a única com vídeo hoje.
+   - Capa aparece, play responde, vídeo não roda? **É o passo 3** — o
+     *Allowed Origins* do Stream.
+
+7. **Volte ao painel e remova a aluna de teste** pela ficha dela.
+
+> Não há conta de aluna ativa na base — a `teste` está bloqueada, e o
+> banco recusa o login dela antes de conferir o código. É por isso que o
+> teste começa cadastrando, e não entrando.
 
 ---
 
