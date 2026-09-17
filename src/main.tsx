@@ -3,29 +3,22 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { App } from "./App";
 import { PainelAdmin } from "./admin/PainelAdmin";
-import { CAMINHO_APP, CAMINHO_PAINEL } from "./enderecos";
+import { portaAtual } from "./enderecos";
 import { ProvedorEstado } from "./data/estado";
 import "./index.css";
 
 /*
- * Duas portas no mesmo domínio, e qual delas foi aberta decide tudo.
+ * Qual porta foi aberta decide o que esta tela é.
  *
- *   souaion.com/appmentoria      → a área da aluna, com suas rotas
- *   souaion.com/admappmentoria   → o painel, que não tem rotas
- *
- * São caminhos irmãos, e um roteador só aceita um `basename`. Então o
- * `basename` é escolhido aqui, uma vez, pelo caminho de entrada — e
- * dali para dentro nada mais precisa saber onde o aplicativo mora. As
- * vinte e quatro navegações da área da aluna continuam dizendo
- * `/inicio` e `/modulo/3`, como sempre disseram.
+ * São quatro portas e todas funcionam — ver `enderecos.ts`. O
+ * `basename` é escolhido aqui, uma vez, e dali para dentro nada mais
+ * precisa saber onde o aplicativo mora: as vinte e quatro navegações da
+ * área da aluna continuam dizendo `/inicio` e `/modulo/3`, como sempre.
  *
  * O painel não entra no roteador da aluna de propósito. Ele não tem
- * rota nenhuma — é uma tela só, com abas — e deixá-lo fora significa
- * que o endereço dele não é adivinhável a partir do endereço dela.
+ * rota nenhuma — é uma tela só, com abas.
  */
-const noPainel =
-  window.location.pathname === CAMINHO_PAINEL ||
-  window.location.pathname.startsWith(CAMINHO_PAINEL + "/");
+const porta = portaAtual();
 
 /**
  * Service worker: guarda só os arquivos do programa, e por isso é
@@ -42,8 +35,8 @@ if ("serviceWorker" in navigator) {
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <BrowserRouter basename={noPainel ? CAMINHO_PAINEL : CAMINHO_APP}>
-      <ProvedorEstado>{noPainel ? <PainelAdmin /> : <App />}</ProvedorEstado>
+    <BrowserRouter basename={porta.base}>
+      <ProvedorEstado>{porta.ehPainel ? <PainelAdmin /> : <App />}</ProvedorEstado>
     </BrowserRouter>
   </StrictMode>,
 );
