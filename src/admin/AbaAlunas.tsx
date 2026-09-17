@@ -55,7 +55,7 @@ export function AbaAlunas({
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
-  const { catalogo, alunas, configuracao, executar, recarregar } = painel;
+  const { catalogo, alunas, carregando, configuracao, executar, recarregar } = painel;
   const intervaloPadrao = configuracao.intervaloDias;
   const [nome, setNome] = useState("");
   const [login, setLogin] = useState("");
@@ -506,7 +506,17 @@ export function AbaAlunas({
         </div>
       ) : null}
 
-      {alunas.length === 0 ? (
+      {/*
+        Enquanto o banco responde, `alunas` é uma lista vazia — e a tela
+        dizia "Nenhuma aluna cadastrada ainda", que é a frase mais
+        alarmante possível para quem administra uma turma, a cada
+        carregamento. O dado sempre existiu; esta tela é que não o lia.
+      */}
+      {carregando ? (
+        <p className="mb-6 mt-0 text-[14px]" style={{ color: tema.textoSecundario }}>
+          Carregando as alunas…
+        </p>
+      ) : alunas.length === 0 ? (
         <p
           className="mb-6 mt-0 rounded-[14px] p-[22px] text-center text-[15px]"
           style={{

@@ -97,6 +97,16 @@ export function TelaAula() {
    * não existia ainda.
    */
   const [buscandoVideo, setBuscandoVideo] = useState(true);
+  /*
+   * Falhar não é a mesma coisa que não existir.
+   *
+   * A busca engolia o erro e deixava `video` nulo — exatamente o estado
+   * de uma aula que ainda não tem vídeo cadastrado. As duas coisas
+   * desenhavam "Vídeo em breve", e a aluna sem internet concluía que a
+   * aula não estava pronta e ia embora esperar.
+   */
+  const [falhouVideo, setFalhouVideo] = useState(false);
+  const [tentativaVideo, setTentativaVideo] = useState(0);
   const [buscandoComentarios, setBuscandoComentarios] = useState(true);
   const [video, setVideo] = useState<api.Video | null>(null);
   const [segundos, setSegundos] = useState(0);
@@ -147,6 +157,7 @@ export function TelaAula() {
     let valeAinda = true;
     setComentarios([]);
     setVideo(null);
+    setFalhouVideo(false);
     setBuscandoVideo(true);
     setBuscandoComentarios(true);
     void api
@@ -157,7 +168,7 @@ export function TelaAula() {
     void api
       .videoDaAula(aulaId)
       .then((v) => valeAinda && setVideo(v))
-      .catch(() => undefined)
+      .catch(() => valeAinda && setFalhouVideo(true))
       // `finally` e não `then`: falhando a busca, continua sendo
       // espera terminada — o que a tela precisa saber é que já não há
       // o que esperar, não se deu certo.
@@ -165,7 +176,7 @@ export function TelaAula() {
     return () => {
       valeAinda = false;
     };
-  }, [aulaId]);
+  }, [aulaId, tentativaVideo]);
 
   /*
    * Um endereço novo, quando o de agora deixou de servir.
@@ -441,8 +452,32 @@ export function TelaAula() {
                 opacidade={tocando ? 0.55 : 1}
               />
 
-              {/* Aula ainda sem vídeo cadastrado: nada de botão que não toca. */}
-              {tocando || buscandoVideo ? null : (
+              {/*
+                Dois estados, e não um: a aula sem vídeo cadastrado
+                espera, e não há o que fazer; a busca que falhou tem
+                conserto, e a aluna precisa do botão para tentar.
+              */}
+              {tocando || buscandoVideo ? null : falhouVideo ? (
+                <span className="absolute left-1/2 top-1/2 z-[5] flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-3 px-4">
+                  <span
+                    className="rounded-[5px] px-4 py-2 text-center text-apoio"
+                    style={{
+                      color: "rgba(255,255,255,.92)",
+                      background: "rgba(0,0,0,.6)",
+                      border: "1px solid rgba(255,255,255,.4)",
+                    }}
+                  >
+                    Não conseguimos carregar o vídeo.
+                  </span>
+                  <button
+                    onClick={() => setTentativaVideo((n) => n + 1)}
+                    className="min-h-[44px] rounded-pilula border-none bg-white px-6 text-corpo font-bold text-black hover:opacity-[.86]"
+                    style={{ cursor: "pointer" }}
+                  >
+                    Tentar de novo
+                  </button>
+                </span>
+              ) : (
                 <span
                   className="absolute left-1/2 top-1/2 z-[5] -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-[5px] px-4 py-2 text-apoio"
                   style={{
@@ -755,7 +790,13 @@ export function TelaAula() {
             {comentarios.length > 0 ? (
               <button
                 onClick={() => setComentariosAbertos((v) => !v)}
-                className="border-none bg-transparent text-apoio underline underline-offset-4 hover:opacity-80"
+                aria-expanded={comentariosAbertos}
+                /*
+                  Tinha 13px de letra e nenhuma altura: ~20px de alvo,
+                  numa tela em que todo o resto tem 44. E é por ele que
+                  se chega aos comentários.
+                */
+                className="-mr-3 flex min-h-[44px] flex-none items-center border-none bg-transparent px-3 text-apoio underline underline-offset-4 hover:opacity-80"
                 style={{ color: SUAVE, cursor: "pointer" }}
               >
                 {comentariosAbertos

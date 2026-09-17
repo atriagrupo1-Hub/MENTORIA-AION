@@ -12,6 +12,7 @@ export function PaginaPresente() {
   const navegar = useNavigate();
   const [tocando, setTocando] = useState(false);
   const [video, setVideo] = useState<api.Video | null>(null);
+  const [buscandoVideo, setBuscandoVideo] = useState(true);
 
   const todos = catalogo.categorias.flatMap((c) =>
     c.presentes.map((p) => ({ presente: p, categoriaId: c.id })),
@@ -26,10 +27,12 @@ export function PaginaPresente() {
     if (!presenteId) return;
     let valeAinda = true;
     setVideo(null);
+    setBuscandoVideo(true);
     void api
       .videoDoPresente(presenteId)
       .then((v) => valeAinda && setVideo(v))
-      .catch(() => undefined);
+      .catch(() => undefined)
+      .finally(() => valeAinda && setBuscandoVideo(false));
     return () => {
       valeAinda = false;
     };
@@ -89,6 +92,14 @@ export function PaginaPresente() {
               background: "linear-gradient(180deg, rgba(5,8,16,.35), rgba(5,8,16,.8))",
             }}
           />
+          {/*
+            O botão só existe quando há vídeo para tocar.
+            
+            Antes ele aparecia sempre: sem vídeo, clicar ligava
+            `tocando`, a condição abaixo continuava falsa, e a tela
+            voltava a desenhar o mesmo botão. A pessoa clicava, clicava,
+            e nada acontecia — sem erro, sem mensagem, sem pista.
+          */}
           {tocando && video ? (
             <iframe
               src={api.enderecoDoVideo(video)}
@@ -98,7 +109,11 @@ export function PaginaPresente() {
               referrerPolicy="strict-origin-when-cross-origin"
               className="absolute inset-0 z-[4] h-full w-full border-0"
             />
-          ) : (
+          ) : buscandoVideo ? (
+            <div className="absolute inset-0 grid place-items-center">
+              <span className="text-corpo text-[rgba(243,236,225,.72)]">Carregando…</span>
+            </div>
+          ) : video ? (
             <div className="absolute inset-0 grid place-items-center">
               <button
                 onClick={() => setTocando(true)}
@@ -109,6 +124,19 @@ export function PaginaPresente() {
                 <Play tamanho={14} />
                 Assistir
               </button>
+            </div>
+          ) : (
+            <div className="absolute inset-0 grid place-items-center px-6">
+              <span
+                className="rounded-[5px] px-4 py-2 text-center text-apoio"
+                style={{
+                  color: "rgba(255,255,255,.85)",
+                  background: "rgba(0,0,0,.5)",
+                  border: "1px solid rgba(255,255,255,.4)",
+                }}
+              >
+                Vídeo em breve
+              </span>
             </div>
           )}
         </div>

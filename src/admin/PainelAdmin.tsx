@@ -324,8 +324,15 @@ function PainelLogado() {
           </p>
         ) : null}
 
+        {/*
+          `flex-wrap` não é enfeite: era a única fila do painel sem ele.
+          As quatro abas somam ~350px e a largura útil do celular é 342px
+          — e `index.css` tem `overflow-x: clip`, então o que passa é
+          CORTADO, não rolável. A aba Equipe simplesmente não existia em
+          tela pequena.
+        */}
         <div
-          className="mb-7 flex"
+          className="mb-7 flex flex-wrap"
           style={{ borderBottom: `1px solid ${tema.linhaSuave}` }}
         >
           {ABAS.map((a) => (

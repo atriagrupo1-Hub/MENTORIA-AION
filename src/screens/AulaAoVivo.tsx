@@ -1,7 +1,5 @@
-import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Capa, capaAoVivo, capaModulo } from "@/components/Capa";
-import { Play } from "@/components/Icones";
 import { useEstado } from "@/data/estado";
 import { cores } from "@/design/tokens";
 
@@ -10,8 +8,6 @@ export function AulaAoVivo() {
   const numero = Number(mi);
   const { catalogo } = useEstado();
   const navegar = useNavigate();
-  const [tocando, setTocando] = useState(false);
-  const [pct, setPct] = useState(0);
 
   const modulo = catalogo.modulos.find((m) => m.numero === numero);
   if (!modulo) return <main className="p-8">Módulo não encontrado.</main>;
@@ -71,46 +67,51 @@ export function AulaAoVivo() {
         <Capa
           caminhos={[capaAoVivo(numero), capaModulo(numero)]}
           alt={`Capa da aula ao vivo do Módulo ${numero}`}
-          opacidade={tocando ? 0.55 : 1}
+          opacidade={1}
         />
         <span
           className="absolute inset-0"
           style={{ background: "linear-gradient(180deg, rgba(5,8,16,.35), rgba(5,8,16,.85))" }}
         />
-        <div className="absolute inset-0 grid place-items-center">
-          <button
-            onClick={() => {
-              setTocando((v) => !v);
-              setPct((v) => (v === 0 ? 4 : v));
-            }}
-            aria-label={tocando ? "Pausar transmissão" : "Assistir aula ao vivo"}
-            className="flex min-h-[56px] items-center justify-center gap-3 rounded-pilula border-none bg-white px-7 py-4 text-realce font-bold text-black hover:opacity-[.86]"
-            style={{ cursor: "pointer" }}
-          >
-            <Play tamanho={14} />
-            {tocando ? "Pausar transmissão" : "Assistir aula ao vivo"}
-          </button>
-        </div>
-        <div
-          className="absolute inset-x-0 bottom-0 px-6 py-5"
-          style={{ background: "linear-gradient(180deg, transparent, rgba(5,8,16,.92))" }}
-        >
-          <div
-            className="h-[6px] overflow-hidden rounded-pilula"
-            style={{ background: "rgba(243,236,225,.18)" }}
-          >
-            <div
-              className="h-full rounded-pilula"
+        {/*
+          Aqui havia um botão "Assistir aula ao vivo" e uma barra de
+          progresso. Nenhum dos dois tocava nada: não existe `<video>`,
+          `<iframe>` nem chamada de API nesta tela. O botão só alternava
+          o próprio rótulo e empurrava a barra de 0 para 4%.
+
+          A aluna clicava, lia "Reproduzindo", via a barra andar um
+          dedo e parar — e concluía que o vídeo dela estava quebrado.
+          Mentir sobre o estado é pior que não ter o recurso.
+
+          Para ligar isto de verdade falta uma coisa do lado dos dados:
+          `AulaAoVivo` (em `data/tipos.ts`) traz `moduloId`,
+          `quandoTexto` e `liberada`, mas NÃO traz o identificador da
+          aula ao vivo — e `api.videoDaAoVivo(id)`, que já existe,
+          precisa dele. Enquanto o catálogo não carregar esse id, esta
+          tela não tem como pedir o vídeo.
+
+          Até lá ela diz o que de fato sabe: quando é o encontro.
+        */}
+        <div className="absolute inset-0 grid place-items-center px-6">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <span
+              className="rounded-[5px] px-4 py-2 text-apoio"
               style={{
-                background: "#ffffff",
-                width: `${pct}%`,
-                transition: "width .4s linear",
+                color: "rgba(255,255,255,.88)",
+                background: "rgba(0,0,0,.5)",
+                border: "1px solid rgba(255,255,255,.4)",
               }}
-            />
-          </div>
-          <div className="mt-3 flex justify-between text-corpo text-[#cbbfae]">
-            <span>{tocando ? "Reproduzindo" : pct > 0 ? "Pausado" : "Pronto para assistir"}</span>
-            <span>{aoVivo?.quandoTexto ?? "Encontro de 1 hora"}</span>
+            >
+              A transmissão abre aqui
+            </span>
+            {/*
+              O dia e a hora são a única coisa que a aluna veio buscar
+              nesta tela. Estavam a 15px numa legenda no rodapé do
+              quadro, competindo com a palavra "Pausado".
+            */}
+            <span className="font-titulo text-titulo text-marfim">
+              {aoVivo?.quandoTexto ?? "Data e horário a confirmar"}
+            </span>
           </div>
         </div>
       </div>
