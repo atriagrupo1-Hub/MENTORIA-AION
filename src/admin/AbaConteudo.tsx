@@ -63,6 +63,19 @@ export function AbaConteudo({
 
   const totalAulas = catalogo.modulos.reduce((s, m) => s + m.aulas.length, 0);
 
+  /*
+   * "de 12 alunas" em vez de "das alunas".
+   *
+   * A confirmação de um bloqueio tem de dizer o tamanho do estrago em
+   * número: "some da tela de 12 alunas" faz pensar; "some da tela das
+   * alunas" é paisagem.
+   */
+  const quantasAlunas = () => {
+    const n = alunas.filter((a) => a.status === "ativa").length;
+    if (n === 0) return "todas as alunas";
+    return n === 1 ? "1 aluna ativa" : `${n} alunas ativas`;
+  };
+
   async function adicionarModulo(e: FormEvent) {
     e.preventDefault();
     if (!novoModulo.trim()) {
@@ -172,15 +185,37 @@ export function AbaConteudo({
                     >
                       {editando === `m:${modulo.id}` ? "Cancelar edição" : "Editar nome"}
                     </button>
+                    {/*
+                      Bloquear tira o módulo inteiro do ar para a turma
+                      toda, e ficava a um clique, sem confirmação, com o
+                      mesmo desenho de "Editar nome". Agora pergunta — e
+                      o aviso diz o que aconteceu, não "estado
+                      atualizado".
+                    */}
                     <button
-                      onClick={async () =>
-                        avisar(
-                          (await executar(() =>
-                            dados.atualizarModulo(modulo.id, {
-                              bloqueado_geral: !modulo.bloqueadoGeral,
-                            }),
-                          )) ?? "Estado do módulo atualizado.",
-                        )
+                      onClick={() =>
+                        modulo.bloqueadoGeral
+                          ? void (async () =>
+                              avisar(
+                                (await executar(() =>
+                                  dados.atualizarModulo(modulo.id, { bloqueado_geral: false }),
+                                )) ?? `Módulo ${modulo.numero} de volta ao ar para as alunas.`,
+                              ))()
+                          : pedirConfirmacao({
+                              tom: "normal",
+                              rotuloConfirmar: "Bloquear para todas",
+                              titulo: `Bloquear o Módulo ${modulo.numero}?`,
+                              mensagem:
+                                `As ${modulo.aulas.length} aulas dele somem da tela de ` +
+                                `${quantasAlunas()}. O progresso e os comentários ficam ` +
+                                "guardados, e desbloquear devolve tudo.",
+                              executar: async () =>
+                                avisar(
+                                  (await executar(() =>
+                                    dados.atualizarModulo(modulo.id, { bloqueado_geral: true }),
+                                  )) ?? `Módulo ${modulo.numero} bloqueado para as alunas.`,
+                                ),
+                            })
                       }
                       style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
                     >
@@ -365,6 +400,8 @@ export function AbaConteudo({
                               }
                               const jaTem = alunas.length - semAula.length;
                               pedirConfirmacao({
+                                tom: "normal",
+                                rotuloConfirmar: "Liberar para todas",
                                 titulo: `Liberar a Aula ${aula.numero} para todas?`,
                                 mensagem:
                                   `"${aula.titulo}" será liberada, aberta desde já, para ` +
@@ -401,17 +438,46 @@ export function AbaConteudo({
                           >
                             {editando === `a:${aula.id}` ? "Cancelar" : "Editar"}
                           </button>
+                          {/*
+                            Este botão tira a aula do ar para TODAS as
+                            alunas e ficava 8px ao lado de "Editar", com
+                            o mesmo objeto de estilo, byte a byte, e sem
+                            confirmação. Um deslize de dedo entre os dois
+                            derrubava uma aula para a turma inteira.
+                          */}
                           <button
-                            onClick={async () =>
-                              avisar(
-                                (await executar(() =>
-                                  dados.atualizarAula(aula.id, {
-                                    bloqueado_geral: !aula.bloqueadoGeral,
-                                  }),
-                                )) ?? "Estado da aula atualizado.",
-                              )
+                            onClick={() =>
+                              aula.bloqueadoGeral
+                                ? void (async () =>
+                                    avisar(
+                                      (await executar(() =>
+                                        dados.atualizarAula(aula.id, { bloqueado_geral: false }),
+                                      )) ?? `Aula ${aula.numero} de volta ao ar.`,
+                                    ))()
+                                : pedirConfirmacao({
+                                    tom: "normal",
+                                    rotuloConfirmar: "Bloquear",
+                                    titulo: `Bloquear a Aula ${aula.numero}?`,
+                                    mensagem:
+                                      `"${aula.titulo}" some da tela de ${quantasAlunas()}. ` +
+                                      "O progresso e os comentários ficam guardados, e " +
+                                      "desbloquear devolve tudo.",
+                                    executar: async () =>
+                                      avisar(
+                                        (await executar(() =>
+                                          dados.atualizarAula(aula.id, { bloqueado_geral: true }),
+                                        )) ?? `Aula ${aula.numero} bloqueada para as alunas.`,
+                                      ),
+                                  })
                             }
-                            style={BOTAO_LINHA}
+                            style={{
+                              ...BOTAO_LINHA,
+                              // Deixa de ser gêmeo do "Editar" ao lado.
+                              color: aula.bloqueadoGeral ? tema.texto : tema.perigo,
+                              border: `1px solid ${
+                                aula.bloqueadoGeral ? tema.linha : tema.perigoLinha
+                              }`,
+                            }}
                           >
                             {aula.bloqueadoGeral ? "Desbloquear" : "Bloquear"}
                           </button>
@@ -442,22 +508,36 @@ export function AbaConteudo({
                             onSubmit={async (e) => {
                               e.preventDefault();
                               const ref = idDoVideo(video);
-                              const falha =
-                                (await executar(() =>
-                                  dados.definirMidiaDaAula(
-                                    aula.id,
-                                    provedorDoLink(video),
-                                    ref,
-                                  ),
-                                )) ??
-                                (await executar(() =>
-                                  dados.atualizarAula(aula.id, {
-                                    capa_path: capa.trim() || null,
-                                    exercicio: exercicio.trim() || null,
-                                  }),
-                                ));
-                              if (!falha) setConteudoDe("");
-                              avisar(falha ?? "Conteúdo da aula salvo.");
+                              /*
+                                Os dois sempre gravam, e os dois são
+                                contados.
+
+                                Antes havia um `??` entre eles: falhando
+                                o vídeo, a capa e o exercício NEM
+                                chegavam a ser tentados — e a mensagem
+                                falava só do vídeo. A pessoa via um erro
+                                sobre vídeo, ia embora, e não sabia que
+                                o resto também não gravou.
+                              */
+                              const falhaVideo = await executar(() =>
+                                dados.definirMidiaDaAula(aula.id, provedorDoLink(video), ref),
+                              );
+                              const falhaResto = await executar(() =>
+                                dados.atualizarAula(aula.id, {
+                                  capa_path: capa.trim() || null,
+                                  exercicio: exercicio.trim() || null,
+                                }),
+                              );
+                              if (!falhaVideo && !falhaResto) {
+                                setConteudoDe("");
+                                avisar("Conteúdo da aula salvo.");
+                              } else if (falhaVideo && falhaResto) {
+                                avisar(`Nada foi salvo. ${falhaVideo}`);
+                              } else if (falhaVideo) {
+                                avisar(`Capa e exercício salvos. O vídeo não: ${falhaVideo}`);
+                              } else {
+                                avisar(`Vídeo salvo. Capa e exercício não: ${falhaResto}`);
+                              }
                             }}
                             className="flex flex-col gap-2 pb-[14px] pt-[6px]"
                           >

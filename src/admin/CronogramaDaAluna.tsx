@@ -177,6 +177,8 @@ export function CronogramaDaAluna({
       return;
     }
     pedirConfirmacao({
+      tom: "normal",
+      rotuloConfirmar: "Gerar cronograma",
       titulo: `Gerar o cronograma de ${aluna.nome}?`,
       mensagem:
         `Isto substitui o cronograma inteiro dela: ${totalMarcadas} aulas, ` +
@@ -322,6 +324,7 @@ export function CronogramaDaAluna({
                       temVideo={!semVideo(a.id)}
                       executar={executar}
                       avisar={avisar}
+                      pedirConfirmacao={pedirConfirmacao}
                     />
                   ))}
                 </div>
@@ -444,6 +447,7 @@ function LinhaAula({
   temVideo,
   executar,
   avisar,
+  pedirConfirmacao,
 }: {
   alunaId: string;
   alunaNome: string;
@@ -454,6 +458,7 @@ function LinhaAula({
   temVideo: boolean;
   executar: (f: () => Promise<unknown>) => Promise<string | null>;
   avisar: (m: string) => void;
+  pedirConfirmacao: (p: PedidoConfirmacao) => void;
 }) {
   const abertaAgora = atribuida && (abreEm === null || new Date(abreEm).getTime() <= Date.now());
 
@@ -513,12 +518,25 @@ function LinhaAula({
               aberta
             </span>
           )}
+          {/*
+            "Tirar" apaga a atribuição da aula e o progresso ligado a
+            ela, e dividia a linha com "Abrir agora" — os dois com 32px,
+            separados por 8px, e este sem confirmação nenhuma.
+          */}
           <button
-            onClick={async () => {
-              const falha = await executar(() => dados.removerAulaDaAluna(alunaId, aulaId));
-              avisar(falha ?? `Aula tirada de ${alunaNome}.`);
-            }}
-            style={{ ...botaoRemover, minHeight: 32, padding: "0 10px", fontSize: 11 }}
+            onClick={() =>
+              pedirConfirmacao({
+                titulo: `Tirar a aula de ${alunaNome}?`,
+                mensagem:
+                  `"${titulo}" sai do curso dela. O que ela já assistiu desta aula ` +
+                  "se perde. Dar a aula de novo começa do zero.",
+                executar: async () => {
+                  const falha = await executar(() => dados.removerAulaDaAluna(alunaId, aulaId));
+                  avisar(falha ?? `Aula tirada de ${alunaNome}.`);
+                },
+              })
+            }
+            style={{ ...botaoRemover, minHeight: 36, padding: "0 12px", fontSize: 12 }}
           >
             Tirar
           </button>

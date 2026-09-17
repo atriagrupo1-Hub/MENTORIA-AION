@@ -208,6 +208,8 @@ export function PrazoDaAluna({
           <button
             onClick={() =>
               pedirConfirmacao({
+                tom: "normal",
+                rotuloConfirmar: "Deixar sem prazo",
                 titulo: `Deixar ${aluna.nome} sem prazo?`,
                 mensagem:
                   "O acesso dela passa a valer para sempre, até alguém definir um prazo novo ou bloquear a conta.",

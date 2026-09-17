@@ -224,8 +224,33 @@ export function AbaComentarios({
   /** Os botões de moderação, iguais para raiz e resposta. */
   const Acoes = ({ c }: { c: ComentarioParaModerar }) => (
     <div className="mt-4 flex flex-wrap gap-2">
+      {/*
+        Ocultar uma raiz derruba as respostas dela em cascata — e a tela
+        só contava isso DEPOIS, no aviso. A porta vizinha ("Remover")
+        contava antes. Duas portas para o mesmo efeito, uma só com
+        pergunta; agora as duas perguntam quando há respostas em jogo.
+      */}
       {c.status === "publicado" ? (
-        <button onClick={() => void mudar(c, "oculto")} style={botaoNeutro}>
+        <button
+          onClick={() => {
+            const penduradas = c.respostaA ? 0 : respostasDe(c.id);
+            if (penduradas === 0) {
+              void mudar(c, "oculto");
+              return;
+            }
+            pedirConfirmacao({
+              tom: "normal",
+              rotuloConfirmar: "Ocultar",
+              titulo: `Ocultar o comentário de ${c.autoraNome}?`,
+              mensagem:
+                `${quantasRespostas(penduradas)} embaixo dele saem junto — sem o ` +
+                "comentário, elas não teriam o que responder. Nada é apagado, e " +
+                "devolver ao ar traz tudo de volta.",
+              executar: () => void mudar(c, "oculto"),
+            });
+          }}
+          style={botaoNeutro}
+        >
           Ocultar das alunas
         </button>
       ) : (

@@ -89,8 +89,7 @@ export function AbaEquipe({
     void carregar();
   }, [carregar]);
 
-  async function bloquear(c: Colaborador) {
-    const novo = c.status === "ativa" ? "bloqueada" : "ativa";
+  async function aplicarBloqueio(c: Colaborador, novo: "ativa" | "bloqueada") {
     try {
       await dados.bloquearColaborador(c.id, novo);
       await carregar();
@@ -102,6 +101,27 @@ export function AbaEquipe({
     } catch (falha) {
       avisar(falha instanceof Error ? falha.message : "Não foi possível mudar.");
     }
+  }
+
+  /*
+   * Devolver acesso é inofensivo e vai direto. Tirar acesso derruba a
+   * pessoa do painel no meio do trabalho dela — e ficava num botão
+   * igual ao de "Trocar código", sem pergunta nenhuma.
+   */
+  function bloquear(c: Colaborador) {
+    if (c.status === "bloqueada") {
+      void aplicarBloqueio(c, "ativa");
+      return;
+    }
+    pedirConfirmacao({
+      tom: "normal",
+      rotuloConfirmar: "Bloquear acesso",
+      titulo: `Bloquear o acesso de ${c.nome}?`,
+      mensagem:
+        "A conta continua existindo, com tudo o que ela fez, e simplesmente " +
+        "deixa de entrar. Devolver o acesso é um clique.",
+      executar: () => void aplicarBloqueio(c, "bloqueada"),
+    });
   }
 
   return (
@@ -215,7 +235,7 @@ export function AbaEquipe({
 
                         {ehODono || c.souEu ? null : (
                           <>
-                            <button onClick={() => void bloquear(c)} style={botaoNeutro}>
+                            <button onClick={() => bloquear(c)} style={botaoNeutro}>
                               {c.status === "ativa" ? "Bloquear acesso" : "Devolver acesso"}
                             </button>
                             <button

@@ -35,6 +35,13 @@ export function AbaPresentes({
   avisar: (m: string) => void;
 }) {
   const { catalogo, midiaPresentes, alunas, executar } = painel;
+
+  /** O tamanho do estrago em número — ver o gêmeo em `AbaConteudo`. */
+  const quantasAlunas = () => {
+    const n = alunas.filter((a) => a.status === "ativa").length;
+    if (n === 0) return "todas as alunas";
+    return n === 1 ? "1 aluna ativa" : `${n} alunas ativas`;
+  };
   const [expandido, setExpandido] = useState(true);
   const [novaCategoria, setNovaCategoria] = useState("");
   const [novoPresenteEm, setNovoPresenteEm] = useState("");
@@ -163,14 +170,31 @@ export function AbaPresentes({
                       {categoria.destacada ? "Voltar para Presentes" : "Deixar sozinha"}
                     </button>
                     <button
-                      onClick={async () =>
-                        avisar(
-                          (await executar(() =>
-                            dados.atualizarCategoria(categoria.id, {
-                              bloqueada_geral: !categoria.bloqueadaGeral,
-                            }),
-                          )) ?? "Estado da categoria atualizado.",
-                        )
+                      onClick={() =>
+                        categoria.bloqueadaGeral
+                          ? void (async () =>
+                              avisar(
+                                (await executar(() =>
+                                  dados.atualizarCategoria(categoria.id, { bloqueada_geral: false }),
+                                )) ?? `"${categoria.titulo}" de volta ao ar.`,
+                              ))()
+                          : pedirConfirmacao({
+                              tom: "normal",
+                              rotuloConfirmar: "Bloquear para todas",
+                              titulo: `Bloquear "${categoria.titulo}"?`,
+                              mensagem:
+                                `Os ${categoria.presentes.length} presentes dela somem do ` +
+                                `acervo de ${quantasAlunas()}. Nada é apagado, e ` +
+                                "desbloquear devolve tudo.",
+                              executar: async () =>
+                                avisar(
+                                  (await executar(() =>
+                                    dados.atualizarCategoria(categoria.id, {
+                                      bloqueada_geral: true,
+                                    }),
+                                  )) ?? `"${categoria.titulo}" bloqueada para as alunas.`,
+                                ),
+                            })
                       }
                       style={{ ...botaoNeutro, minHeight: 36, padding: "0 13px" }}
                     >
@@ -311,6 +335,8 @@ export function AbaPresentes({
                                 return;
                               }
                               pedirConfirmacao({
+                                tom: "normal",
+                                rotuloConfirmar: "Liberar para todas",
                                 titulo: `Liberar ${presente.titulo} para todas?`,
                                 mensagem:
                                   `O presente será liberado para as alunas que ainda não o ` +
@@ -342,17 +368,42 @@ export function AbaPresentes({
                           >
                             {movendo === presente.id ? "Fechar" : "Mover"}
                           </button>
+                          {/* Mesmo caso da aula: era gêmeo do "Editar". */}
                           <button
-                            onClick={async () =>
-                              avisar(
-                                (await executar(() =>
-                                  dados.atualizarPresente(presente.id, {
-                                    bloqueado_geral: !presente.bloqueadoGeral,
-                                  }),
-                                )) ?? "Estado do presente atualizado.",
-                              )
+                            onClick={() =>
+                              presente.bloqueadoGeral
+                                ? void (async () =>
+                                    avisar(
+                                      (await executar(() =>
+                                        dados.atualizarPresente(presente.id, {
+                                          bloqueado_geral: false,
+                                        }),
+                                      )) ?? `"${presente.titulo}" de volta ao ar.`,
+                                    ))()
+                                : pedirConfirmacao({
+                                    tom: "normal",
+                                    rotuloConfirmar: "Bloquear",
+                                    titulo: `Bloquear "${presente.titulo}"?`,
+                                    mensagem:
+                                      `Ele some do acervo de ${quantasAlunas()}. Nada é ` +
+                                      "apagado, e desbloquear devolve.",
+                                    executar: async () =>
+                                      avisar(
+                                        (await executar(() =>
+                                          dados.atualizarPresente(presente.id, {
+                                            bloqueado_geral: true,
+                                          }),
+                                        )) ?? `"${presente.titulo}" bloqueado para as alunas.`,
+                                      ),
+                                  })
                             }
-                            style={BOTAO_LINHA}
+                            style={{
+                              ...BOTAO_LINHA,
+                              color: presente.bloqueadoGeral ? tema.texto : tema.perigo,
+                              border: `1px solid ${
+                                presente.bloqueadoGeral ? tema.linha : tema.perigoLinha
+                              }`,
+                            }}
                           >
                             {presente.bloqueadoGeral ? "Desbloquear" : "Bloquear"}
                           </button>
@@ -411,23 +462,31 @@ export function AbaPresentes({
                             onSubmit={async (e) => {
                               e.preventDefault();
                               const ref = idDoVideo(video);
-                              const falha =
-                                (await executar(() =>
-                                  dados.definirMidiaDoPresente(
-                                    presente.id,
-                                    provedorDoLink(video),
-                                    ref,
-                                  ),
-                                )) ??
-                                (await executar(() =>
-                                  dados.atualizarPresente(presente.id, {
-                                    capa_path: capa.trim() || null,
-                                    duracao_texto: duracao.trim(),
-                                    descricao: descricao.trim(),
-                                  }),
-                                ));
-                              if (!falha) setConteudoDe("");
-                              avisar(falha ?? "Conteúdo do presente salvo.");
+                              /* Mesmo caso da aula — ver o comentário lá. */
+                              const falhaVideo = await executar(() =>
+                                dados.definirMidiaDoPresente(
+                                  presente.id,
+                                  provedorDoLink(video),
+                                  ref,
+                                ),
+                              );
+                              const falhaResto = await executar(() =>
+                                dados.atualizarPresente(presente.id, {
+                                  capa_path: capa.trim() || null,
+                                  duracao_texto: duracao.trim(),
+                                  descricao: descricao.trim(),
+                                }),
+                              );
+                              if (!falhaVideo && !falhaResto) {
+                                setConteudoDe("");
+                                avisar("Conteúdo do presente salvo.");
+                              } else if (falhaVideo && falhaResto) {
+                                avisar(`Nada foi salvo. ${falhaVideo}`);
+                              } else if (falhaVideo) {
+                                avisar(`Capa e descrição salvas. O vídeo não: ${falhaVideo}`);
+                              } else {
+                                avisar(`Vídeo salvo. Capa e descrição não: ${falhaResto}`);
+                              }
                             }}
                             className="flex flex-col gap-2 pb-[14px] pt-[6px]"
                           >
