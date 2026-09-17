@@ -666,11 +666,18 @@ export function TelaAula() {
             <button
               onClick={marcarConcluida}
               aria-pressed={feita}
-              className="flex h-11 items-center gap-2 rounded-pilula px-5 text-corpo font-semibold hover:opacity-90"
+              /*
+                Dos três botões desta linha, só este registra progresso
+                — e tinha exatamente o mesmo peso das setas ← e →, que
+                apenas mudam de página. As setas não podem encolher
+                (44px é o alvo mínimo) nem perder contorno (3:1), então
+                a distinção vem daqui: contorno pleno e negrito.
+              */
+              className="flex h-11 items-center gap-2 rounded-pilula px-6 text-corpo font-bold hover:opacity-90"
               style={{
                 color: feita ? "#000000" : "#ffffff",
                 background: feita ? "#ffffff" : "transparent",
-                border: `1px solid ${feita ? "#ffffff" : LINHA}`,
+                border: `1px solid ${feita ? "#ffffff" : "rgba(255,255,255,.8)"}`,
                 cursor: "pointer",
               }}
             >

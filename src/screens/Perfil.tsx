@@ -61,8 +61,16 @@ export function Perfil() {
             >
               {item.rotulo}
             </p>
+            {/*
+              "Módulo atual" é o único cartão sem número grande, e
+              estava a 17px ao lado de três irmãos a 26-40px — o cartão
+              que diz onde ela está lia-se como rodapé dos que só
+              contam. Passa à mesma família tipográfica dos outros.
+            */}
             {item.texto ? (
-              <p className="m-0 text-realce leading-[1.45] text-marfim">{item.texto}</p>
+              <p className="text-titulo m-0 font-titulo leading-[1.25] text-marfim">
+                {item.texto}
+              </p>
             ) : (
               <p
                 className="m-0 font-titulo text-heroi"

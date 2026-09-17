@@ -108,7 +108,14 @@ export function Inicio() {
             <p className="m-0 text-apoio text-white/60">
               Módulo {retomada.modulo.numero} — {retomada.modulo.titulo}
             </p>
-            <h2 className="m-0 text-corpo font-bold leading-[1.3] text-white">
+            {/*
+              O nome da aula é a única coisa desta seção que a aluna
+              veio buscar, e estava a 15px — enquanto os nomes dos
+              módulos, sobre as capas logo abaixo, estão a 21-27px.
+              O que ela veio fazer pesava metade do que ela não veio
+              fazer. Sobe para a mesma escala dos módulos.
+            */}
+            <h2 className="text-titulo m-0 font-bold leading-[1.22] text-white">
               Aula {retomada.aula.numero} — {retomada.aula.titulo}
             </h2>
             <p className="m-0 text-apoio text-white/55">
@@ -163,7 +170,21 @@ export function Inicio() {
       {modulos.length > 0 ? (
         <section className="mt-10">
           <div className="mb-6 flex flex-wrap items-end gap-5">
-            <div className="flex-[1_1_280px]" />
+            {/*
+              Aqui havia um <div> vazio. A fileira de módulos era a
+              única seção do aplicativo sem título: Presentes e Perfil
+              abrem com rótulo + cabeçalho, esta abria com nada — e no
+              celular, onde as setas somem, a linha inteira ficava em
+              branco. O espaço já estava reservado no layout.
+            */}
+            <div className="flex-[1_1_280px]">
+              <p className="mb-1 mt-0 text-rotulo uppercase tracking-rotulo text-[rgba(255,255,255,.4)]">
+                Sua jornada
+              </p>
+              <h2 className="text-titulo m-0 font-titulo font-semibold text-marfim">
+                Seus módulos
+              </h2>
+            </div>
             <div className="flex gap-3 cel:hidden">
               {[
                 { rotulo: "Voltar nos módulos", glifo: "‹", passo: -560 },

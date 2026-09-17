@@ -48,9 +48,15 @@ export function PaginaPresente() {
       <div className="mb-7 flex flex-wrap items-center gap-4">
         <button
           onClick={() => navegar("/presentes")}
-          className="flex min-h-[52px] items-center justify-center gap-3 rounded-pilula border-none px-6 py-4 text-realce font-bold text-white"
+          /*
+            Era o primeiro elemento da tela, a 17px em negrito branco —
+            com mais peso que "Assistir", a ação principal, que vem
+            depois. Agora usa exatamente a forma do voltar da aula ao
+            vivo: mesma altura de toque, texto de corpo, sem negrito.
+          */
+          className="flex min-h-[52px] items-center justify-center gap-3 rounded-pilula border-none px-6 py-4 text-corpo text-marfim-corpo"
           style={{
-            background: "rgba(255,255,255,.16)",
+            background: "rgba(255,255,255,.14)",
             backdropFilter: "blur(10px)",
             WebkitBackdropFilter: "blur(10px)",
             cursor: "pointer",

@@ -33,7 +33,7 @@ export function Presentes() {
         Presentes
       </h1>
       <p
-        className="text-titulo mb-0 mt-4 max-w-[700px] leading-[1.55] text-[#cbbfae]"
+        className="text-realce mb-0 mt-4 max-w-[700px] leading-[1.5] text-[#cbbfae]"
       >
         Conteúdos escolhidos para assistir com calma, no seu tempo, ao lado das aulas da
         mentoria.
@@ -41,8 +41,14 @@ export function Presentes() {
 
       {categorias.map((categoria) => (
         <section key={categoria.id} className="mt-9">
+          {/*
+            Hierarquia invertida: o nome de cada categoria — a estrutura
+            do acervo inteiro — era o MENOR texto da tela (11px), e o
+            parágrafo decorativo acima era o segundo maior (21-27px).
+            A categoria sobe para 19px; o parágrafo desce para 17px.
+          */}
           <h2
-            className="mb-4 mt-0 text-rotulo font-bold uppercase tracking-rotulo"
+            className="text-secao mb-4 mt-0 font-bold uppercase tracking-[.06em]"
             style={{ color: "#ffffff" }}
           >
             {categoria.titulo}
