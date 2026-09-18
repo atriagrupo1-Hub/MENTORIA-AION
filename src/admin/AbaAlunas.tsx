@@ -1,4 +1,5 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
 import { formatarDigitando, soDigitos } from "./celular";
@@ -401,25 +402,50 @@ export function AbaAlunas({
     lugares: dentro da caixa quando aberta, logo abaixo do cabecalho
     quando fechada.
   */
+  /*
+    Fechar e desistir sao a mesma coisa, e limpam tudo.
+
+    Estava escrito duas vezes — no "Cancelar" de baixo e no botao de
+    cima — e as duas versoes ja tinham divergido uma vez: uma limpava
+    as marcacoes, a outra nao.
+  */
+  function fecharCadastro() {
+    setNome("");
+    setLogin("");
+    setCodigo("");
+    setCelular("");
+    setModulosEscolhidos(new Set());
+    setCategoriasEscolhidas(new Set());
+    setAcessoAberto(false);
+    setCadastroAberto(false);
+  }
+
+  /*
+    Esc fecha a folha, e a pagina atras para de rolar.
+
+    Sem travar o `body`, rolar dentro do cadastro no celular arrasta a
+    lista de alunas por baixo — e ao fechar a pessoa volta num ponto da
+    lista que nao e o que ela deixou.
+  */
+  useEffect(() => {
+    if (!cadastroAberto) return;
+    const escape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") fecharCadastro();
+    };
+    document.addEventListener("keydown", escape);
+    const antes = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", escape);
+      document.body.style.overflow = antes;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cadastroAberto]);
+
   const oCancelar = (
     <button
-        type="button"
-        onClick={() => {
-          /*
-            Limpa TUDO. As marcacoes ficaram de fora quando a secao
-            nasceu: cancelar e abrir de novo trazia os modulos e as
-            categorias da aluna anterior, marcados e prontos para serem
-            gravados em outra pessoa.
-          */
-          setNome("");
-          setLogin("");
-          setCodigo("");
-          setCelular("");
-          setModulosEscolhidos(new Set());
-          setCategoriasEscolhidas(new Set());
-          setAcessoAberto(false);
-          setCadastroAberto(false);
-        }}
+      type="button"
+      onClick={fecharCadastro}
       style={{ ...botaoNeutroGrande, flex: "0 0 auto" }}
     >
       Cancelar
@@ -503,17 +529,76 @@ export function AbaAlunas({
           aria-label="Buscar aluna"
           style={{ ...campo, flex: "1 1 260px" }}
         />
-        <button onClick={() => setCadastroAberto((v) => !v)} style={botaoOuro}>
-          {cadastroAberto ? "Fechar" : "Cadastrar aluna"}
+        <button
+          onClick={() => {
+            setCadastroAberto(true);
+            /*
+              A secao ja nasce aberta aqui.
+
+              Numa tela cheia dedicada a configurar o acesso, abrir com
+              ela dobrada seria mostrar uma pagina quase vazia e pedir
+              mais um clique para chegar no que a tela existe para
+              fazer. Fora do painel ela continuava dobrada porque
+              disputava espaco com a lista; aqui nao disputa com nada.
+            */
+            setAcessoAberto(true);
+          }}
+          style={botaoOuro}
+        >
+          Cadastrar aluna
         </button>
       </div>
 
       {/*
-        O cadastro fica guardado. É a ação mais rara desta tela — uma
-        turma se cadastra uma vez e se administra por meses — e o
-        formulário aberto empurrava a lista para baixo todo dia.
+        O cadastro cobre a tela.
+
+        Era um formulario embutido, e crescia: quatro campos, duas
+        listas de catalogo, ritmo, prazo e os botoes. Empurrava a lista
+        de alunas para baixo e dividia a atencao com filtros, busca e
+        trinta linhas de gente que nao tem nada a ver com a pessoa que
+        esta sendo cadastrada agora.
+
+        Cadastrar alguem e uma tarefa com comeco, meio e fim. Ocupa a
+        tela inteira enquanto dura, e devolve a tela quando acaba.
+
+        Mesma forma do modal de confirmacao desta pasta: fecha com Esc,
+        o foco entra ao abrir, e `role="dialog"` com `aria-modal` para
+        quem navega por leitor de tela nao continuar lendo a lista
+        atras do escurecimento.
       */}
-      {cadastroAberto ? (
+      {cadastroAberto
+        ? createPortal(
+        /*
+          Vai direto no `body`, por portal.
+
+          `position: fixed` se ancora na janela — menos quando algum
+          ancestral tem `transform`, e ai se ancora NELE. A animacao de
+          entrada do painel (`.entra`) usa transform: medido, a folha
+          abria a 123px do topo no celular e cobria 757px de 844, com a
+          lista aparecendo por cima da borda.
+        */
+        <div
+          className="fixed inset-0 z-[90] overflow-y-auto"
+          style={{ background: tema.fundo }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Cadastrar aluna"
+        >
+          <div className="mx-auto w-full max-w-[860px] px-5 py-6">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <h2 className="m-0 text-[19px] font-semibold" style={{ color: tema.texto }}>
+                Cadastrar aluna
+              </h2>
+              <button
+                type="button"
+                onClick={fecharCadastro}
+                aria-label="Fechar o cadastro"
+                style={{ ...botaoNeutroGrande, flex: "0 0 auto" }}
+              >
+                Fechar
+              </button>
+            </div>
+
         <form
           onSubmit={cadastrar}
           className="mb-5 flex flex-wrap gap-[10px] rounded-[14px] p-4"
@@ -710,7 +795,11 @@ export function AbaAlunas({
             <div className="flex w-full flex-wrap gap-[10px]">{oCancelar}</div>
           )}
         </form>
-      ) : null}
+          </div>
+        </div>,
+            document.body,
+          )
+        : null}
 
       {/*
         O convite, logo depois de cadastrar.
