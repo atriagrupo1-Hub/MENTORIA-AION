@@ -234,8 +234,24 @@ export function AbaAlunas({
 
   async function cadastrar(e: FormEvent) {
     e.preventDefault();
+    /*
+      Os quatro campos sao obrigatorios.
+
+      O celular era opcional, e o resultado aparecia depois: a ficha
+      dizia "nao informado", o botao de chamar no WhatsApp nao existia,
+      e entregar o acesso virava procurar o numero noutro lugar. O
+      momento de pedir e este, com a pessoa do outro lado da linha.
+
+      O nome de acesso tambem: era deduzido do nome quando vazio
+      ("Ana Maria" virava "ana.maria"), e quem cadastrava so descobria
+      qual era o acesso da aluna depois, lendo a ficha.
+    */
     if (!nome.trim()) {
       avisar("Informe o nome da aluna.");
+      return;
+    }
+    if (!login.trim()) {
+      avisar("Informe o nome de acesso — é com ele que ela entra.");
       return;
     }
     if (!/^[0-9]{4,6}$/.test(codigo.trim())) {
@@ -246,12 +262,16 @@ export function AbaAlunas({
       return;
     }
     const digitos = soDigitos(celular);
-    if (digitos && (digitos.length < 10 || digitos.length > 15)) {
+    if (!digitos) {
+      avisar("Informe o celular — é por ele que o acesso é entregue.");
+      return;
+    }
+    if (digitos.length < 10 || digitos.length > 15) {
       avisar("O celular precisa do DDD. Ex.: 11 98765-4321.");
       return;
     }
     setSalvando(true);
-    const acesso = login.trim() || nome.trim().toLowerCase().replace(/\s+/g, ".");
+    const acesso = login.trim();
     const r = await dados.cadastrarAluna(nome.trim(), acesso, codigo.trim(), digitos);
 
     if (!r.ok) {
@@ -610,6 +630,7 @@ export function AbaAlunas({
             onChange={(e) => setNome(e.target.value)}
             placeholder="Nome da aluna"
             aria-label="Nome da aluna"
+            aria-required="true"
             autoFocus
             style={{ ...campo, flex: "2 1 200px" }}
           />
@@ -619,6 +640,7 @@ export function AbaAlunas({
             onChange={(e) => setLogin(e.target.value)}
             placeholder="Nome de acesso"
             aria-label="Nome de acesso"
+            aria-required="true"
             style={{ ...campo, flex: "1 1 150px" }}
           />
           <input
@@ -627,6 +649,7 @@ export function AbaAlunas({
             onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
             placeholder="Código (4 a 6 números)"
             aria-label="Código de acesso"
+            aria-required="true"
             inputMode="numeric"
             style={{ ...campo, flex: "1 1 140px" }}
           />
@@ -634,8 +657,9 @@ export function AbaAlunas({
             type="tel"
             value={celular}
             onChange={(e) => setCelular(formatarDigitando(e.target.value))}
-            placeholder="Celular (opcional)"
+            placeholder="Celular com DDD"
             aria-label="Celular"
+            aria-required="true"
             inputMode="numeric"
             style={{ ...campo, flex: "1 1 150px" }}
           />
