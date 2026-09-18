@@ -45,6 +45,21 @@ Não inventar conteúdo para preencher seções.
 
 **Nunca esconder falha. Nunca dizer que fez algo que não fez.** Bloqueio
 real: informar curto e objetivo.
+## Autorização — regra permanente
+
+Tarefa pedida = execução autorizada até concluir.
+
+Não perguntar "posso prosseguir", "deseja que eu execute", "quer que eu
+continue", "posso aplicar", "posso executar o próximo passo", nem
+qualquer outra confirmação. Não interromper entre passos.
+
+Onde houver permissão persistente disponível, configurá-la em vez de
+pedir autorização de novo.
+
+**Exceção única:** confirmação obrigatória da interface (Claude Code,
+MCP, Supabase). Nesse caso: pedir só o obrigatório, sem explicação;
+continuar de onde parou assim que autorizado; e dizer objetivamente qual
+configuração evita a próxima interrupção.
 
 ## Regras do produto que não se quebram
 
