@@ -555,6 +555,37 @@ export function AbaAlunas({
                   aoTodos={() => setModulosEscolhidos(new Set(catalogo.modulos.map((m) => m.id)))}
                   aoNenhum={() => setModulosEscolhidos(new Set())}
                 />
+
+                {/*
+                  O ritmo das aulas pertence a Mentoria.
+
+                  Estava depois de Presentes, no rodape junto do prazo —
+                  longe do que governa. Recuado, para ler como parte da
+                  lista de cima e nao como um terceiro grupo. Sem aula
+                  marcada nao ha o que espacar, entao some.
+                */}
+                {modulosEscolhidos.size > 0 ? (
+                  <div className="flex flex-wrap items-end gap-3 pl-[14px]">
+                    <label className="flex flex-col gap-[6px]">
+                      <span style={rotulo}>Uma aula a cada</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={365}
+                        inputMode="numeric"
+                        value={intervalo}
+                        onChange={(e) => setIntervalo(e.target.value)}
+                        placeholder={String(intervaloPadrao)}
+                        aria-label="Intervalo em dias entre as aulas"
+                        style={{ ...campo, width: 92, textAlign: "center" }}
+                      />
+                    </label>
+                    <label className="flex flex-col gap-[6px]">
+                      <span style={rotulo}>Começando em</span>
+                      <Calendario valor={inicio} aoEscolher={setInicio} />
+                    </label>
+                  </div>
+                ) : null}
                 <ListaDeEscolha
                   titulo="Presentes"
                   vazio="Nenhuma categoria cadastrada ainda."
@@ -586,30 +617,6 @@ export function AbaAlunas({
                   className="flex flex-col gap-4 pt-4"
                   style={{ borderTop: `1px solid ${tema.linhaSuave}` }}
                 >
-                  {/* Sem aula marcada nao ha o que espacar. */}
-                  {modulosEscolhidos.size > 0 ? (
-                    <div className="flex flex-wrap items-end gap-3">
-                      <label className="flex flex-col gap-[6px]">
-                        <span style={rotulo}>Uma aula a cada</span>
-                        <input
-                          type="number"
-                          min={0}
-                          max={365}
-                          inputMode="numeric"
-                          value={intervalo}
-                          onChange={(e) => setIntervalo(e.target.value)}
-                          placeholder={String(intervaloPadrao)}
-                          aria-label="Intervalo em dias entre as aulas"
-                          style={{ ...campo, width: 92, textAlign: "center" }}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-[6px]">
-                        <span style={rotulo}>Começando em</span>
-                        <Calendario valor={inicio} aoEscolher={setInicio} />
-                      </label>
-                    </div>
-                  ) : null}
-
                   {/* O prazo e da conta, nao do conteudo: fica sempre. */}
                   <div className="flex flex-wrap items-center gap-2">
                     <span style={{ ...rotulo, flex: "0 0 100%" }}>Acesso por</span>
