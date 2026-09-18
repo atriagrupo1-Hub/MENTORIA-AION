@@ -30,7 +30,7 @@ const FUNDO = tema.fundo;
  * é permissão.
  */
 export function PainelAdmin() {
-  const { aluna, entrar, sair, carregando: carregandoSessao } = useEstado();
+  const { aluna, entrar, sair, carregando: carregandoSessao, erro: erroSessao } = useEstado();
   const daEquipe = ehEquipe(aluna?.papel);
 
   if (carregandoSessao) {
@@ -44,7 +44,20 @@ export function PainelAdmin() {
   }
 
   if (!daEquipe) {
-    return <EntradaAdmin entrar={entrar} logada={Boolean(aluna)} sair={sair} />;
+    return (
+      <EntradaAdmin
+        entrar={entrar}
+        logada={Boolean(aluna)}
+        sair={sair}
+        /*
+          Quando a sessão cai sozinha, a pessoa é trazida para cá sem
+          ter pedido — estava trabalhando e a tela trocou. Sem dizer o
+          motivo, isso parece defeito do aplicativo, e era exatamente
+          assim que aparecia: "o app enlouquece e me tira do painel".
+        */
+        aviso={erroSessao}
+      />
+    );
   }
 
   return <PainelLogado />;
@@ -54,10 +67,13 @@ function EntradaAdmin({
   entrar,
   logada,
   sair,
+  aviso,
 }: {
   entrar: (login: string, codigo: string) => Promise<string | null>;
   logada: boolean;
   sair: () => Promise<void>;
+  /** Por que a pessoa veio parar aqui, quando não foi ela que pediu. */
+  aviso?: string | null;
 }) {
   const [login, setLogin] = useState("");
   const [codigo, setCodigo] = useState("");
@@ -98,6 +114,15 @@ function EntradaAdmin({
               Painel administrativo
             </p>
           </div>
+
+          {aviso && !logada ? (
+            <p
+              className="mb-5 mt-0 text-[14px] leading-[1.5]"
+              style={{ color: tema.texto }}
+            >
+              {aviso}
+            </p>
+          ) : null}
 
           {logada ? (
             <>

@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import * as api from "./api";
+import { supabase } from "./supabase";
 import type { AulaLiberada, PerfilSessao } from "./api";
 import type { Aula, Catalogo, Modulo } from "./tipos";
 
@@ -191,6 +192,46 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
   useEffect(() => {
     void carregarTudo();
   }, [carregarTudo]);
+
+  /*
+   * O app precisa ficar sabendo quando a sessão morre.
+   *
+   * Não havia nenhum `onAuthStateChange` no projeto. O token dura uma
+   * hora; quando a renovação falha — outra aba entrou com outra conta,
+   * o aparelho dormiu, a rede caiu na hora errada — o cliente do
+   * Supabase desiste da sessão e passa a mandar TODO pedido como
+   * visitante anônimo. E o app não ficava sabendo: o React continuava
+   * segurando o perfil em memória, o painel continuava desenhado, os
+   * botões continuavam clicáveis, e cada um deles saía sem credencial.
+   *
+   * O banco recusava, corretamente. Mas a tela mostrava um painel vivo
+   * operado por ninguém — os registros de produção de 17/09 têm dezenas
+   * de `permission denied for function eh_admin` em sequência, que é o
+   * banco dizendo "quem está falando comigo não é administradora".
+   *
+   * Daqui em diante a queda da sessão é um evento, não um mistério:
+   * limpa o que está na tela e diz o que aconteceu, para a pessoa
+   * entrar de novo em vez de ficar clicando contra uma parede.
+   *
+   * Só `SIGNED_OUT` age. `INITIAL_SESSION` e `SIGNED_IN` disparam no
+   * carregamento e logo depois de `setSession`, e reagir a eles faria
+   * o app recarregar em laço.
+   */
+  useEffect(() => {
+    const { data } = supabase.auth.onAuthStateChange((evento) => {
+      if (evento !== "SIGNED_OUT") return;
+      setAluna(null);
+      setCatalogo(CATALOGO_VAZIO);
+      setLiberadas(new Map());
+      setPresentesLib(new Set());
+      setModulosDaAluna(new Map());
+      setCurtidasSet(new Set());
+      setAberturas(new Map());
+      setCarregando(false);
+      setErro("Sua sessão expirou. Entre de novo para continuar.");
+    });
+    return () => data.subscription.unsubscribe();
+  }, []);
 
   const entrar = useCallback<Estado["entrar"]>(
     async (login, codigo) => {
