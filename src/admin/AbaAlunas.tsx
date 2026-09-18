@@ -389,6 +389,52 @@ export function AbaAlunas({
             presentesEscolhidos > 0 ? `, mais ${presentesEscolhidos} presentes` : ""
           }.` + sufixoPrazo;
 
+  /*
+    Gravar e desistir, num par so.
+    
+    Moram no fim de "O que ela vai acessar" — gravar e o fim do caminho,
+    e quem cadastra passa por tudo antes de chegar neles. Mas a secao
+    dobra, e com ela fechada os botoes iriam junto: o formulario ficaria
+    sem saida, e cadastrar sem liberar conteudo e caso legitimo.
+    
+    Por isso e uma constante, renderizada UMA vez, em um de dois
+    lugares: dentro da caixa quando aberta, logo abaixo do cabecalho
+    quando fechada.
+  */
+  const osBotoes = (
+    <div className="flex w-full flex-wrap gap-[10px]">
+      <button
+        type="submit"
+        disabled={salvando}
+        style={{ ...botaoOuro, flex: "0 0 auto", opacity: salvando ? 0.7 : 1 }}
+      >
+        {salvando ? "Cadastrando…" : "Cadastrar e liberar"}
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          /*
+            Limpa TUDO. As marcacoes ficaram de fora quando a secao
+            nasceu: cancelar e abrir de novo trazia os modulos e as
+            categorias da aluna anterior, marcados e prontos para serem
+            gravados em outra pessoa.
+          */
+          setNome("");
+          setLogin("");
+          setCodigo("");
+          setCelular("");
+          setModulosEscolhidos(new Set());
+          setCategoriasEscolhidas(new Set());
+          setAcessoAberto(false);
+          setCadastroAberto(false);
+        }}
+        style={{ ...botaoNeutroGrande, flex: "0 0 auto" }}
+      >
+        Cancelar
+      </button>
+    </div>
+  );
+
   // O vermelho é a única cor do painel, e quer dizer sempre a mesma
   // coisa: isto precisa de você. Aceso só quando há alguém.
   const FILTROS = [
@@ -640,38 +686,15 @@ export function AbaAlunas({
                       );
                     })}
                   </div>
+
+                  {osBotoes}
                 </div>
               </div>
             ) : null}
 
           </div>
 
-          <button
-            type="submit"
-            disabled={salvando}
-            style={{ ...botaoOuro, flex: "0 0 auto", opacity: salvando ? 0.7 : 1 }}
-          >
-            {salvando ? "Cadastrando…" : "Cadastrar e liberar"}
-          </button>
-          {/*
-            A saída fica junto do que se está preenchendo. O botão lá em
-            cima também fecha, mas quem desistiu está com os olhos aqui
-            embaixo, no último campo — e procurar a saída é o que faz
-            alguém deixar o formulário aberto pelo resto da tarde.
-          */}
-          <button
-            type="button"
-            onClick={() => {
-              setNome("");
-              setLogin("");
-              setCodigo("");
-              setCelular("");
-              setCadastroAberto(false);
-            }}
-            style={{ ...botaoNeutroGrande, flex: "0 0 auto" }}
-          >
-            Cancelar
-          </button>
+          {acessoAberto ? null : osBotoes}
         </form>
       ) : null}
 
