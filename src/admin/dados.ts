@@ -949,3 +949,44 @@ export async function responderComentario(
   });
   if (error) throw new Error(`responder: ${error.message}`);
 }
+
+/**
+ * Dá a uma aluna o acervo de presentes, por categoria.
+ *
+ * Não existia. O painel só sabia liberar um presente para a turma
+ * inteira, então dar o acervo a UMA aluna — que é o que se faz ao
+ * cadastrar alguém — não tinha caminho: cadastrava-se a conta e os
+ * presentes ficavam de fora, sem aviso.
+ *
+ * Grava no escopo `categoria`, que é a unidade com que a equipe
+ * trabalha. `pode_ver_presente()` já lê os três escopos (acervo,
+ * categoria, presente), então nada muda do lado da aluna.
+ *
+ * Substitui o que havia: quem chama isto está dizendo quais categorias
+ * a aluna tem, não quais acrescentar. É a mesma escolha de
+ * `gerar_cronograma`, que também apaga antes de gravar — duas telas com
+ * a mesma regra erram menos que duas telas com regras diferentes.
+ */
+export async function definirCategoriasDaAluna(
+  alunaId: string,
+  categoriaIds: string[],
+): Promise<number> {
+  const apagar = await supabase
+    .from("acessos")
+    .delete()
+    .eq("aluna_id", alunaId)
+    .eq("escopo", "categoria");
+  if (apagar.error) throw new Error(`presentes: ${apagar.error.message}`);
+
+  if (categoriaIds.length === 0) return 0;
+
+  const { error } = await supabase.from("acessos").insert(
+    categoriaIds.map((categoria_id) => ({
+      aluna_id: alunaId,
+      escopo: "categoria" as const,
+      categoria_id,
+    })),
+  );
+  if (error) throw new Error(`presentes: ${error.message}`);
+  return categoriaIds.length;
+}

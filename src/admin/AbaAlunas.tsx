@@ -43,6 +43,84 @@ const PRAZOS = [
 
 type ChavePrazo = (typeof PRAZOS)[number]["chave"];
 
+/**
+ * Uma lista de caixas para marcar, com "Todos" e "Nenhum".
+ *
+ * Mentoria e Presentes escolhem coisas diferentes com o mesmo gesto, e
+ * escrever a lista duas vezes é como as duas deixam de se parecer.
+ */
+function ListaDeEscolha({
+  titulo,
+  vazio,
+  itens,
+  marcados,
+  aoAlternar,
+  aoTodos,
+  aoNenhum,
+}: {
+  titulo: string;
+  vazio: string;
+  itens: Array<{ id: string; nome: string; quantos: string }>;
+  marcados: Set<string>;
+  aoAlternar: (id: string) => void;
+  aoTodos: () => void;
+  aoNenhum: () => void;
+}) {
+  return (
+    <div>
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span style={{ ...rotulo, flex: "1 1 auto" }}>
+          {titulo} · {marcados.size} de {itens.length}
+        </span>
+        <button type="button" onClick={aoTodos} style={botaoNeutro}>
+          Todos
+        </button>
+        <button type="button" onClick={aoNenhum} style={botaoNeutro}>
+          Nenhum
+        </button>
+      </div>
+
+      {itens.length === 0 ? (
+        <p className="m-0 text-[13px]" style={{ color: tema.textoSecundario }}>
+          {vazio}
+        </p>
+      ) : (
+        <div className="flex flex-col">
+          {itens.map((item) => {
+            const marcado = marcados.has(item.id);
+            return (
+              /*
+                A área de toque cobre a linha inteira: no celular, mirar
+                uma caixa de 20px ao lado de um texto clicável é o
+                caminho curto para marcar o módulo errado.
+              */
+              <label
+                key={item.id}
+                className="flex min-h-[44px] cursor-pointer items-center gap-3 px-1"
+                style={{ borderBottom: `1px solid ${tema.linhaSuave}` }}
+              >
+                <input
+                  type="checkbox"
+                  checked={marcado}
+                  onChange={() => aoAlternar(item.id)}
+                  className="h-5 w-5 flex-none"
+                  style={{ accentColor: tema.texto }}
+                />
+                <span className="min-w-0 flex-1 truncate text-[14px]" style={{ color: tema.texto }}>
+                  {item.nome}
+                </span>
+                <span className="flex-none text-[13px]" style={{ color: tema.textoSecundario }}>
+                  {item.quantos}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function AbaAlunas({
   painel,
   meuPapel,
@@ -80,7 +158,21 @@ export function AbaAlunas({
    * precisar de outra coisa muda aqui, e quem precisar de algo fora do
    * comum continua ajustando depois na ficha.
    */
-  const [liberarCurso, setLiberarCurso] = useState(true);
+  /*
+   * O que ela recebe, escolhido item a item, e desmarcado por padrão.
+   *
+   * Antes era uma caixa só: "dar o curso inteiro". Quem precisasse de
+   * outra coisa — dois módulos, um acervo de presentes — cadastrava,
+   * saía, abria a ficha e refazia tudo lá dentro. A decisão já estava
+   * tomada no momento do cadastro; o que faltava era onde registrá-la.
+   *
+   * Nasce vazio de propósito. O padrão anterior dava o curso inteiro
+   * sem ninguém marcar nada, e "todas as aulas" é justamente a escolha
+   * que não se deve tomar no lugar de quem administra.
+   */
+  const [modulosEscolhidos, setModulosEscolhidos] = useState<Set<string>>(new Set());
+  const [categoriasEscolhidas, setCategoriasEscolhidas] = useState<Set<string>>(new Set());
+  const [acessoAberto, setAcessoAberto] = useState(false);
   const [intervalo, setIntervalo] = useState("");
   const [inicio, setInicio] = useState<Date>(() => {
     const d = new Date();
@@ -146,7 +238,10 @@ export function AbaAlunas({
       return;
     }
     if (!/^[0-9]{4,6}$/.test(codigo.trim())) {
-      avisar("O código tem 4 números.");
+      // A regra aceita de 4 a 6; a frase dizia 4. Mesmo defeito que a
+      // Edge Function `entrar` tinha, e que fazia quem tem codigo de 6
+      // encurtar o proprio codigo.
+      avisar("O código tem de 4 a 6 números.");
       return;
     }
     const digitos = soDigitos(celular);
@@ -176,16 +271,21 @@ export function AbaAlunas({
     const cadastrada = nome.trim();
     const faltou: string[] = [];
 
-    if (liberarCurso && catalogo.modulos.length > 0) {
+    if (modulosEscolhidos.size > 0) {
       try {
-        await dados.gerarCronograma(
-          r.id,
-          catalogo.modulos.map((m) => m.id),
-          nDias,
-          inicio,
-        );
+        await dados.gerarCronograma(r.id, [...modulosEscolhidos], nDias, inicio);
       } catch (falha) {
         faltou.push(falha instanceof Error ? `o curso (${falha.message})` : "o curso");
+      }
+    }
+
+    if (categoriasEscolhidas.size > 0) {
+      try {
+        await dados.definirCategoriasDaAluna(r.id, [...categoriasEscolhidas]);
+      } catch (falha) {
+        faltou.push(
+          falha instanceof Error ? `os presentes (${falha.message})` : "os presentes",
+        );
       }
     }
 
@@ -210,6 +310,9 @@ export function AbaAlunas({
     if (faltou.length === 0) {
       setPronta({ nome: cadastrada, login: acesso, codigo: codigo.trim(), celular });
     }
+    setModulosEscolhidos(new Set());
+    setCategoriasEscolhidas(new Set());
+    setAcessoAberto(false);
     setNome("");
     setLogin("");
     setCodigo("");
@@ -226,16 +329,41 @@ export function AbaAlunas({
 
   /** O que a aluna nova vai receber, em palavras, antes de o botão ser clicado. */
   const nDias = Math.max(0, Math.floor(Number(intervalo || intervaloPadrao) || 0));
-  const totalAulasCatalogo = catalogo.modulos.reduce((n, m) => n + m.aulas.length, 0);
-  const resumoDoQueRecebe = !liberarCurso
-    ? "Ela entra e ainda não vê aula nenhuma — o curso você dá depois, na ficha."
-    : totalAulasCatalogo === 0
-      ? "Ainda não há aulas cadastradas para dar."
+  const aulasEscolhidas = catalogo.modulos
+    .filter((m) => modulosEscolhidos.has(m.id))
+    .reduce((n, m) => n + m.aulas.length, 0);
+  const presentesEscolhidos = catalogo.categorias
+    .filter((c) => categoriasEscolhidas.has(c.id))
+    .reduce((n, c) => n + c.presentes.length, 0);
+  const nadaEscolhido = modulosEscolhidos.size === 0 && categoriasEscolhidas.size === 0;
+
+  const alternar = (
+    id: string,
+    atual: Set<string>,
+    definir: (s: Set<string>) => void,
+  ) => {
+    const proximo = new Set(atual);
+    if (proximo.has(id)) proximo.delete(id);
+    else proximo.add(id);
+    definir(proximo);
+  };
+
+  /** O que a aluna nova vai receber, em palavras, antes de o botão ser clicado. */
+  const resumoDoQueRecebe = nadaEscolhido
+    ? "Nada marcado — ela entra e não vê conteúdo nenhum."
+    : aulasEscolhidas === 0
+      ? `Só os presentes: ${presentesEscolhidos} em ${categoriasEscolhidas.size} ${
+          categoriasEscolhidas.size === 1 ? "categoria" : "categorias"
+        }.`
       : nDias === 0
-        ? `As ${totalAulasCatalogo} aulas abrem todas de uma vez.`
-        : `As ${totalAulasCatalogo} aulas abrem uma a cada ${nDias} ${
-            nDias === 1 ? "dia" : "dias"
-          }, a partir da data escolhida.`;
+        ? `${aulasEscolhidas} ${aulasEscolhidas === 1 ? "aula abre" : "aulas abrem"} de uma vez${
+            presentesEscolhidos > 0 ? `, mais ${presentesEscolhidos} presentes` : ""
+          }.`
+        : `${aulasEscolhidas} ${
+            aulasEscolhidas === 1 ? "aula abre" : "aulas abrem"
+          } uma a cada ${nDias} ${nDias === 1 ? "dia" : "dias"}${
+            presentesEscolhidos > 0 ? `, mais ${presentesEscolhidos} presentes` : ""
+          }.`;
 
   // O vermelho é a única cor do painel, e quer dizer sempre a mesma
   // coisa: isto precisa de você. Aceso só quando há alguém.
@@ -329,8 +457,8 @@ export function AbaAlunas({
           <input
             type="text"
             value={codigo}
-            onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 4))}
-            placeholder="Código (4 números)"
+            onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            placeholder="Código (4 a 6 números)"
             aria-label="Código de acesso"
             inputMode="numeric"
             style={{ ...campo, flex: "1 1 140px" }}
@@ -354,25 +482,76 @@ export function AbaAlunas({
             className="mt-1 flex w-full flex-col gap-3 pt-3"
             style={{ borderTop: `1px solid ${tema.linhaSuave}` }}
           >
-            <label className="flex cursor-pointer items-start gap-3">
-              <input
-                type="checkbox"
-                checked={liberarCurso}
-                onChange={(e) => setLiberarCurso(e.target.checked)}
-                className="mt-[3px]"
-                style={{ accentColor: tema.texto }}
-              />
+            {/*
+              O que ela vai acessar, escolhido aqui.
+
+              Fica dobrado porque o formulario ja e alto no celular, mas
+              o contador e o resumo aparecem NO cabecalho, fechado — a
+              pessoa precisa saber o que vai gravar sem ter que abrir.
+            */}
+            <button
+              type="button"
+              onClick={() => setAcessoAberto((v) => !v)}
+              aria-expanded={acessoAberto}
+              className="flex w-full items-center justify-between gap-3 text-left"
+              style={{
+                ...botaoNeutroGrande,
+                background: "transparent",
+                border: `1px solid ${nadaEscolhido ? tema.linha : tema.texto}`,
+              }}
+            >
               <span className="min-w-0">
                 <span className="block text-[14px]" style={{ color: tema.texto }}>
-                  Dar o curso inteiro a ela
+                  O que ela vai acessar
                 </span>
-                <span className="mt-[2px] block text-[13px]" style={{ color: tema.textoSecundario }}>
+                <span
+                  className="mt-[2px] block text-[13px]"
+                  style={{ color: tema.textoSecundario }}
+                >
                   {resumoDoQueRecebe}
                 </span>
               </span>
-            </label>
+              <span className="flex-none text-[13px]" style={{ color: tema.textoSecundario }}>
+                {acessoAberto ? "Fechar ▲" : "Escolher ▼"}
+              </span>
+            </button>
 
-            {liberarCurso ? (
+            {acessoAberto ? (
+              <div className="flex flex-col gap-4 pl-[2px]">
+                <ListaDeEscolha
+                  titulo="Mentoria"
+                  vazio="Nenhum módulo cadastrado ainda."
+                  itens={catalogo.modulos.map((m) => ({
+                    id: m.id,
+                    nome: `Módulo ${m.numero} · ${m.titulo}`,
+                    quantos: `${m.aulas.length} ${m.aulas.length === 1 ? "aula" : "aulas"}`,
+                  }))}
+                  marcados={modulosEscolhidos}
+                  aoAlternar={(id) => alternar(id, modulosEscolhidos, setModulosEscolhidos)}
+                  aoTodos={() => setModulosEscolhidos(new Set(catalogo.modulos.map((m) => m.id)))}
+                  aoNenhum={() => setModulosEscolhidos(new Set())}
+                />
+                <ListaDeEscolha
+                  titulo="Presentes"
+                  vazio="Nenhuma categoria cadastrada ainda."
+                  itens={catalogo.categorias.map((c) => ({
+                    id: c.id,
+                    nome: c.titulo,
+                    quantos: `${c.presentes.length} ${
+                      c.presentes.length === 1 ? "presente" : "presentes"
+                    }`,
+                  }))}
+                  marcados={categoriasEscolhidas}
+                  aoAlternar={(id) => alternar(id, categoriasEscolhidas, setCategoriasEscolhidas)}
+                  aoTodos={() =>
+                    setCategoriasEscolhidas(new Set(catalogo.categorias.map((c) => c.id)))
+                  }
+                  aoNenhum={() => setCategoriasEscolhidas(new Set())}
+                />
+              </div>
+            ) : null}
+
+            {modulosEscolhidos.size > 0 ? (
               <div className="flex flex-wrap items-end gap-3 pl-[27px]">
                 <label className="flex flex-col gap-[6px]">
                   <span style={rotulo}>Uma aula a cada</span>
