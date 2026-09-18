@@ -45,6 +45,7 @@ Não inventar conteúdo para preencher seções.
 
 **Nunca esconder falha. Nunca dizer que fez algo que não fez.** Bloqueio
 real: informar curto e objetivo.
+
 ## Autorização — regra permanente
 
 Tarefa pedida = execução autorizada até concluir.
