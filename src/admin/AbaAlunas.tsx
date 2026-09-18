@@ -401,16 +401,8 @@ export function AbaAlunas({
     lugares: dentro da caixa quando aberta, logo abaixo do cabecalho
     quando fechada.
   */
-  const osBotoes = (
-    <div className="flex w-full flex-wrap gap-[10px]">
-      <button
-        type="submit"
-        disabled={salvando}
-        style={{ ...botaoOuro, flex: "0 0 auto", opacity: salvando ? 0.7 : 1 }}
-      >
-        {salvando ? "Cadastrando…" : "Cadastrar e liberar"}
-      </button>
-      <button
+  const oCancelar = (
+    <button
         type="button"
         onClick={() => {
           /*
@@ -428,10 +420,30 @@ export function AbaAlunas({
           setAcessoAberto(false);
           setCadastroAberto(false);
         }}
-        style={{ ...botaoNeutroGrande, flex: "0 0 auto" }}
+      style={{ ...botaoNeutroGrande, flex: "0 0 auto" }}
+    >
+      Cancelar
+    </button>
+  );
+
+  /*
+    Gravar so aparece com a secao aberta.
+
+    E de proposito: o caminho e preencher, escolher o que ela acessa, e
+    so entao gravar. Com a secao fechada nada foi escolhido, e um botao
+    de gravar ali convida a pular justamente a parte que faz o cadastro
+    valer. Desistir, esse sim, tem que estar sempre a mao.
+  */
+  const osBotoes = (
+    <div className="flex w-full flex-wrap gap-[10px]">
+      <button
+        type="submit"
+        disabled={salvando}
+        style={{ ...botaoOuro, flex: "0 0 auto", opacity: salvando ? 0.7 : 1 }}
       >
-        Cancelar
+        {salvando ? "Cadastrando…" : "Cadastrar e liberar"}
       </button>
+      {oCancelar}
     </div>
   );
 
@@ -694,7 +706,9 @@ export function AbaAlunas({
 
           </div>
 
-          {acessoAberto ? null : osBotoes}
+          {acessoAberto ? null : (
+            <div className="flex w-full flex-wrap gap-[10px]">{oCancelar}</div>
+          )}
         </form>
       ) : null}
 
