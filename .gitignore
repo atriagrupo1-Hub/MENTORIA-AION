@@ -5,3 +5,11 @@ dist/
 .env.*
 !.env.exemplo
 .DS_Store
+
+# Sobras do arranjo de verificação (Playwright), que grava capturas na
+# raiz ao rodar. São ferramenta, não produto: a pasta `previa/` é
+# apagada ao fim de cada passagem, mas as capturas reaparecem sempre que
+# os testes rodam de novo.
+previa/
+*.png
+!public/*.png
