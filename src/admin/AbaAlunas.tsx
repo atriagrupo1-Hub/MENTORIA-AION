@@ -320,10 +320,26 @@ export function AbaAlunas({
     setCadastroAberto(false);
     await recarregar();
 
+    /*
+      O aviso nomeia o que de fato foi feito.
+
+      Dizia sempre "conta, curso e prazo", mesmo quando nenhum modulo
+      tinha sido marcado — anunciava um curso que nao existia. Agora a
+      lista e montada com o que realmente entrou.
+    */
+    const feito = ["conta"];
+    if (modulosEscolhidos.size > 0) feito.push("curso");
+    if (categoriasEscolhidas.size > 0) feito.push("presentes");
+    if (PRAZOS.find((x) => x.chave === prazo)?.p) feito.push("prazo");
+    const emPalavras =
+      feito.length === 1 ? feito[0] : `${feito.slice(0, -1).join(", ")} e ${feito[feito.length - 1]}`;
+
     avisar(
       faltou.length > 0
         ? `${cadastrada} foi cadastrada, mas faltou ${faltou.join(" e ")}. Abra a ficha dela.`
-        : `${cadastrada} está pronta: conta, curso e prazo.`,
+        : nadaEscolhido
+          ? `${cadastrada} foi cadastrada, mas sem conteúdo nenhum liberado. Abra a ficha dela para dar.`
+          : `${cadastrada} está pronta: ${emPalavras}.`,
     );
   }
 
