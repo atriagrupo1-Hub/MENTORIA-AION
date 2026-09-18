@@ -364,22 +364,30 @@ export function AbaAlunas({
     definir(proximo);
   };
 
+  /*
+    O prazo entra no resumo porque agora mora dentro da secao dobrada.
+    Fora dela, estava sempre a vista; dentro, sumiria de quem fecha — e
+    ate quando a conta vale e coisa que nao se grava sem olhar.
+  */
+  const nomeDoPrazo = PRAZOS.find((x) => x.chave === prazo)?.nome ?? "";
+  const sufixoPrazo = nomeDoPrazo ? ` Acesso: ${nomeDoPrazo.toLowerCase()}.` : "";
+
   /** O que a aluna nova vai receber, em palavras, antes de o botão ser clicado. */
   const resumoDoQueRecebe = nadaEscolhido
-    ? "Nada marcado — ela entra e não vê conteúdo nenhum."
+    ? "Nada marcado — ela entra e não vê conteúdo nenhum." + sufixoPrazo
     : aulasEscolhidas === 0
       ? `Só os presentes: ${presentesEscolhidos} em ${categoriasEscolhidas.size} ${
           categoriasEscolhidas.size === 1 ? "categoria" : "categorias"
-        }.`
+        }.` + sufixoPrazo
       : nDias === 0
         ? `${aulasEscolhidas} ${aulasEscolhidas === 1 ? "aula abre" : "aulas abrem"} de uma vez${
             presentesEscolhidos > 0 ? `, mais ${presentesEscolhidos} presentes` : ""
-          }.`
+          }.` + sufixoPrazo
         : `${aulasEscolhidas} ${
             aulasEscolhidas === 1 ? "aula abre" : "aulas abrem"
           } uma a cada ${nDias} ${nDias === 1 ? "dia" : "dias"}${
             presentesEscolhidos > 0 ? `, mais ${presentesEscolhidos} presentes` : ""
-          }.`;
+          }.` + sufixoPrazo;
 
   // O vermelho é a única cor do painel, e quer dizer sempre a mesma
   // coisa: isto precisa de você. Aceso só quando há alguém.
@@ -564,54 +572,71 @@ export function AbaAlunas({
                   }
                   aoNenhum={() => setCategoriasEscolhidas(new Set())}
                 />
+
+                {/*
+                  Quando as aulas abrem, e ate quando a conta vale.
+
+                  Moravam fora desta secao, soltos entre ela e o botao
+                  de gravar — tres controles orfaos que decidem o acesso
+                  da aluna, do lado de fora do lugar chamado "o que ela
+                  vai acessar". O traco os separa das listas para nao
+                  parecerem mais um item de catalogo.
+                */}
+                <div
+                  className="flex flex-col gap-4 pt-4"
+                  style={{ borderTop: `1px solid ${tema.linhaSuave}` }}
+                >
+                  {/* Sem aula marcada nao ha o que espacar. */}
+                  {modulosEscolhidos.size > 0 ? (
+                    <div className="flex flex-wrap items-end gap-3">
+                      <label className="flex flex-col gap-[6px]">
+                        <span style={rotulo}>Uma aula a cada</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={365}
+                          inputMode="numeric"
+                          value={intervalo}
+                          onChange={(e) => setIntervalo(e.target.value)}
+                          placeholder={String(intervaloPadrao)}
+                          aria-label="Intervalo em dias entre as aulas"
+                          style={{ ...campo, width: 92, textAlign: "center" }}
+                        />
+                      </label>
+                      <label className="flex flex-col gap-[6px]">
+                        <span style={rotulo}>Começando em</span>
+                        <Calendario valor={inicio} aoEscolher={setInicio} />
+                      </label>
+                    </div>
+                  ) : null}
+
+                  {/* O prazo e da conta, nao do conteudo: fica sempre. */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span style={{ ...rotulo, flex: "0 0 100%" }}>Acesso por</span>
+                    {PRAZOS.map((x) => {
+                      const escolhido = prazo === x.chave;
+                      return (
+                        <button
+                          key={x.chave}
+                          type="button"
+                          onClick={() => setPrazo(x.chave)}
+                          aria-pressed={escolhido}
+                          style={{
+                            ...botaoNeutro,
+                            color: escolhido ? "#000000" : tema.texto,
+                            background: escolhido ? tema.texto : "transparent",
+                            border: `1px solid ${escolhido ? tema.texto : tema.linha}`,
+                          }}
+                        >
+                          {x.nome}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             ) : null}
 
-            {modulosEscolhidos.size > 0 ? (
-              <div className="flex flex-wrap items-end gap-3 pl-[27px]">
-                <label className="flex flex-col gap-[6px]">
-                  <span style={rotulo}>Uma aula a cada</span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={365}
-                    inputMode="numeric"
-                    value={intervalo}
-                    onChange={(e) => setIntervalo(e.target.value)}
-                    placeholder={String(intervaloPadrao)}
-                    aria-label="Intervalo em dias entre as aulas"
-                    style={{ ...campo, width: 92, textAlign: "center" }}
-                  />
-                </label>
-                <label className="flex flex-col gap-[6px]">
-                  <span style={rotulo}>Começando em</span>
-                  <Calendario valor={inicio} aoEscolher={setInicio} />
-                </label>
-              </div>
-            ) : null}
-
-            <div className="flex flex-wrap items-center gap-2">
-              <span style={{ ...rotulo, flex: "0 0 100%" }}>Acesso por</span>
-              {PRAZOS.map((x) => {
-                const escolhido = prazo === x.chave;
-                return (
-                  <button
-                    key={x.chave}
-                    type="button"
-                    onClick={() => setPrazo(x.chave)}
-                    aria-pressed={escolhido}
-                    style={{
-                      ...botaoNeutro,
-                      color: escolhido ? "#000000" : tema.texto,
-                      background: escolhido ? tema.texto : "transparent",
-                      border: `1px solid ${escolhido ? tema.texto : tema.linha}`,
-                    }}
-                  >
-                    {x.nome}
-                  </button>
-                );
-              })}
-            </div>
           </div>
 
           <button
