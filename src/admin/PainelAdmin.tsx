@@ -5,9 +5,9 @@ import { useAviso } from "@/components/useAviso";
 import { useEstado } from "@/data/estado";
 import { AbaAlunas } from "./AbaAlunas";
 import { AbaComentarios } from "./AbaComentarios";
-import { AbaConteudo } from "./AbaConteudo";
 import { AbaEquipe } from "./AbaEquipe";
-import { AbaPresentes } from "./AbaPresentes";
+import { AbaLayout } from "./AbaLayout";
+import { AbaProdutos } from "./AbaProdutos";
 import { ehAdmin as podeTudo, ehDono, ehEquipe, NOME_DO_PAPEL } from "./papeis";
 import { Confirmacao, type PedidoConfirmacao } from "./Confirmacao";
 import { aba, botaoNeutro, botaoOuro, campo, painel as tema } from "./estilos";
@@ -232,11 +232,24 @@ function EntradaAdmin({
   );
 }
 
-type Chave = "alunas" | "conteudo" | "comentarios" | "equipe";
+/*
+ * As duas áreas novas — `layout` e `produtos` — são a separação que o
+ * painel não tinha. Antes havia uma aba "Conteúdo" com sub-abas
+ * Mentoria e Presentes, e ela misturava três responsabilidades: onde o
+ * conteúdo aparece, o que ele tem dentro, e quem pode abri-lo.
+ *
+ *   Categorias / Layout  ->  ONDE aparece, e em que ordem
+ *   Cursos e conteúdos   ->  O QUE existe dentro do produto
+ *   `acessos`            ->  QUEM pode acessar
+ *
+ * Nenhuma das duas novas escreve em `acessos`.
+ */
+type Chave = "alunas" | "layout" | "produtos" | "comentarios" | "equipe";
 
 const TITULO: Record<Chave, string> = {
   alunas: "Alunas da mentoria",
-  conteudo: "Conteúdo da mentoria",
+  layout: "Categorias e layout",
+  produtos: "Cursos e conteúdos",
   comentarios: "Comentários das alunas",
   equipe: "Quem trabalha no painel",
 };
@@ -246,7 +259,6 @@ function PainelLogado() {
   const painel = usePainel();
   const aviso = useAviso();
   const [abaAtiva, setAbaAtiva] = useState<Chave>("alunas");
-  const [subaba, setSubaba] = useState("mentoria");
   const [pedido, setPedido] = useState<PedidoConfirmacao | null>(null);
 
   const papel = aluna?.papel;
@@ -262,7 +274,12 @@ function PainelLogado() {
    */
   const ABAS: Array<{ chave: Chave; nome: string }> = [
     { chave: "alunas", nome: "Alunas" },
-    ...(podeTudo(papel) ? [{ chave: "conteudo" as const, nome: "Conteúdo" }] : []),
+    ...(podeTudo(papel)
+      ? [
+          { chave: "layout" as const, nome: "Categorias / Layout" },
+          { chave: "produtos" as const, nome: "Cursos e conteúdos" },
+        ]
+      : []),
     { chave: "comentarios", nome: "Comentários" },
     ...(podeTudo(papel) ? [{ chave: "equipe" as const, nome: "Equipe" }] : []),
   ];
@@ -279,25 +296,18 @@ function PainelLogado() {
           ativas === 1 ? "ativa" : "ativas"
         }`;
 
-  const sozinhaId = subaba.startsWith("solo:") ? subaba.slice(5) : null;
+  const totalProdutos = catalogo.produtos.length;
 
-  const resumoConteudo = sozinhaId
-    ? `${catalogo.categorias.find((c) => c.id === sozinhaId)?.presentes.length ?? 0} presentes`
-    : subaba === "presentes"
-      ? `${catalogo.categorias.length} ${
-          catalogo.categorias.length === 1 ? "categoria" : "categorias"
-        } · ${totalPresentes} ${totalPresentes === 1 ? "presente" : "presentes"}`
-      : `${catalogo.modulos.length} ${
-          catalogo.modulos.length === 1 ? "módulo" : "módulos"
-        } · ${totalAulas} ${totalAulas === 1 ? "aula" : "aulas"}`;
+  const resumoLayout = `${catalogo.categorias.length} ${
+    catalogo.categorias.length === 1 ? "categoria" : "categorias"
+  } · ${totalProdutos} ${totalProdutos === 1 ? "produto" : "produtos"}`;
 
-  const subabas = [
-    { nome: "Mentoria", chave: "mentoria" },
-    { nome: "Presentes", chave: "presentes" },
-    ...catalogo.categorias
-      .filter((c) => c.destacada)
-      .map((c) => ({ nome: c.titulo, chave: `solo:${c.id}` })),
-  ];
+  const resumoProdutos =
+    `${totalProdutos} ${totalProdutos === 1 ? "produto" : "produtos"} · ` +
+    `${catalogo.modulos.length} ${
+      catalogo.modulos.length === 1 ? "módulo" : "módulos"
+    } · ${totalAulas} ${totalAulas === 1 ? "aula" : "aulas"} · ` +
+    `${totalPresentes} ${totalPresentes === 1 ? "item" : "itens"}`;
 
   return (
     <div className="min-h-screen" style={{ background: FUNDO }}>
@@ -345,9 +355,11 @@ function PainelLogado() {
                 ? "O que elas escreveram nas aulas — e onde você responde"
                 : carregando
                   ? "Carregando…"
-                  : abaAtiva === "conteudo"
-                    ? resumoConteudo
-                    : resumoAlunas}
+                  : abaAtiva === "layout"
+                    ? resumoLayout
+                    : abaAtiva === "produtos"
+                      ? resumoProdutos
+                      : resumoAlunas}
           </span>
         </header>
 
@@ -391,45 +403,17 @@ function PainelLogado() {
           />
         ) : abaAtiva === "equipe" ? (
           <AbaEquipe meuPapel={papel} pedirConfirmacao={setPedido} avisar={aviso.mostrar} />
-        ) : abaAtiva === "alunas" ? (
+        ) : abaAtiva === "layout" ? (
+          <AbaLayout painel={painel} pedirConfirmacao={setPedido} avisar={aviso.mostrar} />
+        ) : abaAtiva === "produtos" ? (
+          <AbaProdutos painel={painel} pedirConfirmacao={setPedido} avisar={aviso.mostrar} />
+        ) : (
           <AbaAlunas
             painel={painel}
             meuPapel={papel}
             pedirConfirmacao={setPedido}
             avisar={aviso.mostrar}
           />
-        ) : (
-          <div>
-            <div
-              className="mb-5 flex flex-wrap"
-              style={{ borderBottom: `1px solid ${tema.linhaSuave}` }}
-            >
-              {subabas.map((s) => (
-                <button
-                  key={s.chave}
-                  onClick={() => setSubaba(s.chave)}
-                  style={aba(subaba === s.chave)}
-                >
-                  {s.nome}
-                </button>
-              ))}
-            </div>
-
-            {subaba === "mentoria" ? (
-              <AbaConteudo
-                painel={painel}
-                pedirConfirmacao={setPedido}
-                avisar={aviso.mostrar}
-              />
-            ) : (
-              <AbaPresentes
-                painel={painel}
-                categoriaSozinha={sozinhaId}
-                pedirConfirmacao={setPedido}
-                avisar={aviso.mostrar}
-              />
-            )}
-          </div>
         )}
       </div>
 

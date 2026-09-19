@@ -2,8 +2,18 @@ import { useState, type FormEvent } from "react";
 import type { Aula, Modulo } from "@/data/tipos";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
-import { botaoNeutro, botaoNeutroGrande, botaoOuro, botaoRemover, campo, painel as tema } from "./estilos";
+import { EditorConteudos } from "./EditorConteudos";
+import {
+  botaoNeutro,
+  botaoNeutroGrande,
+  botaoOuro,
+  botaoRemover,
+  campo,
+  painel as tema,
+  rotulo,
+} from "./estilos";
 import type { Painel } from "./usePainel";
+import { idDoVideo, provedorDoLink } from "./video";
 
 /*
  * O botão das linhas de aula e de presente.
@@ -26,40 +36,28 @@ const BOTAO_LINHA: React.CSSProperties = {
   cursor: "pointer",
 };
 
-/** Extrai o identificador do vídeo a partir de um link ou do próprio id. */
-export function idDoVideo(entrada: string): string {
-  const s = String(entrada).trim();
-  if (!s) return "";
-  const comQuery = s.match(/[?&]v=([\w-]{6,})/);
-  if (comQuery) return comQuery[1];
-  const curto =
-    s.match(/youtu\.be\/([\w-]{6,})/) ??
-    s.match(/embed\/([\w-]{6,})/) ??
-    s.match(/videodelivery\.net\/([\w-]{6,})/) ??
-    s.match(/cloudflarestream\.com\/([\w-]{6,})/);
-  if (curto) return curto[1];
-  if (/^[\w-]{6,}$/.test(s)) return s;
-  return "";
-}
-
-/** O provedor é deduzido do link. Sem link reconhecível, Cloudflare Stream. */
-function provedorDoLink(entrada: string): string {
-  const s = entrada.toLowerCase();
-  if (s.includes("youtu")) return "youtube";
-  if (s.includes("vimeo")) return "vimeo";
-  return "stream";
-}
 
 export function AbaConteudo({
   painel,
+  produtoId,
   pedirConfirmacao,
   avisar,
 }: {
   painel: Painel;
+  /**
+   * Montado dentro de um produto, mostra só os módulos DELE. Sem a
+   * prop, mostra todos — é como a aba antiga funcionava, e é o que
+   * mantém o componente utilizável nos dois lugares sem reescrita.
+   */
+  produtoId?: string;
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
   const { catalogo, midiaAulas, alunas, executar } = painel;
+
+  const modulos = produtoId
+    ? catalogo.modulos.filter((m) => m.produtoId === produtoId)
+    : catalogo.modulos;
   const [expandido, setExpandido] = useState(true);
   const [novoModulo, setNovoModulo] = useState("");
   const [novaAulaEm, setNovaAulaEm] = useState("");
@@ -71,7 +69,7 @@ export function AbaConteudo({
   const [capa, setCapa] = useState("");
   const [exercicio, setExercicio] = useState("");
 
-  const totalAulas = catalogo.modulos.reduce((s, m) => s + m.aulas.length, 0);
+  const totalAulas = modulos.reduce((s, m) => s + m.aulas.length, 0);
 
   /*
    * "de 12 alunas" em vez de "das alunas".
@@ -92,11 +90,9 @@ export function AbaConteudo({
       avisar("Informe o nome do módulo.");
       return;
     }
-    const numero = catalogo.modulos.length
-      ? Math.max(...catalogo.modulos.map((m) => m.numero)) + 1
-      : 0;
+    const numero = modulos.length ? Math.max(...modulos.map((m) => m.numero)) + 1 : 0;
     const falha = await executar(() =>
-      dados.criarModulo(novoModulo.trim(), numero, catalogo.modulos.length),
+      dados.criarModulo(novoModulo.trim(), numero, modulos.length, produtoId),
     );
     if (!falha) setNovoModulo("");
     avisar(falha ?? "Módulo criado.");
@@ -126,12 +122,14 @@ export function AbaConteudo({
       <div className="flex flex-wrap items-center gap-[10px]">
         <span className="flex min-w-0 flex-[1_1_220px] flex-col gap-[3px]">
           <span className="text-[11px] uppercase tracking-[.24em] text-[#a58a52]">
-            Mentoria
+            {produtoId ? "Estrutura" : "Mentoria"}
           </span>
-          <span className="font-titulo text-[22px] text-white">Caminho do Desbloqueio</span>
+          <span className="font-titulo text-[22px] text-white">
+            {produtoId ? "Módulos e aulas" : "Caminho do Desbloqueio"}
+          </span>
         </span>
         <span className="text-[13px] text-[rgba(255,255,255,.55)]">
-          {catalogo.modulos.length} módulos · {totalAulas} aulas
+          {modulos.length} módulos · {totalAulas} aulas
         </span>
         <button
           onClick={() => setExpandido((v) => !v)}
@@ -153,7 +151,7 @@ export function AbaConteudo({
             quando alguém chega ao final da lista pensando "falta um".
           */}
           <div className="flex flex-col gap-3">
-            {catalogo.modulos.map((modulo) => (
+            {modulos.map((modulo) => (
               <div
                 key={modulo.id}
                 className="rounded-cartao p-4"
@@ -307,6 +305,29 @@ export function AbaConteudo({
                       Cancelar
                     </button>
                   </form>
+                ) : null}
+
+                {/*
+                  Conteúdo da SEÇÃO — o que pertence ao módulo e não a
+                  nenhuma aula dele. É o degrau que faltava para o
+                  produto que tem seções mas não tem aulas.
+                */}
+                {modulo.produtoId ? (
+                  <div
+                    className="mt-3 pt-3"
+                    style={{ borderTop: "1px solid rgba(255,255,255,.07)" }}
+                  >
+                    <span className="mb-2 block" style={rotulo}>
+                      Conteúdos desta seção, fora das aulas
+                    </span>
+                    <EditorConteudos
+                      dono={{ produtoId: modulo.produtoId, moduloId: modulo.id }}
+                      conteudos={modulo.conteudos}
+                      painel={painel}
+                      pedirConfirmacao={pedirConfirmacao}
+                      avisar={avisar}
+                    />
+                  </div>
                 ) : null}
 
                 <div className="mt-[10px] flex flex-col">
@@ -649,6 +670,28 @@ export function AbaConteudo({
                               </button>
                             </div>
                           </form>
+                        ) : null}
+
+                        {/*
+                          Os conteúdos extras da aula. O vídeo
+                          principal, a capa e o exercício continuam nos
+                          campos de sempre, lidos pelo player — aqui
+                          entra o que a aula ganhou além disso: outro
+                          áudio, um texto, um PDF, um link.
+                        */}
+                        {conteudoDe === aula.id && modulo.produtoId ? (
+                          <div className="mb-3">
+                            <span className="mb-2 block" style={rotulo}>
+                              Conteúdos extras desta aula
+                            </span>
+                            <EditorConteudos
+                              dono={{ produtoId: modulo.produtoId, aulaId: aula.id }}
+                              conteudos={aula.conteudos}
+                              painel={painel}
+                              pedirConfirmacao={pedirConfirmacao}
+                              avisar={avisar}
+                            />
+                          </div>
                         ) : null}
 
                         {editando === `a:${aula.id}` ? (

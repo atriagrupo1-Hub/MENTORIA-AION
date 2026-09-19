@@ -338,10 +338,18 @@ export async function removerAulaDaAluna(alunaId: string, aulaId: string): Promi
 // Catálogo
 // ---------------------------------------------------------------------
 
-export async function criarModulo(titulo: string, numero: number, ordem: number) {
-  const { error } = await supabase
-    .from("modulos")
-    .insert({ titulo: titulo.toUpperCase(), numero, ordem });
+export async function criarModulo(
+  titulo: string,
+  numero: number,
+  ordem: number,
+  produtoId?: string,
+) {
+  const { error } = await supabase.from("modulos").insert({
+    titulo: titulo.toUpperCase(),
+    numero,
+    ordem,
+    ...(produtoId ? { produto_id: produtoId } : {}),
+  });
   if (error) throw new Error(`criar módulo: ${error.message}`);
 }
 
@@ -460,10 +468,18 @@ export async function removerCategoria(id: string) {
   if (error) throw new Error(`remover categoria: ${error.message}`);
 }
 
-export async function criarPresente(categoriaId: string, titulo: string, ordem: number) {
-  const { error } = await supabase
-    .from("presentes")
-    .insert({ categoria_id: categoriaId, titulo, ordem });
+export async function criarPresente(
+  categoriaId: string,
+  titulo: string,
+  ordem: number,
+  produtoId?: string,
+) {
+  const { error } = await supabase.from("presentes").insert({
+    categoria_id: categoriaId,
+    titulo,
+    ordem,
+    ...(produtoId ? { produto_id: produtoId } : {}),
+  });
   if (error) throw new Error(`criar presente: ${error.message}`);
 }
 
@@ -475,7 +491,9 @@ export async function atualizarPresente(
     duracao_texto: string;
     capa_path: string | null;
     categoria_id: string;
+    produto_id: string | null;
     ordem: number;
+    publicado: boolean;
     bloqueado_geral: boolean;
   }>,
 ) {
