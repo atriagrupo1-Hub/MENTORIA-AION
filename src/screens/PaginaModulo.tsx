@@ -1,4 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
+import { Conteudos } from "@/components/Conteudos";
 import { Aviso } from "@/components/Aviso";
 import { Capa, capaAoVivo, capaAula, capaModulo } from "@/components/Capa";
 import { Play } from "@/components/Icones";
@@ -96,6 +97,7 @@ export function PaginaModulo() {
   const e = estadoDoModulo(modulo, moduloLiberado(modulo), concluida, moduloAbreEm(modulo));
   const cor = paleta(modulo.numero);
   const aoVivo = catalogo.aoVivo[modulo.id];
+  const extras = modulo.conteudos.filter((c) => c.publicado);
   const proxima = modulo.aulas.findIndex((a) => !concluida(a.id));
 
   function irPara(destino: number) {
@@ -319,6 +321,20 @@ export function PaginaModulo() {
             />
           </div>
         </section>
+
+        {/*
+          Os conteúdos da seção — o que pertence ao módulo e não a
+          nenhuma aula dele. Vazio em todos os módulos de hoje; existe
+          para o produto que tem seção e não tem aula.
+
+          A política de `conteudos` já decidiu o que chega: o módulo só
+          devolve linha para quem tem ao menos uma aula dele aberta.
+        */}
+        {extras.length > 0 ? (
+          <section className="mt-9">
+            <Conteudos itens={extras} />
+          </section>
+        ) : null}
       </div>
 
       <Aviso mensagem={aviso.mensagem} aoFechar={aviso.limpar} />

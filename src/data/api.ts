@@ -484,10 +484,34 @@ export async function minhasAulas(): Promise<AulaLiberada[]> {
 
 /** Presentes liberados: a decisão é do banco, uma pergunta por presente. */
 export async function presentesLiberados(ids: string[]): Promise<Set<string>> {
+  return perguntarUmAUm("pode_ver_presente", "p_presente", ids);
+}
+
+/**
+ * Quais produtos a aluna pode abrir.
+ *
+ * Só faz sentido para o produto cujo conteúdo é direto — sem módulo e
+ * sem item. Quando o conteúdo pendura numa aula ou num item, é a
+ * liberação DELES que vale, e é ela que o banco confere.
+ */
+export async function produtosLiberados(ids: string[]): Promise<Set<string>> {
+  return perguntarUmAUm("pode_ver_produto", "p_produto", ids);
+}
+
+/*
+ * Uma pergunta por id. Quem decide continua sendo o banco: a tela não
+ * recalcula liberação em lugar nenhum, só lê a resposta. Erro conta
+ * como "não" — é a regra do item 8 do handoff.
+ */
+async function perguntarUmAUm(
+  funcao: string,
+  parametro: string,
+  ids: string[],
+): Promise<Set<string>> {
   if (ids.length === 0) return new Set();
   const respostas = await Promise.all(
     ids.map(async (id) => {
-      const { data, error } = await supabase.rpc("pode_ver_presente", { p_presente: id });
+      const { data, error } = await supabase.rpc(funcao, { [parametro]: id });
       if (error) return [id, false] as const;
       return [id, Boolean(data)] as const;
     }),
@@ -682,6 +706,25 @@ export function enderecoDoVideo(video: Video): string {
 }
 
 /** Endereço público de uma capa no depósito `capas`. */
+/**
+ * Endereço temporário de um arquivo guardado.
+ *
+ * `materiais` e `audios` são depósitos fechados: quem decide se o
+ * arquivo sai é a política do Storage, que confere
+ * `pode_ver_conteudo()` no banco. Esconder o endereço nunca foi a
+ * proteção — a assinatura curta é.
+ */
+export async function enderecoDoArquivo(
+  deposito: "materiais" | "audios",
+  caminho: string,
+): Promise<string | null> {
+  const { data, error } = await supabase.storage
+    .from(deposito)
+    .createSignedUrl(caminho, 600);
+  if (error) return null;
+  return data?.signedUrl ?? null;
+}
+
 export function urlDaCapa(caminho: string | null): string | null {
   if (!caminho) return null;
   const { data } = supabase.storage.from("capas").getPublicUrl(caminho);

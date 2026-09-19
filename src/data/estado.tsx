@@ -86,6 +86,8 @@ type Estado = {
    */
   aulaAbreEm: (aulaId: string) => string | null;
   presenteLiberado: (categoriaId: string, presenteId: string) => boolean;
+  /** Produto de conteúdo direto: a aluna pode abrir? */
+  produtoLiberado: (produtoId: string) => boolean;
 
   concluida: (aulaId: string) => boolean;
   percentualAssistido: (aulaId: string) => number;
@@ -114,6 +116,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
   const [catalogo, setCatalogo] = useState<Catalogo>(CATALOGO_VAZIO);
   const [liberadas, setLiberadas] = useState<Map<string, AulaLiberada>>(new Map());
   const [presentesLib, setPresentesLib] = useState<Set<string>>(new Set());
+  const [produtosLib, setProdutosLib] = useState<Set<string>>(new Set());
   const [modulosDaAluna, setModulosDaAluna] = useState<Map<string, api.ModuloDaAluna>>(
     new Map(),
   );
@@ -143,6 +146,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
         setCatalogo(CATALOGO_VAZIO);
         setLiberadas(new Map());
         setPresentesLib(new Set());
+        setProdutosLib(new Set());
         setModulosDaAluna(new Map());
         setCurtidasSet(new Set());
         setAberturas(new Map());
@@ -177,11 +181,28 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       setAberturas(abre);
 
       const idsPresentes = cat.categorias.flatMap((c) => c.presentes.map((p) => p.id));
-      setPresentesLib(await api.presentesLiberados(idsPresentes));
+
+      /*
+       * Só os produtos de conteúdo DIRETO precisam de pergunta própria.
+       * Quem tem módulo ou item já é decidido pela liberação deles, e
+       * perguntar de novo seria uma ida ao banco por produto sem mudar
+       * resposta nenhuma.
+       */
+      const idsProdutos = cat.produtos
+        .filter((p) => p.modulos.length === 0 && p.presentes.length === 0)
+        .map((p) => p.id);
+
+      const [libPresentes, libProdutos] = await Promise.all([
+        api.presentesLiberados(idsPresentes),
+        api.produtosLiberados(idsProdutos),
+      ]);
+      setPresentesLib(libPresentes);
+      setProdutosLib(libProdutos);
     } catch (falha) {
       // Sem resposta do banco, nada é liberado. É a regra do item 8.
       setLiberadas(new Map());
       setPresentesLib(new Set());
+      setProdutosLib(new Set());
       setModulosDaAluna(new Map());
       setAberturas(new Map());
       setErro(
@@ -229,6 +250,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       setCatalogo(CATALOGO_VAZIO);
       setLiberadas(new Map());
       setPresentesLib(new Set());
+      setProdutosLib(new Set());
       setModulosDaAluna(new Map());
       setCurtidasSet(new Set());
       setAberturas(new Map());
@@ -254,6 +276,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
     setCatalogo(CATALOGO_VAZIO);
     setLiberadas(new Map());
     setPresentesLib(new Set());
+    setProdutosLib(new Set());
     setModulosDaAluna(new Map());
     setCurtidasSet(new Set());
     posicoesLocais.current.clear();
@@ -309,6 +332,11 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
   const presenteLiberado = useCallback<Estado["presenteLiberado"]>(
     (_categoriaId, presenteId) => presentesLib.has(presenteId),
     [presentesLib],
+  );
+
+  const produtoLiberado = useCallback<Estado["produtoLiberado"]>(
+    (produtoId) => produtosLib.has(produtoId),
+    [produtosLib],
   );
 
   const posicaoSegundos = useCallback<Estado["posicaoSegundos"]>(
@@ -410,6 +438,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       moduloAbreEm,
       aulaAbreEm,
       presenteLiberado,
+      produtoLiberado,
       concluida,
       percentualAssistido,
       posicaoSegundos,
@@ -434,6 +463,7 @@ export function ProvedorEstado({ children }: { children: ReactNode }) {
       moduloAbreEm,
       aulaAbreEm,
       presenteLiberado,
+      produtoLiberado,
       concluida,
       percentualAssistido,
       posicaoSegundos,

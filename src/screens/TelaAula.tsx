@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Aviso } from "@/components/Aviso";
 import { Capa, capaAula, capaModulo } from "@/components/Capa";
 import { Conversa } from "@/components/Conversa";
+import { Conteudos } from "@/components/Conteudos";
 import { EsqueletoComentarios } from "@/components/Esqueleto";
 import { Player } from "@/components/Player";
 import { Play } from "@/components/Icones";
@@ -256,6 +257,7 @@ export function TelaAula() {
   const cor = paleta(modulo.numero);
   const feita = concluida(aula.id);
   const passos = passosDoExercicio(aula.exercicio);
+  const extras = aula.conteudos.filter((c) => c.publicado);
   /*
    * O minuto em que ela está. Com vídeo de verdade vem do player; sem
    * vídeo, da barra simulada, que só existe enquanto a aula não subiu.
@@ -750,6 +752,21 @@ export function TelaAula() {
               ))}
             </ol>
           </div>
+        ) : null}
+
+        {/*
+          Os conteúdos extras desta aula — outro áudio, um texto, um
+          PDF, um link. O vídeo principal, a capa e o exercício
+          continuam vindo de onde sempre vieram; isto é o que a aula
+          ganhou além disso, na ordem definida no painel.
+
+          A lista só chega até aqui se a política de `conteudos` no
+          banco deixou: aula não liberada não devolve linha nenhuma.
+        */}
+        {extras.length > 0 ? (
+          <section className="mt-8">
+            <Conteudos itens={extras} />
+          </section>
         ) : null}
 
         {/*

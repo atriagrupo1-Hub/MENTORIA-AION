@@ -6,6 +6,7 @@ import { Login } from "@/screens/Login";
 import { Modulos } from "@/screens/Modulos";
 import { PaginaModulo } from "@/screens/PaginaModulo";
 import { PaginaPresente } from "@/screens/PaginaPresente";
+import { PaginaProduto } from "@/screens/PaginaProduto";
 import { Perfil } from "@/screens/Perfil";
 import { Presentes } from "@/screens/Presentes";
 import { TelaAula } from "@/screens/TelaAula";
@@ -35,6 +36,7 @@ export function App() {
         <Route path="/ao-vivo/:mi" element={<AulaAoVivo />} />
         <Route path="/presentes" element={<Presentes />} />
         <Route path="/presente/:id" element={<PaginaPresente />} />
+        <Route path="/conteudo/:id" element={<PaginaProduto />} />
         <Route path="/perfil" element={<Perfil />} />
       </Route>
 

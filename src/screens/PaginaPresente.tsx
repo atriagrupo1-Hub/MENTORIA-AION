@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import * as api from "@/data/api";
 import { Capa, capaPresente } from "@/components/Capa";
+import { Conteudos } from "@/components/Conteudos";
 import { Cadeado, Play } from "@/components/Icones";
 import { useEstado } from "@/data/estado";
 import { cores } from "@/design/tokens";
@@ -42,6 +43,7 @@ export function PaginaPresente() {
 
   const { presente, categoriaId } = atual;
   const liberado = presenteLiberado(categoriaId, presente.id);
+  const extras = presente.conteudos.filter((c) => c.publicado);
 
   return (
     <main className="entra mx-auto max-w-[1240px] px-7 pb-24 pt-9 cel-sm:px-5">
@@ -160,6 +162,20 @@ export function PaginaPresente() {
           </p>
         </div>
       )}
+
+      {/*
+        Os conteúdos deste item: capa, texto, áudio, PDF, link. O vídeo
+        principal continua acima, vindo de `presente_midia` como sempre
+        veio — isto é o que o item ganhou além dele, na ordem do painel.
+
+        Só chega aqui o que o banco devolveu: a política de `conteudos`
+        confere `pode_ver_presente` linha a linha.
+      */}
+      {liberado && extras.length > 0 ? (
+        <section className="mt-8">
+          <Conteudos itens={extras} />
+        </section>
+      ) : null}
 
       <div className="mt-7 flex flex-wrap gap-5">
         <div
