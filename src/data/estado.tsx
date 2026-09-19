@@ -22,7 +22,12 @@ import type { Aula, Catalogo, Modulo } from "./tipos";
  * palpite local.
  */
 
-const CATALOGO_VAZIO: Catalogo = { modulos: [], categorias: [], aoVivo: {} };
+const CATALOGO_VAZIO: Catalogo = {
+  modulos: [],
+  categorias: [],
+  aoVivo: {},
+  produtos: [],
+};
 
 /**
  * Duração de demonstração, herdada do protótipo. Vale só enquanto

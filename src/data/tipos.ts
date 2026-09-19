@@ -12,10 +12,14 @@ export type Modulo = {
   titulo: string;
   intro: string;
   ordem: number;
+  /** A qual produto este módulo pertence. Nulo só em base antiga. */
+  produtoId: string | null;
   bloqueadoGeral: boolean;
   /** A arte da capa já traz o título; a tela não sobrepõe o dela. */
   tituloNaArte: boolean;
   aulas: Aula[];
+  /** Conteúdos da seção — pendurados no módulo, fora de qualquer aula. */
+  conteudos: Conteudo[];
 };
 
 export type Aula = {
@@ -32,6 +36,8 @@ export type Aula = {
   exercicio: string | null;
   capaPath: string | null;
   bloqueadoGeral: boolean;
+  /** Conteúdos extras desta aula, além do vídeo e do material de sempre. */
+  conteudos: Conteudo[];
 };
 
 export type AulaAoVivo = {
@@ -47,6 +53,51 @@ export type Categoria = {
   destacada: boolean;
   bloqueadaGeral: boolean;
   presentes: Presente[];
+  /** Os produtos desta categoria, na ordem definida no painel. */
+  produtos: Produto[];
+};
+
+/** Um pedaço de conteúdo. O mesmo formato serve para todos os tipos. */
+export type TipoConteudo = "video" | "audio" | "texto" | "pdf" | "link" | "imagem";
+
+export type Conteudo = {
+  id: string;
+  produtoId: string;
+  /** Onde ele está pendurado. Os três nulos = conteúdo direto do produto. */
+  moduloId: string | null;
+  aulaId: string | null;
+  presenteId: string | null;
+  tipo: TipoConteudo;
+  titulo: string;
+  texto: string | null;
+  arquivoPath: string | null;
+  url: string | null;
+  videoProvider: string | null;
+  videoRef: string | null;
+  ordem: number;
+  publicado: boolean;
+};
+
+/**
+ * O container universal.
+ *
+ * `categoriaId` diz ONDE ele aparece — e só isso. Não diz o que ele tem
+ * dentro: um produto pode ter módulos e aulas, pode ter itens de
+ * acervo, pode ter conteúdo direto, ou qualquer combinação.
+ */
+export type Produto = {
+  id: string;
+  categoriaId: string;
+  titulo: string;
+  descricao: string;
+  capaPath: string | null;
+  ordem: number;
+  publicado: boolean;
+  bloqueadoGeral: boolean;
+  modulos: Modulo[];
+  presentes: Presente[];
+  /** Conteúdo pendurado direto no produto, sem módulo nem item. */
+  conteudos: Conteudo[];
 };
 
 export type Presente = {
@@ -60,12 +111,18 @@ export type Presente = {
   videoRef: string | null;
   ordem: number;
   bloqueadoGeral: boolean;
+  /** A qual produto este item pertence. Nulo só em base antiga. */
+  produtoId: string | null;
+  /** Conteúdos deste item. */
+  conteudos: Conteudo[];
 };
 
 export type Catalogo = {
   modulos: Modulo[];
   categorias: Categoria[];
   aoVivo: Record<string, AulaAoVivo>;
+  /** Todos os produtos, na ordem de categoria e depois de posição. */
+  produtos: Produto[];
 };
 
 export type StatusConta = "ativa" | "bloqueada";

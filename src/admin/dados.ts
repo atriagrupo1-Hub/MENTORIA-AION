@@ -1,5 +1,5 @@
 import { supabase } from "@/data/supabase";
-import type { Catalogo } from "@/data/tipos";
+import type { Catalogo, TipoConteudo } from "@/data/tipos";
 import { NOME_DO_PAPEL, type PapelNovo } from "./papeis";
 
 /**
@@ -520,6 +520,144 @@ export async function midiaDosPresentes(): Promise<
       ],
     ),
   );
+}
+
+// ---------------------------------------------------------------------
+// Produtos e conteúdos
+// ---------------------------------------------------------------------
+// A separação que estas funções existem para manter:
+//
+//   categoria e posição -> ONDE o produto aparece
+//   estrutura           -> O QUE ele tem dentro
+//   `acessos`           -> QUEM pode abrir
+//
+// Nenhuma delas toca em `acessos`. Trocar um produto de categoria muda
+// a vitrine e mais nada — quem não tinha o produto continua sem ele.
+
+export async function criarProduto(
+  categoriaId: string,
+  titulo: string,
+  ordem: number,
+  publicado = true,
+) {
+  const { data, error } = await supabase
+    .from("produtos")
+    .insert({ categoria_id: categoriaId, titulo, ordem, publicado })
+    .select("id")
+    .single();
+  if (error) throw new Error(`criar produto: ${error.message}`);
+  return data.id as string;
+}
+
+export async function atualizarProduto(
+  id: string,
+  patch: Partial<{
+    titulo: string;
+    descricao: string;
+    capa_path: string | null;
+    categoria_id: string;
+    ordem: number;
+    publicado: boolean;
+    bloqueado_geral: boolean;
+  }>,
+) {
+  const { error } = await supabase.from("produtos").update(patch).eq("id", id);
+  if (error) throw new Error(`produto: ${error.message}`);
+}
+
+export async function removerProduto(id: string) {
+  const { error } = await supabase.from("produtos").delete().eq("id", id);
+  if (error) throw new Error(`remover produto: ${error.message}`);
+}
+
+/**
+ * Troca duas posições.
+ *
+ * Trocar a ORDEM, nunca a identidade: as duas linhas continuam sendo
+ * as mesmas, com os mesmos ids, os mesmos módulos e as mesmas
+ * liberações. Mover é renumerar.
+ */
+async function trocarOrdem(
+  tabela: "categorias" | "produtos" | "conteudos",
+  a: { id: string; ordem: number },
+  b: { id: string; ordem: number },
+) {
+  const um = await supabase.from(tabela).update({ ordem: b.ordem }).eq("id", a.id);
+  if (um.error) throw new Error(`ordem: ${um.error.message}`);
+  const dois = await supabase.from(tabela).update({ ordem: a.ordem }).eq("id", b.id);
+  if (dois.error) throw new Error(`ordem: ${dois.error.message}`);
+}
+
+export const trocarOrdemDasCategorias = (
+  a: { id: string; ordem: number },
+  b: { id: string; ordem: number },
+) => trocarOrdem("categorias", a, b);
+
+export const trocarOrdemDosProdutos = (
+  a: { id: string; ordem: number },
+  b: { id: string; ordem: number },
+) => trocarOrdem("produtos", a, b);
+
+export const trocarOrdemDosConteudos = (
+  a: { id: string; ordem: number },
+  b: { id: string; ordem: number },
+) => trocarOrdem("conteudos", a, b);
+
+/** Renumera as categorias de 0 em diante, na ordem recebida. */
+export async function ordenarCategorias(ids: string[]) {
+  for (let i = 0; i < ids.length; i++) {
+    const { error } = await supabase
+      .from("categorias")
+      .update({ ordem: i })
+      .eq("id", ids[i]);
+    if (error) throw new Error(`ordem das categorias: ${error.message}`);
+  }
+}
+
+export type NovoConteudo = {
+  produtoId: string;
+  /** Onde pendura. Os três ausentes = conteúdo direto do produto. */
+  moduloId?: string | null;
+  aulaId?: string | null;
+  presenteId?: string | null;
+  tipo: TipoConteudo;
+  titulo: string;
+  ordem: number;
+};
+
+export async function criarConteudo(c: NovoConteudo) {
+  const { error } = await supabase.from("conteudos").insert({
+    produto_id: c.produtoId,
+    modulo_id: c.moduloId ?? null,
+    aula_id: c.aulaId ?? null,
+    presente_id: c.presenteId ?? null,
+    tipo: c.tipo,
+    titulo: c.titulo,
+    ordem: c.ordem,
+  });
+  if (error) throw new Error(`criar conteúdo: ${error.message}`);
+}
+
+export async function atualizarConteudo(
+  id: string,
+  patch: Partial<{
+    titulo: string;
+    texto: string | null;
+    arquivo_path: string | null;
+    url: string | null;
+    video_provider: string | null;
+    video_ref: string | null;
+    ordem: number;
+    publicado: boolean;
+  }>,
+) {
+  const { error } = await supabase.from("conteudos").update(patch).eq("id", id);
+  if (error) throw new Error(`conteúdo: ${error.message}`);
+}
+
+export async function removerConteudo(id: string) {
+  const { error } = await supabase.from("conteudos").delete().eq("id", id);
+  if (error) throw new Error(`remover conteúdo: ${error.message}`);
 }
 
 /** Catálogo completo, para o painel. Reaproveita a leitura da aluna. */

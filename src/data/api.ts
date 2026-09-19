@@ -4,7 +4,15 @@ import {
   enderecoVideoAssinado,
   supabase,
 } from "./supabase";
-import type { Catalogo, Categoria, Modulo, Presente } from "./tipos";
+import type {
+  Catalogo,
+  Categoria,
+  Conteudo,
+  Modulo,
+  Presente,
+  Produto,
+  TipoConteudo,
+} from "./tipos";
 
 /**
  * Toda a conversa com o Supabase passa por aqui.
@@ -127,6 +135,7 @@ type LinhaModulo = {
   ordem: number;
   bloqueado_geral: boolean;
   titulo_na_arte: boolean;
+  produto_id: string | null;
 };
 
 type LinhaAula = {
@@ -158,6 +167,35 @@ type LinhaPresente = {
   capa_path: string | null;
   ordem: number;
   bloqueado_geral: boolean;
+  produto_id: string | null;
+};
+
+type LinhaProduto = {
+  id: string;
+  categoria_id: string;
+  titulo: string;
+  descricao: string | null;
+  capa_path: string | null;
+  ordem: number;
+  publicado: boolean;
+  bloqueado_geral: boolean;
+};
+
+type LinhaConteudo = {
+  id: string;
+  produto_id: string;
+  modulo_id: string | null;
+  aula_id: string | null;
+  presente_id: string | null;
+  tipo: TipoConteudo;
+  titulo: string | null;
+  texto: string | null;
+  arquivo_path: string | null;
+  url: string | null;
+  video_provider: string | null;
+  video_ref: string | null;
+  ordem: number;
+  publicado: boolean;
 };
 
 /**
@@ -223,17 +261,64 @@ export async function minhasAberturas(): Promise<Map<string, string>> {
 }
 
 export async function carregarCatalogo(): Promise<Catalogo> {
-  const [modulos, aulas, categorias, presentes, aoVivo] = await Promise.all([
-    supabase.from("modulos").select("*").order("ordem"),
-    supabase.from("aulas").select("*").order("ordem"),
-    supabase.from("categorias").select("*").order("ordem"),
-    supabase.from("presentes").select("*").order("ordem"),
-    supabase.from("aulas_ao_vivo").select("*"),
-  ]);
+  const [modulos, aulas, categorias, presentes, aoVivo, produtos, conteudos] =
+    await Promise.all([
+      supabase.from("modulos").select("*").order("ordem"),
+      supabase.from("aulas").select("*").order("ordem"),
+      supabase.from("categorias").select("*").order("ordem"),
+      supabase.from("presentes").select("*").order("ordem"),
+      supabase.from("aulas_ao_vivo").select("*"),
+      supabase.from("produtos").select("*").order("ordem"),
+      supabase.from("conteudos").select("*").order("ordem"),
+    ]);
 
-  for (const r of [modulos, aulas, categorias, presentes, aoVivo]) {
+  for (const r of [modulos, aulas, categorias, presentes, aoVivo, produtos, conteudos]) {
     if (r.error) throw new Error(`catálogo: ${r.error.message}`);
   }
+
+  /*
+   * Os conteúdos chegam numa lista só e são distribuídos aqui, por
+   * dono. Uma consulta em vez de quatro — e, mais importante, um lugar
+   * só decidindo onde cada pedaço mora.
+   */
+  const conteudoDaAula = new Map<string, Conteudo[]>();
+  const conteudoDoModulo = new Map<string, Conteudo[]>();
+  const conteudoDoPresente = new Map<string, Conteudo[]>();
+  const conteudoDoProduto = new Map<string, Conteudo[]>();
+
+  for (const k of (conteudos.data ?? []) as LinhaConteudo[]) {
+    const item: Conteudo = {
+      id: k.id,
+      produtoId: k.produto_id,
+      moduloId: k.modulo_id,
+      aulaId: k.aula_id,
+      presenteId: k.presente_id,
+      tipo: k.tipo,
+      titulo: k.titulo ?? "",
+      texto: k.texto,
+      arquivoPath: k.arquivo_path,
+      url: k.url,
+      videoProvider: k.video_provider,
+      videoRef: k.video_ref,
+      ordem: k.ordem,
+      publicado: k.publicado,
+    };
+
+    const [mapa, chave] = k.aula_id
+      ? [conteudoDaAula, k.aula_id]
+      : k.modulo_id
+        ? [conteudoDoModulo, k.modulo_id]
+        : k.presente_id
+          ? [conteudoDoPresente, k.presente_id]
+          : [conteudoDoProduto, k.produto_id];
+
+    const lista = mapa.get(chave) ?? [];
+    lista.push(item);
+    mapa.set(chave, lista);
+  }
+
+  const emOrdem = (lista: Conteudo[] | undefined) =>
+    (lista ?? []).slice().sort((x, y) => x.ordem - y.ordem);
 
   const porModulo = new Map<string, LinhaAula[]>();
   for (const a of (aulas.data ?? []) as LinhaAula[]) {
@@ -248,8 +333,10 @@ export async function carregarCatalogo(): Promise<Catalogo> {
     titulo: m.titulo,
     intro: m.intro ?? "",
     ordem: m.ordem,
+    produtoId: m.produto_id,
     bloqueadoGeral: m.bloqueado_geral,
     tituloNaArte: m.titulo_na_arte,
+    conteudos: emOrdem(conteudoDoModulo.get(m.id)),
     aulas: (porModulo.get(m.id) ?? [])
       .sort((x, y) => x.ordem - y.ordem)
       .map((a) => ({
@@ -265,14 +352,58 @@ export async function carregarCatalogo(): Promise<Catalogo> {
         exercicio: a.exercicio,
         capaPath: a.capa_path,
         bloqueadoGeral: a.bloqueado_geral,
+        conteudos: emOrdem(conteudoDaAula.get(a.id)),
       })),
   }));
 
-  const porCategoria = new Map<string, LinhaPresente[]>();
-  for (const p of (presentes.data ?? []) as LinhaPresente[]) {
-    const lista = porCategoria.get(p.categoria_id) ?? [];
+  const listaPresentes: Presente[] = ((presentes.data ?? []) as LinhaPresente[]).map(
+    (p): Presente => ({
+      id: p.id,
+      categoriaId: p.categoria_id,
+      titulo: p.titulo,
+      descricao: p.descricao ?? "",
+      duracaoTexto: p.duracao_texto ?? "",
+      capaPath: p.capa_path,
+      videoProvider: null,
+      videoRef: null,
+      ordem: p.ordem,
+      bloqueadoGeral: p.bloqueado_geral,
+      produtoId: p.produto_id,
+      conteudos: emOrdem(conteudoDoPresente.get(p.id)),
+    }),
+  );
+
+  /*
+   * O produto reúne o que é dele: os módulos que apontam para ele, os
+   * itens de acervo que apontam para ele, e o conteúdo solto. É a
+   * mesma leitura que o painel usa — `src/admin/dados.ts` reexporta
+   * esta função —, então admin e aluna nunca divergem.
+   */
+  const listaProdutos: Produto[] = ((produtos.data ?? []) as LinhaProduto[]).map(
+    (p): Produto => ({
+      id: p.id,
+      categoriaId: p.categoria_id,
+      titulo: p.titulo,
+      descricao: p.descricao ?? "",
+      capaPath: p.capa_path,
+      ordem: p.ordem,
+      publicado: p.publicado,
+      bloqueadoGeral: p.bloqueado_geral,
+      modulos: listaModulos
+        .filter((m) => m.produtoId === p.id)
+        .sort((x, y) => x.ordem - y.ordem),
+      presentes: listaPresentes
+        .filter((i) => i.produtoId === p.id)
+        .sort((x, y) => x.ordem - y.ordem),
+      conteudos: emOrdem(conteudoDoProduto.get(p.id)),
+    }),
+  );
+
+  const porCategoriaPresentes = new Map<string, Presente[]>();
+  for (const p of listaPresentes) {
+    const lista = porCategoriaPresentes.get(p.categoriaId) ?? [];
     lista.push(p);
-    porCategoria.set(p.categoria_id, lista);
+    porCategoriaPresentes.set(p.categoriaId, lista);
   }
 
   const listaCategorias: Categoria[] = ((categorias.data ?? []) as LinhaCategoria[]).map(
@@ -282,22 +413,10 @@ export async function carregarCatalogo(): Promise<Catalogo> {
       ordem: c.ordem,
       destacada: c.destacada,
       bloqueadaGeral: c.bloqueada_geral,
-      presentes: (porCategoria.get(c.id) ?? [])
-        .sort((x, y) => x.ordem - y.ordem)
-        .map(
-          (p): Presente => ({
-            id: p.id,
-            categoriaId: p.categoria_id,
-            titulo: p.titulo,
-            descricao: p.descricao ?? "",
-            duracaoTexto: p.duracao_texto ?? "",
-            capaPath: p.capa_path,
-            videoProvider: null,
-            videoRef: null,
-            ordem: p.ordem,
-            bloqueadoGeral: p.bloqueado_geral,
-          }),
-        ),
+      presentes: (porCategoriaPresentes.get(c.id) ?? []).sort((x, y) => x.ordem - y.ordem),
+      produtos: listaProdutos
+        .filter((p) => p.categoriaId === c.id)
+        .sort((x, y) => x.ordem - y.ordem),
     }),
   );
 
@@ -315,7 +434,12 @@ export async function carregarCatalogo(): Promise<Catalogo> {
     };
   }
 
-  return { modulos: listaModulos, categorias: listaCategorias, aoVivo: mapaAoVivo };
+  return {
+    modulos: listaModulos,
+    categorias: listaCategorias,
+    aoVivo: mapaAoVivo,
+    produtos: listaProdutos,
+  };
 }
 
 export type AulaLiberada = {
@@ -541,6 +665,7 @@ async function pedirVideo(corpo: Record<string, string>): Promise<Video | null> 
 export const videoDaAula = (aulaId: string) => pedirVideo({ aulaId });
 export const videoDoPresente = (presenteId: string) => pedirVideo({ presenteId });
 export const videoDaAoVivo = (aoVivoId: string) => pedirVideo({ aoVivoId });
+export const videoDoConteudo = (conteudoId: string) => pedirVideo({ conteudoId });
 
 export function enderecoDoVideo(video: Video): string {
   const opcoes = "autoplay=1&playsinline=1";

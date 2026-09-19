@@ -1,0 +1,11 @@
+-- ---------------------------------------------------------------------
+-- 0027 — O escopo `produto`
+-- ---------------------------------------------------------------------
+-- Sozinha, e de uma linha só, porque o PostgreSQL não deixa usar um
+-- valor de enum na mesma transação que o adiciona. A 0028 usa este
+-- valor; por isso ele tem que chegar antes, numa migration própria.
+--
+-- Adicionar o valor NÃO concede nada a ninguém: `acessos` continua sem
+-- nenhuma linha com este escopo até alguém do painel criar uma.
+-- ---------------------------------------------------------------------
+alter type escopo_acesso add value if not exists 'produto';

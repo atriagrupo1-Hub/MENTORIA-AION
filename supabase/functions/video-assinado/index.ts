@@ -131,16 +131,18 @@ Deno.serve(async (req) => {
   let aulaId = "";
   let presenteId = "";
   let aoVivoId = "";
+  let conteudoId = "";
   try {
     const corpo = await req.json();
     aulaId = String(corpo?.aulaId ?? "");
     presenteId = String(corpo?.presenteId ?? "");
     aoVivoId = String(corpo?.aoVivoId ?? "");
+    conteudoId = String(corpo?.conteudoId ?? "");
   } catch {
     return resposta({ erro: "corpo_invalido" }, 400, origem);
   }
 
-  const alvos = [aulaId, presenteId, aoVivoId].filter(Boolean);
+  const alvos = [aulaId, presenteId, aoVivoId, conteudoId].filter(Boolean);
   if (alvos.length !== 1) {
     return resposta({ erro: "alvo_invalido" }, 400, origem);
   }
@@ -153,11 +155,17 @@ Deno.serve(async (req) => {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
+  // `video_do_conteudo` é o quarto caso, e segue a mesma regra dos
+  // outros três: a função no banco só devolve a referência depois de
+  // conferir a liberação do DONO do conteúdo — a aula, o item ou o
+  // produto. Esta função continua sem decidir nada.
   const chamada = aulaId
     ? comoAluna.rpc("video_da_aula", { p_aula: aulaId })
     : presenteId
       ? comoAluna.rpc("video_do_presente", { p_presente: presenteId })
-      : comoAluna.rpc("video_da_ao_vivo", { p_ao_vivo: aoVivoId });
+      : aoVivoId
+        ? comoAluna.rpc("video_da_ao_vivo", { p_ao_vivo: aoVivoId })
+        : comoAluna.rpc("video_do_conteudo", { p_conteudo: conteudoId });
 
   const { data, error } = await chamada;
 
