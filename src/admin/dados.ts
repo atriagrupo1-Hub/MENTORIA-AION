@@ -360,6 +360,8 @@ export async function atualizarModulo(
     intro: string;
     bloqueado_geral: boolean;
     titulo_na_arte: boolean;
+    ordem: number;
+    produto_id: string | null;
   }>,
 ) {
   const { error } = await supabase.from("modulos").update(patch).eq("id", id);
@@ -596,7 +598,7 @@ export async function removerProduto(id: string) {
  * liberações. Mover é renumerar.
  */
 async function trocarOrdem(
-  tabela: "categorias" | "produtos" | "conteudos",
+  tabela: "categorias" | "produtos" | "conteudos" | "modulos",
   a: { id: string; ordem: number },
   b: { id: string; ordem: number },
 ) {
@@ -615,6 +617,11 @@ export const trocarOrdemDosProdutos = (
   a: { id: string; ordem: number },
   b: { id: string; ordem: number },
 ) => trocarOrdem("produtos", a, b);
+
+export const trocarOrdemDosModulos = (
+  a: { id: string; ordem: number },
+  b: { id: string; ordem: number },
+) => trocarOrdem("modulos", a, b);
 
 export const trocarOrdemDosConteudos = (
   a: { id: string; ordem: number },

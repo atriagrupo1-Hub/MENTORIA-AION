@@ -98,6 +98,19 @@ export function AbaConteudo({
     avisar(falha ?? "Módulo criado.");
   }
 
+  async function moverModulo(modulo: Modulo, passo: -1 | 1) {
+    const atual = modulos.findIndex((m) => m.id === modulo.id);
+    const destino = atual + passo;
+    if (atual < 0 || destino < 0 || destino >= modulos.length) return;
+    const falha = await executar(() =>
+      dados.trocarOrdemDosModulos(
+        { id: modulos[atual].id, ordem: modulos[atual].ordem },
+        { id: modulos[destino].id, ordem: modulos[destino].ordem },
+      ),
+    );
+    avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
+  }
+
   async function mover(modulo: Modulo, aula: Aula, passo: number) {
     const destino = modulo.aulas[aula.ordem + passo];
     if (!destino) {
@@ -246,6 +259,28 @@ export function AbaConteudo({
                       title="Use quando a arte da capa já traz o nome do módulo escrito nela, para o título não aparecer duas vezes."
                     >
                       {modulo.tituloNaArte ? "Escrever título na tela" : "Título já está na arte"}
+                    </button>
+                    {/*
+                      A ordem do módulo dentro do produto. Trocar a
+                      ORDEM das duas linhas, nunca a identidade: os
+                      ids, as aulas, o progresso e as liberações de
+                      cada um continuam sendo os mesmos.
+                    */}
+                    <button
+                      onClick={() => moverModulo(modulo, -1)}
+                      disabled={modulo.ordem === modulos[0]?.ordem}
+                      aria-label={`Subir o módulo ${modulo.titulo}`}
+                      style={{ ...BOTAO_LINHA, minWidth: 36, padding: 0 }}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      onClick={() => moverModulo(modulo, 1)}
+                      disabled={modulo.ordem === modulos[modulos.length - 1]?.ordem}
+                      aria-label={`Descer o módulo ${modulo.titulo}`}
+                      style={{ ...BOTAO_LINHA, minWidth: 36, padding: 0 }}
+                    >
+                      ↓
                     </button>
                     <button
                       onClick={() =>
