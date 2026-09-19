@@ -266,6 +266,34 @@ export async function gerarCronograma(
   return (data as number) ?? 0;
 }
 
+/**
+ * O cronograma de uma aluna, escolhido aula a aula.
+ *
+ * `gerarCronograma` recebe módulos e libera tudo que houver dentro. No
+ * cadastro a escolha passou a ser por aula — abre-se o módulo e marca-se
+ * o que ela recebe —, e uma aluna que compra três aulas de um módulo de
+ * dez não tinha como ser cadastrada: liberava-se o módulo inteiro e
+ * tirava-se o resto depois, na ficha.
+ *
+ * A ordem e o espaçamento são decididos no banco, pela ordem do módulo
+ * e da aula — nunca pela ordem em que a pessoa clicou.
+ */
+export async function gerarCronogramaDeAulas(
+  alunaId: string,
+  aulaIds: string[],
+  intervaloDias: number,
+  inicio: Date,
+): Promise<number> {
+  const { data, error } = await supabase.rpc("gerar_cronograma_de_aulas", {
+    p_aluna: alunaId,
+    p_aulas: aulaIds,
+    p_intervalo: intervaloDias,
+    p_inicio: inicio.toISOString(),
+  });
+  if (error) throw new Error(`cronograma: ${error.message}`);
+  return (data as number) ?? 0;
+}
+
 /** O mesmo cronograma em várias alunas de uma vez — a turma. */
 export async function gerarCronogramaLote(
   alunaIds: string[],
@@ -951,42 +979,50 @@ export async function responderComentario(
 }
 
 /**
- * Dá a uma aluna o acervo de presentes, por categoria.
+ * Dá a uma aluna os presentes, um a um.
  *
  * Não existia. O painel só sabia liberar um presente para a turma
  * inteira, então dar o acervo a UMA aluna — que é o que se faz ao
  * cadastrar alguém — não tinha caminho: cadastrava-se a conta e os
  * presentes ficavam de fora, sem aviso.
  *
- * Grava no escopo `categoria`, que é a unidade com que a equipe
- * trabalha. `pode_ver_presente()` já lê os três escopos (acervo,
- * categoria, presente), então nada muda do lado da aluna.
+ * Grava no escopo `presente`. `pode_ver_presente()` já lê os três
+ * escopos (acervo, categoria, presente), então nada muda do lado da
+ * aluna.
  *
- * Substitui o que havia: quem chama isto está dizendo quais categorias
+ * Substitui o que havia: quem chama isto está dizendo quais presentes
  * a aluna tem, não quais acrescentar. É a mesma escolha de
  * `gerar_cronograma`, que também apaga antes de gravar — duas telas com
  * a mesma regra erram menos que duas telas com regras diferentes.
  */
-export async function definirCategoriasDaAluna(
+export async function definirPresentesDaAluna(
   alunaId: string,
-  categoriaIds: string[],
+  presenteIds: string[],
 ): Promise<number> {
+  /*
+    Apaga os dois escopos antigos, não só um.
+
+    A primeira versão gravava por categoria. Apagar apenas `presente`
+    deixaria para trás as linhas de `categoria` de quem foi cadastrada
+    antes — e categoria libera a categoria inteira, então desmarcar um
+    presente não faria efeito nenhum nessas alunas.
+  */
   const apagar = await supabase
     .from("acessos")
     .delete()
     .eq("aluna_id", alunaId)
-    .eq("escopo", "categoria");
+    .in("escopo", ["presente", "categoria"]);
   if (apagar.error) throw new Error(`presentes: ${apagar.error.message}`);
 
-  if (categoriaIds.length === 0) return 0;
+  if (presenteIds.length === 0) return 0;
 
   const { error } = await supabase.from("acessos").insert(
-    categoriaIds.map((categoria_id) => ({
+    presenteIds.map((presente_id) => ({
       aluna_id: alunaId,
-      escopo: "categoria" as const,
-      categoria_id,
+      escopo: "presente" as const,
+      presente_id,
     })),
   );
   if (error) throw new Error(`presentes: ${error.message}`);
-  return categoriaIds.length;
+  return presenteIds.length;
 }

@@ -45,75 +45,177 @@ const PRAZOS = [
 type ChavePrazo = (typeof PRAZOS)[number]["chave"];
 
 /**
- * Uma lista de caixas para marcar, com "Todos" e "Nenhum".
+ * Um grupo com filhos, para marcar por grupo ou item a item.
  *
- * Mentoria e Presentes escolhem coisas diferentes com o mesmo gesto, e
- * escrever a lista duas vezes é como as duas deixam de se parecer.
+ * Era uma lista de um nivel so: marcava-se o modulo, e o banco liberava
+ * todas as aulas dele. Uma aluna que compra tres aulas de um modulo de
+ * dez nao cabia nessa escolha — liberava-se o modulo inteiro e tirava-se
+ * o resto depois, na ficha.
+ *
+ * O que se marca aqui sao os FILHOS. A caixa do grupo e um atalho:
+ * marca todos, desmarca todos, e mostra tracinho quando so alguns estao
+ * marcados. O grupo em si nunca e gravado.
+ *
+ * A lista vem inteira do catalogo, entao uma aula cadastrada amanha
+ * aparece aqui sem ninguem tocar nesta tela.
  */
-function ListaDeEscolha({
+function GrupoDeEscolha({
   titulo,
   vazio,
-  itens,
+  grupos,
   marcados,
-  aoAlternar,
-  aoTodos,
-  aoNenhum,
+  aoTrocar,
 }: {
   titulo: string;
   vazio: string;
-  itens: Array<{ id: string; nome: string; quantos: string }>;
+  grupos: Array<{
+    id: string;
+    nome: string;
+    filhos: Array<{ id: string; nome: string }>;
+  }>;
   marcados: Set<string>;
-  aoAlternar: (id: string) => void;
-  aoTodos: () => void;
-  aoNenhum: () => void;
+  aoTrocar: (proximo: Set<string>) => void;
 }) {
+  const [abertos, setAbertos] = useState<Set<string>>(new Set());
+  const todosOsFilhos = grupos.flatMap((g) => g.filhos.map((f) => f.id));
+  const quantosMarcados = todosOsFilhos.filter((id) => marcados.has(id)).length;
+
+  const trocar = (ids: string[], ligar: boolean) => {
+    const proximo = new Set(marcados);
+    for (const id of ids) {
+      if (ligar) proximo.add(id);
+      else proximo.delete(id);
+    }
+    aoTrocar(proximo);
+  };
+
   return (
     <div>
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <span style={{ ...rotulo, flex: "1 1 auto" }}>
-          {titulo} · {marcados.size} de {itens.length}
+          {titulo} · {quantosMarcados} de {todosOsFilhos.length}
         </span>
-        <button type="button" onClick={aoTodos} style={botaoNeutro}>
+        <button
+          type="button"
+          onClick={() => trocar(todosOsFilhos, true)}
+          style={botaoNeutro}
+        >
           Todos
         </button>
-        <button type="button" onClick={aoNenhum} style={botaoNeutro}>
+        <button
+          type="button"
+          onClick={() => trocar(todosOsFilhos, false)}
+          style={botaoNeutro}
+        >
           Nenhum
         </button>
       </div>
 
-      {itens.length === 0 ? (
+      {grupos.length === 0 ? (
         <p className="m-0 text-[13px]" style={{ color: tema.textoSecundario }}>
           {vazio}
         </p>
       ) : (
         <div className="flex flex-col">
-          {itens.map((item) => {
-            const marcado = marcados.has(item.id);
+          {grupos.map((grupo) => {
+            const ids = grupo.filhos.map((f) => f.id);
+            const marcadosAqui = ids.filter((id) => marcados.has(id)).length;
+            const todos = ids.length > 0 && marcadosAqui === ids.length;
+            const alguns = marcadosAqui > 0 && !todos;
+            const aberto = abertos.has(grupo.id);
+
             return (
-              /*
-                A área de toque cobre a linha inteira: no celular, mirar
-                uma caixa de 20px ao lado de um texto clicável é o
-                caminho curto para marcar o módulo errado.
-              */
-              <label
-                key={item.id}
-                className="flex min-h-[44px] cursor-pointer items-center gap-3 px-1"
-                style={{ borderBottom: `1px solid ${tema.linhaSuave}` }}
-              >
-                <input
-                  type="checkbox"
-                  checked={marcado}
-                  onChange={() => aoAlternar(item.id)}
-                  className="h-5 w-5 flex-none"
-                  style={{ accentColor: tema.texto }}
-                />
-                <span className="min-w-0 flex-1 truncate text-[14px]" style={{ color: tema.texto }}>
-                  {item.nome}
-                </span>
-                <span className="flex-none text-[13px]" style={{ color: tema.textoSecundario }}>
-                  {item.quantos}
-                </span>
-              </label>
+              <div key={grupo.id} style={{ borderBottom: `1px solid ${tema.linhaSuave}` }}>
+                <div className="flex min-h-[44px] items-center gap-2 px-1">
+                  <input
+                    type="checkbox"
+                    checked={todos}
+                    /*
+                      O tracinho do "alguns". Sem ele, marcar duas de
+                      dez aulas deixa a caixa do modulo vazia — igual a
+                      nenhuma aula marcada.
+                    */
+                    ref={(el) => {
+                      if (el) el.indeterminate = alguns;
+                    }}
+                    onChange={() => trocar(ids, !todos)}
+                    aria-label={`${grupo.nome} — todos`}
+                    className="h-5 w-5 flex-none"
+                    style={{ accentColor: tema.texto }}
+                  />
+                  {/*
+                    O nome abre e fecha. A area de toque cobre a linha
+                    inteira menos a caixa: no celular, mirar o triangulo
+                    sozinho seria mirar 12px.
+                  */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setAbertos((antes) => {
+                        const proximo = new Set(antes);
+                        if (proximo.has(grupo.id)) proximo.delete(grupo.id);
+                        else proximo.add(grupo.id);
+                        return proximo;
+                      })
+                    }
+                    aria-expanded={aberto}
+                    className="flex min-h-[44px] flex-1 items-center gap-2 text-left"
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      padding: 0,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <span
+                      className="min-w-0 flex-1 truncate text-[14px]"
+                      style={{ color: tema.texto }}
+                    >
+                      {grupo.nome}
+                    </span>
+                    <span
+                      className="flex-none text-[13px]"
+                      style={{ color: tema.textoSecundario }}
+                    >
+                      {marcadosAqui} de {ids.length} {aberto ? "▲" : "▼"}
+                    </span>
+                  </button>
+                </div>
+
+                {aberto ? (
+                  <div className="flex flex-col pb-2 pl-7">
+                    {grupo.filhos.length === 0 ? (
+                      <p
+                        className="m-0 py-2 text-[13px]"
+                        style={{ color: tema.textoSecundario }}
+                      >
+                        Nada aqui dentro ainda.
+                      </p>
+                    ) : (
+                      grupo.filhos.map((filho) => (
+                        <label
+                          key={filho.id}
+                          className="flex min-h-[44px] cursor-pointer items-center gap-3 px-1"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={marcados.has(filho.id)}
+                            onChange={() => trocar([filho.id], !marcados.has(filho.id))}
+                            className="h-5 w-5 flex-none"
+                            style={{ accentColor: tema.texto }}
+                          />
+                          <span
+                            className="min-w-0 flex-1 truncate text-[14px]"
+                            style={{ color: tema.textoSecundario }}
+                          >
+                            {filho.nome}
+                          </span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                ) : null}
+              </div>
             );
           })}
         </div>
@@ -171,8 +273,8 @@ export function AbaAlunas({
    * sem ninguém marcar nada, e "todas as aulas" é justamente a escolha
    * que não se deve tomar no lugar de quem administra.
    */
-  const [modulosEscolhidos, setModulosEscolhidos] = useState<Set<string>>(new Set());
-  const [categoriasEscolhidas, setCategoriasEscolhidas] = useState<Set<string>>(new Set());
+  const [aulasEscolhidas, setAulasEscolhidas] = useState<Set<string>>(new Set());
+  const [presentesEscolhidos, setPresentesEscolhidos] = useState<Set<string>>(new Set());
   const [acessoAberto, setAcessoAberto] = useState(false);
   const [intervalo, setIntervalo] = useState("");
   const [inicio, setInicio] = useState<Date>(() => {
@@ -292,17 +394,17 @@ export function AbaAlunas({
     const cadastrada = nome.trim();
     const faltou: string[] = [];
 
-    if (modulosEscolhidos.size > 0) {
+    if (aulasEscolhidas.size > 0) {
       try {
-        await dados.gerarCronograma(r.id, [...modulosEscolhidos], nDias, inicio);
+        await dados.gerarCronogramaDeAulas(r.id, [...aulasEscolhidas], nDias, inicio);
       } catch (falha) {
         faltou.push(falha instanceof Error ? `o curso (${falha.message})` : "o curso");
       }
     }
 
-    if (categoriasEscolhidas.size > 0) {
+    if (presentesEscolhidos.size > 0) {
       try {
-        await dados.definirCategoriasDaAluna(r.id, [...categoriasEscolhidas]);
+        await dados.definirPresentesDaAluna(r.id, [...presentesEscolhidos]);
       } catch (falha) {
         faltou.push(
           falha instanceof Error ? `os presentes (${falha.message})` : "os presentes",
@@ -331,8 +433,8 @@ export function AbaAlunas({
     if (faltou.length === 0) {
       setPronta({ nome: cadastrada, login: acesso, codigo: codigo.trim(), celular });
     }
-    setModulosEscolhidos(new Set());
-    setCategoriasEscolhidas(new Set());
+    setAulasEscolhidas(new Set());
+    setPresentesEscolhidos(new Set());
     setAcessoAberto(false);
     setNome("");
     setLogin("");
@@ -349,8 +451,8 @@ export function AbaAlunas({
       lista e montada com o que realmente entrou.
     */
     const feito = ["conta"];
-    if (modulosEscolhidos.size > 0) feito.push("curso");
-    if (categoriasEscolhidas.size > 0) feito.push("presentes");
+    if (aulasEscolhidas.size > 0) feito.push("curso");
+    if (presentesEscolhidos.size > 0) feito.push("presentes");
     if (PRAZOS.find((x) => x.chave === prazo)?.p) feito.push("prazo");
     const emPalavras =
       feito.length === 1 ? feito[0] : `${feito.slice(0, -1).join(", ")} e ${feito[feito.length - 1]}`;
@@ -366,24 +468,12 @@ export function AbaAlunas({
 
   /** O que a aluna nova vai receber, em palavras, antes de o botão ser clicado. */
   const nDias = Math.max(0, Math.floor(Number(intervalo || intervaloPadrao) || 0));
-  const aulasEscolhidas = catalogo.modulos
-    .filter((m) => modulosEscolhidos.has(m.id))
-    .reduce((n, m) => n + m.aulas.length, 0);
-  const presentesEscolhidos = catalogo.categorias
-    .filter((c) => categoriasEscolhidas.has(c.id))
-    .reduce((n, c) => n + c.presentes.length, 0);
-  const nadaEscolhido = modulosEscolhidos.size === 0 && categoriasEscolhidas.size === 0;
-
-  const alternar = (
-    id: string,
-    atual: Set<string>,
-    definir: (s: Set<string>) => void,
-  ) => {
-    const proximo = new Set(atual);
-    if (proximo.has(id)) proximo.delete(id);
-    else proximo.add(id);
-    definir(proximo);
-  };
+  const quantasAulas = aulasEscolhidas.size;
+  const quantosPresentes = presentesEscolhidos.size;
+  const nadaEscolhido = quantasAulas === 0 && quantosPresentes === 0;
+  const gruposComPresente = catalogo.categorias.filter((c) =>
+    c.presentes.some((pr) => presentesEscolhidos.has(pr.id)),
+  ).length;
 
   /*
     O prazo entra no resumo porque agora mora dentro da secao dobrada.
@@ -396,18 +486,18 @@ export function AbaAlunas({
   /** O que a aluna nova vai receber, em palavras, antes de o botão ser clicado. */
   const resumoDoQueRecebe = nadaEscolhido
     ? "Nada marcado — ela entra e não vê conteúdo nenhum." + sufixoPrazo
-    : aulasEscolhidas === 0
-      ? `Só os presentes: ${presentesEscolhidos} em ${categoriasEscolhidas.size} ${
-          categoriasEscolhidas.size === 1 ? "categoria" : "categorias"
+    : quantasAulas === 0
+      ? `Só os presentes: ${quantosPresentes} em ${gruposComPresente} ${
+          gruposComPresente === 1 ? "categoria" : "categorias"
         }.` + sufixoPrazo
       : nDias === 0
-        ? `${aulasEscolhidas} ${aulasEscolhidas === 1 ? "aula abre" : "aulas abrem"} de uma vez${
-            presentesEscolhidos > 0 ? `, mais ${presentesEscolhidos} presentes` : ""
+        ? `${quantasAulas} ${quantasAulas === 1 ? "aula abre" : "aulas abrem"} de uma vez${
+            quantosPresentes > 0 ? `, mais ${quantosPresentes} presentes` : ""
           }.` + sufixoPrazo
-        : `${aulasEscolhidas} ${
-            aulasEscolhidas === 1 ? "aula abre" : "aulas abrem"
+        : `${quantasAulas} ${
+            quantasAulas === 1 ? "aula abre" : "aulas abrem"
           } uma a cada ${nDias} ${nDias === 1 ? "dia" : "dias"}${
-            presentesEscolhidos > 0 ? `, mais ${presentesEscolhidos} presentes` : ""
+            quantosPresentes > 0 ? `, mais ${quantosPresentes} presentes` : ""
           }.` + sufixoPrazo;
 
   /*
@@ -434,8 +524,8 @@ export function AbaAlunas({
     setLogin("");
     setCodigo("");
     setCelular("");
-    setModulosEscolhidos(new Set());
-    setCategoriasEscolhidas(new Set());
+    setAulasEscolhidas(new Set());
+    setPresentesEscolhidos(new Set());
     setAcessoAberto(false);
     setCadastroAberto(false);
   }
@@ -709,29 +799,29 @@ export function AbaAlunas({
 
             {acessoAberto ? (
               <div className="flex flex-col gap-4 pl-[2px]">
-                <ListaDeEscolha
+                <GrupoDeEscolha
                   titulo="Mentoria"
                   vazio="Nenhum módulo cadastrado ainda."
-                  itens={catalogo.modulos.map((m) => ({
+                  grupos={catalogo.modulos.map((m) => ({
                     id: m.id,
                     nome: `Módulo ${m.numero} · ${m.titulo}`,
-                    quantos: `${m.aulas.length} ${m.aulas.length === 1 ? "aula" : "aulas"}`,
+                    filhos: m.aulas.map((a) => ({
+                      id: a.id,
+                      nome: `Aula ${a.numero} · ${a.titulo}`,
+                    })),
                   }))}
-                  marcados={modulosEscolhidos}
-                  aoAlternar={(id) => alternar(id, modulosEscolhidos, setModulosEscolhidos)}
-                  aoTodos={() => setModulosEscolhidos(new Set(catalogo.modulos.map((m) => m.id)))}
-                  aoNenhum={() => setModulosEscolhidos(new Set())}
+                  marcados={aulasEscolhidas}
+                  aoTrocar={setAulasEscolhidas}
                 />
 
                 {/*
                   O ritmo das aulas pertence a Mentoria.
 
-                  Estava depois de Presentes, no rodape junto do prazo —
-                  longe do que governa. Recuado, para ler como parte da
-                  lista de cima e nao como um terceiro grupo. Sem aula
-                  marcada nao ha o que espacar, entao some.
+                  Recuado, para ler como parte da lista de cima e nao
+                  como um terceiro grupo. Sem aula marcada nao ha o que
+                  espacar, entao some.
                 */}
-                {modulosEscolhidos.size > 0 ? (
+                {aulasEscolhidas.size > 0 ? (
                   <div className="flex flex-wrap items-end gap-3 pl-[14px]">
                     <label className="flex flex-col gap-[6px]">
                       <span style={rotulo}>Uma aula a cada</span>
@@ -753,22 +843,17 @@ export function AbaAlunas({
                     </label>
                   </div>
                 ) : null}
-                <ListaDeEscolha
+
+                <GrupoDeEscolha
                   titulo="Presentes"
                   vazio="Nenhuma categoria cadastrada ainda."
-                  itens={catalogo.categorias.map((c) => ({
+                  grupos={catalogo.categorias.map((c) => ({
                     id: c.id,
                     nome: c.titulo,
-                    quantos: `${c.presentes.length} ${
-                      c.presentes.length === 1 ? "presente" : "presentes"
-                    }`,
+                    filhos: c.presentes.map((pr) => ({ id: pr.id, nome: pr.titulo })),
                   }))}
-                  marcados={categoriasEscolhidas}
-                  aoAlternar={(id) => alternar(id, categoriasEscolhidas, setCategoriasEscolhidas)}
-                  aoTodos={() =>
-                    setCategoriasEscolhidas(new Set(catalogo.categorias.map((c) => c.id)))
-                  }
-                  aoNenhum={() => setCategoriasEscolhidas(new Set())}
+                  marcados={presentesEscolhidos}
+                  aoTrocar={setPresentesEscolhidos}
                 />
 
                 {/*
