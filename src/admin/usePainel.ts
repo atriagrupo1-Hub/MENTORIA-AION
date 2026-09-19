@@ -22,6 +22,7 @@ export function usePainel() {
     categorias: [],
     aoVivo: {},
     produtos: [],
+    produtoJornada: null,
   });
   const [alunas, setAlunas] = useState<AlunaAdmin[]>([]);
   const [midiaAulas, setMidiaAulas] = useState<Map<string, Midia>>(new Map());

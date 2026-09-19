@@ -274,7 +274,6 @@ export function AbaAlunas({
    * que não se deve tomar no lugar de quem administra.
    */
   const [aulasEscolhidas, setAulasEscolhidas] = useState<Set<string>>(new Set());
-  const [presentesEscolhidos, setPresentesEscolhidos] = useState<Set<string>>(new Set());
   const [acessoAberto, setAcessoAberto] = useState(false);
   const [intervalo, setIntervalo] = useState("");
   const [inicio, setInicio] = useState<Date>(() => {
@@ -292,6 +291,11 @@ export function AbaAlunas({
   const [filtro, setFiltro] = useState<"todas" | Coluna | "renovadas">("todas");
 
   const totalAulas = catalogo.modulos.reduce((s, m) => s + m.aulas.length, 0);
+
+  /** Só os produtos que têm algo para liberar. */
+  const produtosComConteudo = catalogo.produtos.filter((p) =>
+    p.modulos.some((m) => m.aulas.length > 0),
+  );
 
   /*
    * Quatro colunas que não se sobrepõem, e uma marca que sobrepõe.
@@ -402,16 +406,6 @@ export function AbaAlunas({
       }
     }
 
-    if (presentesEscolhidos.size > 0) {
-      try {
-        await dados.definirPresentesDaAluna(r.id, [...presentesEscolhidos]);
-      } catch (falha) {
-        faltou.push(
-          falha instanceof Error ? `os presentes (${falha.message})` : "os presentes",
-        );
-      }
-    }
-
     const escolhido = PRAZOS.find((x) => x.chave === prazo);
     if (escolhido?.p) {
       try {
@@ -434,7 +428,6 @@ export function AbaAlunas({
       setPronta({ nome: cadastrada, login: acesso, codigo: codigo.trim(), celular });
     }
     setAulasEscolhidas(new Set());
-    setPresentesEscolhidos(new Set());
     setAcessoAberto(false);
     setNome("");
     setLogin("");
@@ -452,7 +445,6 @@ export function AbaAlunas({
     */
     const feito = ["conta"];
     if (aulasEscolhidas.size > 0) feito.push("curso");
-    if (presentesEscolhidos.size > 0) feito.push("presentes");
     if (PRAZOS.find((x) => x.chave === prazo)?.p) feito.push("prazo");
     const emPalavras =
       feito.length === 1 ? feito[0] : `${feito.slice(0, -1).join(", ")} e ${feito[feito.length - 1]}`;
@@ -469,11 +461,7 @@ export function AbaAlunas({
   /** O que a aluna nova vai receber, em palavras, antes de o botão ser clicado. */
   const nDias = Math.max(0, Math.floor(Number(intervalo || intervaloPadrao) || 0));
   const quantasAulas = aulasEscolhidas.size;
-  const quantosPresentes = presentesEscolhidos.size;
-  const nadaEscolhido = quantasAulas === 0 && quantosPresentes === 0;
-  const gruposComPresente = catalogo.categorias.filter((c) =>
-    c.presentes.some((pr) => presentesEscolhidos.has(pr.id)),
-  ).length;
+  const nadaEscolhido = quantasAulas === 0;
 
   /*
     O prazo entra no resumo porque agora mora dentro da secao dobrada.
@@ -486,19 +474,13 @@ export function AbaAlunas({
   /** O que a aluna nova vai receber, em palavras, antes de o botão ser clicado. */
   const resumoDoQueRecebe = nadaEscolhido
     ? "Nada marcado — ela entra e não vê conteúdo nenhum." + sufixoPrazo
-    : quantasAulas === 0
-      ? `Só os presentes: ${quantosPresentes} em ${gruposComPresente} ${
-          gruposComPresente === 1 ? "categoria" : "categorias"
-        }.` + sufixoPrazo
-      : nDias === 0
-        ? `${quantasAulas} ${quantasAulas === 1 ? "aula abre" : "aulas abrem"} de uma vez${
-            quantosPresentes > 0 ? `, mais ${quantosPresentes} presentes` : ""
-          }.` + sufixoPrazo
-        : `${quantasAulas} ${
-            quantasAulas === 1 ? "aula abre" : "aulas abrem"
-          } uma a cada ${nDias} ${nDias === 1 ? "dia" : "dias"}${
-            quantosPresentes > 0 ? `, mais ${quantosPresentes} presentes` : ""
-          }.` + sufixoPrazo;
+    : nDias === 0
+      ? `${quantasAulas} ${
+          quantasAulas === 1 ? "conteúdo abre" : "conteúdos abrem"
+        } de uma vez.` + sufixoPrazo
+      : `${quantasAulas} ${
+          quantasAulas === 1 ? "conteúdo abre" : "conteúdos abrem"
+        } um a cada ${nDias} ${nDias === 1 ? "dia" : "dias"}.` + sufixoPrazo;
 
   /*
     Gravar e desistir, num par so.
@@ -525,7 +507,6 @@ export function AbaAlunas({
     setCodigo("");
     setCelular("");
     setAulasEscolhidas(new Set());
-    setPresentesEscolhidos(new Set());
     setAcessoAberto(false);
     setCadastroAberto(false);
   }
@@ -799,32 +780,43 @@ export function AbaAlunas({
 
             {acessoAberto ? (
               <div className="flex flex-col gap-4 pl-[2px]">
-                <GrupoDeEscolha
-                  titulo="Mentoria"
-                  vazio="Nenhum módulo cadastrado ainda."
-                  grupos={catalogo.modulos.map((m) => ({
-                    id: m.id,
-                    nome: `Módulo ${m.numero} · ${m.titulo}`,
-                    filhos: m.aulas.map((a) => ({
-                      id: a.id,
-                      nome: `Aula ${a.numero} · ${a.titulo}`,
-                    })),
-                  }))}
-                  marcados={aulasEscolhidas}
-                  aoTrocar={setAulasEscolhidas}
-                />
+                {/*
+                  Um seletor por produto, e todos com a mesma forma:
+                  módulo → conteúdo. Antes eram dois seletores de
+                  desenhos diferentes — "Mentoria" por módulo e aula,
+                  "Presentes" por categoria e presente —, e liberar um
+                  e-book era uma terceira coisa. Agora a liberação é
+                  uma só: o conteúdo, pelo `escopo = 'aula'` de sempre.
+                */}
+                {produtosComConteudo.map((p) => (
+                  <GrupoDeEscolha
+                    key={p.id}
+                    titulo={p.titulo}
+                    vazio="Nenhum módulo cadastrado ainda."
+                    grupos={p.modulos.map((m) => ({
+                      id: m.id,
+                      nome: m.titulo,
+                      filhos: m.aulas.map((a) => ({
+                        id: a.id,
+                        nome: `${a.numero}. ${a.titulo}`,
+                      })),
+                    }))}
+                    marcados={aulasEscolhidas}
+                    aoTrocar={setAulasEscolhidas}
+                  />
+                ))}
 
                 {/*
-                  O ritmo das aulas pertence a Mentoria.
+                  O ritmo vale para tudo o que foi marcado acima.
 
                   Recuado, para ler como parte da lista de cima e nao
-                  como um terceiro grupo. Sem aula marcada nao ha o que
+                  como um grupo a parte. Sem nada marcado nao ha o que
                   espacar, entao some.
                 */}
                 {aulasEscolhidas.size > 0 ? (
                   <div className="flex flex-wrap items-end gap-3 pl-[14px]">
                     <label className="flex flex-col gap-[6px]">
-                      <span style={rotulo}>Uma aula a cada</span>
+                      <span style={rotulo}>Um conteúdo a cada</span>
                       <input
                         type="number"
                         min={0}
@@ -833,7 +825,7 @@ export function AbaAlunas({
                         value={intervalo}
                         onChange={(e) => setIntervalo(e.target.value)}
                         placeholder={String(intervaloPadrao)}
-                        aria-label="Intervalo em dias entre as aulas"
+                        aria-label="Intervalo em dias entre os conteúdos"
                         style={{ ...campo, width: 92, textAlign: "center" }}
                       />
                     </label>
@@ -844,17 +836,7 @@ export function AbaAlunas({
                   </div>
                 ) : null}
 
-                <GrupoDeEscolha
-                  titulo="Presentes"
-                  vazio="Nenhuma categoria cadastrada ainda."
-                  grupos={catalogo.categorias.map((c) => ({
-                    id: c.id,
-                    nome: c.titulo,
-                    filhos: c.presentes.map((pr) => ({ id: pr.id, nome: pr.titulo })),
-                  }))}
-                  marcados={presentesEscolhidos}
-                  aoTrocar={setPresentesEscolhidos}
-                />
+
 
                 {/*
                   Quando as aulas abrem, e ate quando a conta vale.

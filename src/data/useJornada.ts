@@ -30,7 +30,20 @@ export function useJornada() {
      * passa a ser sobre o curso DELA. Uma aluna que entrou no Módulo 2 vê
      * "3 de 39 aulas", e não "3 de 50", que a faria pensar que perdeu algo.
      */
-    const meus = catalogo.modulos.filter(moduloVisivel);
+    /*
+     * E só os do produto da jornada.
+     *
+     * `modulos` deixou de ser só o curso: um e-book também é um
+     * módulo. Sem este filtro, "Minha jornada" misturaria o e-book com
+     * a mentoria e o percentual passaria a contar as páginas dele.
+     * Qual produto é a jornada está em `configuracoes`, e vem no
+     * catálogo.
+     */
+    const doCurso = catalogo.produtoJornada
+      ? catalogo.modulos.filter((m) => m.produtoId === catalogo.produtoJornada)
+      : catalogo.modulos;
+
+    const meus = doCurso.filter(moduloVisivel);
 
     const modulos: EstadoModulo[] = meus.map((m) =>
       estadoDoModulo(m, moduloLiberado(m), concluida, moduloAbreEm(m)),

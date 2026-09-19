@@ -80,6 +80,8 @@ export function AbaConteudo({
   const [novaAula, setNovaAula] = useState("");
   const [editando, setEditando] = useState("");
   const [textoEdicao, setTextoEdicao] = useState("");
+  const [descricaoEdicao, setDescricaoEdicao] = useState("");
+  const [capaEdicao, setCapaEdicao] = useState("");
   const [conteudoDe, setConteudoDe] = useState("");
   const [video, setVideo] = useState("");
   const [capa, setCapa] = useState("");
@@ -130,7 +132,9 @@ export function AbaConteudo({
   async function mover(modulo: Modulo, aula: Aula, passo: number) {
     const destino = modulo.aulas[aula.ordem + passo];
     if (!destino) {
-      avisar(passo < 0 ? "Esta já é a primeira aula." : "Esta já é a última aula.");
+      avisar(
+        passo < 0 ? "Este já é o primeiro conteúdo." : "Este já é o último conteúdo.",
+      );
       return;
     }
     const falha = await executar(() =>
@@ -154,11 +158,12 @@ export function AbaConteudo({
             {produtoId ? "Estrutura" : "Mentoria"}
           </span>
           <span className="font-titulo text-[22px] text-white">
-            {produtoId ? "Módulos e aulas" : "Caminho do Desbloqueio"}
+            {produtoId ? "Módulos" : "Caminho do Desbloqueio"}
           </span>
         </span>
         <span className="text-[13px] text-[rgba(255,255,255,.55)]">
-          {modulos.length} módulos · {totalAulas} aulas
+          {modulos.length} {modulos.length === 1 ? "módulo" : "módulos"} · {totalAulas}{" "}
+          {totalAulas === 1 ? "conteúdo" : "conteúdos"}
         </span>
         <button
           onClick={() => setExpandido((v) => !v)}
@@ -197,7 +202,9 @@ export function AbaConteudo({
                       Módulo {modulo.numero} — {modulo.titulo}
                     </span>
                     <span className="text-[12px] text-[rgba(255,255,255,.5)]">
-                      {modulo.aulas.length === 1 ? "1 aula" : `${modulo.aulas.length} aulas`}
+                      {modulo.aulas.length === 1
+                        ? "1 conteúdo"
+                        : `${modulo.aulas.length} conteúdos`}
                     </span>
                   </span>
                   <span
@@ -221,10 +228,12 @@ export function AbaConteudo({
                         setModulosAbertos((a) => new Set(a).add(modulo.id));
                         setEditando(editando === chave ? "" : chave);
                         setTextoEdicao(modulo.titulo);
+                        setDescricaoEdicao(modulo.intro);
+                        setCapaEdicao(modulo.capaPath ?? "");
                       }}
                       style={{ ...botaoNeutro }}
                     >
-                      {editando === `m:${modulo.id}` ? "Cancelar edição" : "Editar nome"}
+                      {editando === `m:${modulo.id}` ? "Cancelar edição" : "Editar"}
                     </button>
                     {/*
                       Bloquear tira o módulo inteiro do ar para a turma
@@ -306,7 +315,7 @@ export function AbaConteudo({
                       onClick={() =>
                         pedirConfirmacao({
                           titulo: `Remover o Módulo ${modulo.numero}?`,
-                          mensagem: `As ${modulo.aulas.length} aulas dele saem do curso para todas as alunas, junto com o progresso e os comentários delas.`,
+                          mensagem: `Os ${modulo.aulas.length} conteúdos dele saem do produto para todas as alunas, junto com o progresso e os comentários delas.`,
                           executar: async () =>
                             avisar(
                               (await executar(() => dados.removerModulo(modulo.id))) ??
@@ -345,10 +354,12 @@ export function AbaConteudo({
                       const falha = await executar(() =>
                         dados.atualizarModulo(modulo.id, {
                           titulo: textoEdicao.trim().toUpperCase(),
+                          intro: descricaoEdicao.trim(),
+                          capa_path: capaEdicao.trim() || null,
                         }),
                       );
                       if (!falha) setEditando("");
-                      avisar(falha ?? "Nome do módulo atualizado.");
+                      avisar(falha ?? "Módulo atualizado.");
                     }}
                     className="mt-3 flex flex-wrap gap-2"
                   >
@@ -359,11 +370,47 @@ export function AbaConteudo({
                       aria-label="Nome do módulo"
                       style={{ ...campo, flex: "2 1 240px", minHeight: 44, fontSize: 14 }}
                     />
+                    {/*
+                      A descrição do módulo.
+
+                      `PaginaModulo` mostra este texto para a aluna
+                      desde sempre — é o parágrafo abaixo do título,
+                      logo antes da lista — e o painel não tinha como
+                      escrevê-lo: só a migration inicial o preencheu.
+                      É a "descrição do e-book" do caminho pedido.
+                    */}
+                    <label className="flex flex-[1_1_200px] flex-col gap-[6px]">
+                      <span style={rotulo}>Capa — arquivo no depósito `capas`</span>
+                      <input
+                        type="text"
+                        value={capaEdicao}
+                        onChange={(e) => setCapaEdicao(e.target.value)}
+                        placeholder="modulo-3.png"
+                        style={{ ...campo, minHeight: 44, fontSize: 14 }}
+                      />
+                    </label>
+                    <label className="flex w-full flex-col gap-[6px]">
+                      <span style={rotulo}>
+                        Descrição — aparece para a aluna, abaixo do nome
+                      </span>
+                      <textarea
+                        value={descricaoEdicao}
+                        onChange={(e) => setDescricaoEdicao(e.target.value)}
+                        rows={2}
+                        style={{
+                          ...campo,
+                          minHeight: 64,
+                          padding: "12px 14px",
+                          fontSize: 14,
+                          resize: "vertical",
+                        }}
+                      />
+                    </label>
                     <button
                       type="submit"
                       style={{ ...botaoOuro, minHeight: 44, padding: "0 20px", fontSize: 14 }}
                     >
-                      Salvar nome
+                      Salvar módulo
                     </button>
                     <button
                       type="button"
@@ -386,7 +433,7 @@ export function AbaConteudo({
                     style={{ borderTop: "1px solid rgba(255,255,255,.07)" }}
                   >
                     <span className="mb-2 block" style={rotulo}>
-                      Conteúdos desta seção, fora das aulas
+                      Mídia do módulo, fora dos conteúdos
                     </span>
                     <EditorConteudos
                       dono={{ produtoId: modulo.produtoId, moduloId: modulo.id }}
@@ -421,10 +468,10 @@ export function AbaConteudo({
                                   : "#ffffff",
                               }}
                             >
-                              Aula {aula.numero} — {aula.titulo}
+                              {aula.numero}. {aula.titulo}
                             </span>
                             <span className="text-[11px] text-[rgba(255,255,255,.46)]">
-                              {anexos.length ? anexos.join(" · ") : "sem conteúdo anexado"}
+                              {anexos.length ? anexos.join(" · ") : "sem mídia"}
                             </span>
                           </span>
 
@@ -478,7 +525,7 @@ export function AbaConteudo({
                               border: "1px solid rgba(255,255,255,.4)",
                             }}
                           >
-                            {conteudoDe === aula.id ? "Fechar conteúdo" : "Conteúdo"}
+                            {conteudoDe === aula.id ? "Fechar mídia" : "Mídia"}
                           </button>
                           {/*
                             Liberar para a turma inteira.
@@ -504,8 +551,8 @@ export function AbaConteudo({
                               if (semAula.length === 0) {
                                 avisar(
                                   alunas.length === 1
-                                    ? "A única aluna já tem esta aula."
-                                    : `Todas as ${alunas.length} alunas já têm esta aula.`,
+                                    ? "A única aluna já tem este conteúdo."
+                                    : `Todas as ${alunas.length} alunas já têm este conteúdo.`,
                                 );
                                 return;
                               }
@@ -513,14 +560,14 @@ export function AbaConteudo({
                               pedirConfirmacao({
                                 tom: "normal",
                                 rotuloConfirmar: "Liberar para todas",
-                                titulo: `Liberar a Aula ${aula.numero} para todas?`,
+                                titulo: `Liberar "${aula.titulo}" para todas?`,
                                 mensagem:
                                   `"${aula.titulo}" será liberada, aberta desde já, para ` +
                                   `${semAula.length === 1 ? "1 aluna" : `${semAula.length} alunas`}.` +
                                   (jaTem > 0
                                     ? ` Outra${jaTem === 1 ? "" : "s"} ${jaTem} já ${
                                         jaTem === 1 ? "tem" : "têm"
-                                      } a aula e não ${jaTem === 1 ? "será alterada" : "serão alteradas"}.`
+                                      } o conteúdo e não ${jaTem === 1 ? "será alterada" : "serão alteradas"}.`
                                     : "") +
                                   " Depois você pode ajustar a data de cada uma no Curso dela.",
                                 executar: async () => {
@@ -563,12 +610,12 @@ export function AbaConteudo({
                                     avisar(
                                       (await executar(() =>
                                         dados.atualizarAula(aula.id, { bloqueado_geral: false }),
-                                      )) ?? `Aula ${aula.numero} de volta ao ar.`,
+                                      )) ?? `"${aula.titulo}" de volta ao ar.`,
                                     ))()
                                 : pedirConfirmacao({
                                     tom: "normal",
                                     rotuloConfirmar: "Bloquear",
-                                    titulo: `Bloquear a Aula ${aula.numero}?`,
+                                    titulo: `Bloquear "${aula.titulo}"?`,
                                     mensagem:
                                       `"${aula.titulo}" some da tela de ${quantasAlunas()}. ` +
                                       "O progresso e os comentários ficam guardados, e " +
@@ -577,7 +624,7 @@ export function AbaConteudo({
                                       avisar(
                                         (await executar(() =>
                                           dados.atualizarAula(aula.id, { bloqueado_geral: true }),
-                                        )) ?? `Aula ${aula.numero} bloqueada para as alunas.`,
+                                        )) ?? `"${aula.titulo}" bloqueado para as alunas.`,
                                       ),
                                   })
                             }
@@ -595,12 +642,12 @@ export function AbaConteudo({
                           <button
                             onClick={() =>
                               pedirConfirmacao({
-                                titulo: `Remover a Aula ${aula.numero}?`,
-                                mensagem: `"${aula.titulo}" sai do curso para todas as alunas, junto com o progresso e os comentários dela.`,
+                                titulo: `Remover "${aula.titulo}"?`,
+                                mensagem: `"${aula.titulo}" sai do produto para todas as alunas, junto com o progresso e os comentários dele.`,
                                 executar: async () =>
                                   avisar(
                                     (await executar(() => dados.removerAula(aula.id))) ??
-                                      "Aula removida.",
+                                      "Conteúdo removido.",
                                   ),
                               })
                             }
@@ -648,7 +695,7 @@ export function AbaConteudo({
                               );
                               if (!falhaVideo && !falhaResto) {
                                 setConteudoDe("");
-                                avisar("Conteúdo da aula salvo.");
+                                avisar("Mídia salva.");
                               } else if (falhaVideo && falhaResto) {
                                 avisar(`Nada foi salvo. ${falhaVideo}`);
                               } else if (falhaVideo) {
@@ -667,7 +714,7 @@ export function AbaConteudo({
                                 dica: "https://iframe.videodelivery.net/<uid>  ou só o uid",
                               },
                               {
-                                rotulo: "Capa da aula — arquivo no depósito `capas`",
+                                rotulo: "Capa — arquivo no depósito `capas`",
                                 valor: capa,
                                 mudar: setCapa,
                                 dica: `modulo-${modulo.numero}-aula-${aula.numero}.webp`,
@@ -727,7 +774,7 @@ export function AbaConteudo({
                                   fontSize: 13,
                                 }}
                               >
-                                Salvar conteúdo
+                                Salvar mídia
                               </button>
                               <button
                                 type="button"
@@ -750,7 +797,7 @@ export function AbaConteudo({
                         {conteudoDe === aula.id && modulo.produtoId ? (
                           <div className="mb-3">
                             <span className="mb-2 block" style={rotulo}>
-                              Conteúdos extras desta aula
+                              Mais mídia deste conteúdo
                             </span>
                             <EditorConteudos
                               dono={{ produtoId: modulo.produtoId, aulaId: aula.id }}
@@ -767,14 +814,14 @@ export function AbaConteudo({
                             onSubmit={async (e) => {
                               e.preventDefault();
                               if (!textoEdicao.trim()) {
-                                avisar("Informe o nome da aula.");
+                                avisar("Informe o nome do conteúdo.");
                                 return;
                               }
                               const falha = await executar(() =>
                                 dados.atualizarAula(aula.id, { titulo: textoEdicao.trim() }),
                               );
                               if (!falha) setEditando("");
-                              avisar(falha ?? "Nome da aula atualizado.");
+                              avisar(falha ?? "Nome do conteúdo atualizado.");
                             }}
                             className="flex flex-wrap gap-2 pb-3 pt-1"
                           >
@@ -782,7 +829,7 @@ export function AbaConteudo({
                               type="text"
                               value={textoEdicao}
                               onChange={(e) => setTextoEdicao(e.target.value)}
-                              aria-label="Nome da aula"
+                              aria-label="Nome do conteúdo"
                               style={{ ...campo, flex: "2 1 220px", minHeight: 42, fontSize: 14 }}
                             />
                             <button
@@ -825,7 +872,7 @@ export function AbaConteudo({
                       e.preventDefault();
                       const titulo = (novaAulaEm === modulo.id ? novaAula : "").trim();
                       if (!titulo) {
-                        avisar("Informe o nome da aula.");
+                        avisar("Informe o nome do conteúdo.");
                         return;
                       }
                       const falha = await executar(() =>
@@ -837,7 +884,7 @@ export function AbaConteudo({
                         ),
                       );
                       if (!falha) setNovaAula("");
-                      avisar(falha ?? "Aula adicionada.");
+                      avisar(falha ?? "Conteúdo adicionado.");
                     }}
                     className="mt-3 flex flex-wrap gap-2"
                   >
@@ -854,15 +901,15 @@ export function AbaConteudo({
                         }
                       }}
                       onChange={(e) => setNovaAula(e.target.value)}
-                      placeholder={`Nova aula no Módulo ${modulo.numero}`}
-                      aria-label={`Nome da nova aula do Módulo ${modulo.numero}`}
+                      placeholder="Nome do novo conteúdo"
+                      aria-label={`Nome do novo conteúdo de ${modulo.titulo}`}
                       style={{ ...campo, flex: "2 1 240px", minHeight: 42, fontSize: 13 }}
                     />
                     <button
                       type="submit"
                       style={{ ...botaoNeutroGrande }}
                     >
-                      Adicionar aula
+                      + Adicionar conteúdo
                     </button>
                     {/*
                       O cancelar só existe depois que alguém escreveu.

@@ -360,6 +360,7 @@ export async function atualizarModulo(
     intro: string;
     bloqueado_geral: boolean;
     titulo_na_arte: boolean;
+    capa_path: string | null;
     ordem: number;
     produto_id: string | null;
   }>,

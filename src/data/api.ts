@@ -261,7 +261,7 @@ export async function minhasAberturas(): Promise<Map<string, string>> {
 }
 
 export async function carregarCatalogo(): Promise<Catalogo> {
-  const [modulos, aulas, categorias, presentes, aoVivo, produtos, conteudos] =
+  const [modulos, aulas, categorias, presentes, aoVivo, produtos, conteudos, ajustes] =
     await Promise.all([
       supabase.from("modulos").select("*").order("ordem"),
       supabase.from("aulas").select("*").order("ordem"),
@@ -270,6 +270,7 @@ export async function carregarCatalogo(): Promise<Catalogo> {
       supabase.from("aulas_ao_vivo").select("*"),
       supabase.from("produtos").select("*").order("ordem"),
       supabase.from("conteudos").select("*").order("ordem"),
+      supabase.from("configuracoes").select("produto_jornada").maybeSingle(),
     ]);
 
   for (const r of [modulos, aulas, categorias, presentes, aoVivo, produtos, conteudos]) {
@@ -334,6 +335,7 @@ export async function carregarCatalogo(): Promise<Catalogo> {
     intro: m.intro ?? "",
     ordem: m.ordem,
     produtoId: m.produto_id,
+    capaPath: m.capa_path,
     bloqueadoGeral: m.bloqueado_geral,
     tituloNaArte: m.titulo_na_arte,
     conteudos: emOrdem(conteudoDoModulo.get(m.id)),
@@ -439,6 +441,8 @@ export async function carregarCatalogo(): Promise<Catalogo> {
     categorias: listaCategorias,
     aoVivo: mapaAoVivo,
     produtos: listaProdutos,
+    produtoJornada:
+      (ajustes.data as { produto_jornada: string | null } | null)?.produto_jornada ?? null,
   };
 }
 

@@ -14,6 +14,8 @@ export type Modulo = {
   ordem: number;
   /** A qual produto este módulo pertence. Nulo só em base antiga. */
   produtoId: string | null;
+  /** Capa própria. Nulo cai na arte numerada do curso. */
+  capaPath: string | null;
   bloqueadoGeral: boolean;
   /** A arte da capa já traz o título; a tela não sobrepõe o dela. */
   tituloNaArte: boolean;
@@ -123,6 +125,14 @@ export type Catalogo = {
   aoVivo: Record<string, AulaAoVivo>;
   /** Todos os produtos, na ordem de categoria e depois de posição. */
   produtos: Produto[];
+  /**
+   * Qual produto é "Minha jornada" — Início, Módulos, Perfil e o
+   * percentual. Os outros aparecem na prateleira por categoria.
+   *
+   * É colocação, não tipo: qualquer produto pode ser este, e sê-lo não
+   * muda nada do que ele tem dentro.
+   */
+  produtoJornada: string | null;
 };
 
 export type StatusConta = "ativa" | "bloqueada";

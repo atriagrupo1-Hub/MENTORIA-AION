@@ -1,25 +1,30 @@
 import { useNavigate } from "react-router-dom";
 import { Aviso } from "@/components/Aviso";
-import { Capa, capaPresente } from "@/components/Capa";
+import { Capa, capaModulo, capaPresente } from "@/components/Capa";
 import { Play } from "@/components/Icones";
 import { useAviso } from "@/components/useAviso";
 import { useEstado } from "@/data/estado";
-import type { Presente, Produto } from "@/data/tipos";
+import type { Modulo, Presente } from "@/data/tipos";
 import { cores } from "@/design/tokens";
 
 /**
- * Acervo em faixas: cada categoria com o título em maiúsculas e uma
+ * O acervo, em faixas: cada categoria com o título em maiúsculas e uma
  * fileira deslizável mostrando duas capas por tela.
  *
- * A ordem é a do painel, e só ela. Antes havia um desempate por
- * `destacada` na frente de `ordem` — uma categoria marcada como
- * destacada furava a fila —, e isso fazia a ordem escolhida em
- * Categorias / Layout não ser obedecida. `destacada` existia para dar
- * sub-aba à categoria no painel antigo; não é assunto desta tela.
+ * O que está nas capas mudou. Antes eram os "presentes" — uma peça
+ * solta com um vídeo. Agora é o MÓDULO, a mesma coisa que a aluna
+ * clica na mentoria: um e-book, uma coleção de frequências, um
+ * documentário. Clicar leva à página dele — nome, descrição e a lista
+ * de conteúdos —, e de lá ela abre cada conteúdo. São os mesmos
+ * passos da mentoria, nas mesmas telas.
  *
- * Categoria oculta não aparece. `bloqueada_geral` é a mesma coluna que
- * `pode_ver_presente` e `pode_ver_produto` já conferem no banco — a
- * tela deixando de desenhá-la é consequência, não é a proteção.
+ * A jornada fica de fora: a mentoria já tem a tela dela, e repetir os
+ * onze módulos aqui seria mostrar duas vezes a mesma coisa.
+ *
+ * A ordem é a do painel — categoria, depois produto, depois módulo —
+ * e categoria oculta não aparece. `bloqueada_geral` é a mesma coluna
+ * que o banco já confere; a tela deixar de desenhá-la é consequência,
+ * não é a proteção.
  */
 export function Presentes() {
   const { catalogo } = useEstado();
@@ -43,24 +48,28 @@ export function Presentes() {
       </p>
 
       {categorias.map((categoria) => {
-        /*
-         * Dentro da categoria, os produtos na ordem do painel. Só os
-         * que têm alguma coisa para mostrar aqui: o produto que é um
-         * curso aparece na área da mentoria, não no acervo.
-         */
         const produtos = [...categoria.produtos]
+          .filter((p) => p.id !== catalogo.produtoJornada)
           .filter((p) => p.publicado && !p.bloqueadoGeral)
-          .filter((p) => p.presentes.length > 0 || p.conteudos.length > 0)
           .sort((a, b) => a.ordem - b.ordem);
 
         /*
-         * Itens que ainda não pertencem a produto nenhum. Hoje não
-         * existe nenhum; ficam aqui para que uma linha antiga nunca
-         * desapareça da tela por causa da mudança de estrutura.
+         * Um produto pode ter mais de um módulo — "17 Frequências" e
+         * "Frequências do Reino" no mesmo produto, por exemplo. A
+         * fileira mostra os módulos, na ordem do produto e depois na
+         * ordem deles.
+         */
+        const modulos = produtos.flatMap((p) =>
+          [...p.modulos].sort((a, b) => a.ordem - b.ordem),
+        );
+
+        /*
+         * Peças antigas, do tempo em que o acervo era feito de
+         * presentes soltos. Não existe nenhuma hoje; ficam aqui para
+         * que uma linha antiga nunca suma da tela por causa da
+         * mudança de estrutura.
          */
         const soltos = categoria.presentes.filter((p) => !p.produtoId);
-
-        const vazia = produtos.length === 0 && soltos.length === 0;
 
         return (
           <section key={categoria.id} className="mt-9">
@@ -77,14 +86,15 @@ export function Presentes() {
               {categoria.titulo}
             </h2>
 
-            {vazia ? (
+            {modulos.length === 0 && soltos.length === 0 ? (
               <p className="mb-2 mt-0 text-corpo text-[rgba(243,236,225,.45)]">
-                Em breve, presentes nesta categoria.
+                Em breve, conteúdos nesta categoria.
               </p>
-            ) : null}
-
-            {soltos.length > 0 ? (
+            ) : (
               <Fileira>
+                {modulos.map((modulo) => (
+                  <CartaoModulo key={modulo.id} modulo={modulo} avisar={aviso.mostrar} />
+                ))}
                 {soltos.map((presente) => (
                   <CartaoPresente
                     key={presente.id}
@@ -95,18 +105,7 @@ export function Presentes() {
                   />
                 ))}
               </Fileira>
-            ) : null}
-
-            {produtos.map((produto) => (
-              <BlocoDoProduto
-                key={produto.id}
-                produto={produto}
-                categoriaId={categoria.id}
-                mostrarNome={produtos.length > 1 || produto.presentes.length === 0}
-                indiceDe={(id) => todos.findIndex((p) => p.id === id)}
-                avisar={aviso.mostrar}
-              />
-            ))}
+            )}
           </section>
         );
       })}
@@ -127,61 +126,31 @@ function Fileira({ children }: { children: React.ReactNode }) {
   );
 }
 
-function BlocoDoProduto({
-  produto,
-  categoriaId,
-  mostrarNome,
-  indiceDe,
+function CartaoModulo({
+  modulo,
   avisar,
 }: {
-  produto: Produto;
-  categoriaId: string;
-  mostrarNome: boolean;
-  indiceDe: (id: string) => number;
+  modulo: Modulo;
   avisar: (m: string) => void;
 }) {
   const navegar = useNavigate();
-  const { produtoLiberado } = useEstado();
+  const { moduloVisivel, moduloLiberado } = useEstado();
 
-  const itens = [...produto.presentes].sort((a, b) => a.ordem - b.ordem);
+  /*
+   * Aberto só quando ela tem ao menos um conteúdo dele já liberado —
+   * a mesma regra da mentoria. Quem decide continua sendo o banco;
+   * isto é a leitura da resposta dele.
+   */
+  const liberado = moduloVisivel(modulo) && moduloLiberado(modulo);
 
   return (
-    <div className="mt-5 first:mt-0">
-      {mostrarNome ? (
-        <h3 className="text-realce mb-3 mt-0 font-titulo font-semibold text-marfim">
-          {produto.titulo}
-        </h3>
-      ) : null}
-
-      {itens.length > 0 ? (
-        <Fileira>
-          {itens.map((presente) => (
-            <CartaoPresente
-              key={presente.id}
-              presente={presente}
-              categoriaId={categoriaId}
-              indice={indiceDe(presente.id)}
-              avisar={avisar}
-            />
-          ))}
-        </Fileira>
-      ) : (
-        /*
-         * Produto sem item nenhum: o conteúdo mora direto nele, e a
-         * capa inteira é o botão. É o e-book e o documentário.
-         */
-        <Fileira>
-          <Cartao
-            titulo={produto.titulo}
-            capa={produto.capaPath}
-            indice={0}
-            liberado={produtoLiberado(produto.id)}
-            aoAbrir={() => navegar(`/conteudo/${produto.id}`)}
-            avisar={avisar}
-          />
-        </Fileira>
-      )}
-    </div>
+    <Cartao
+      titulo={modulo.titulo}
+      capa={modulo.capaPath ?? capaModulo(modulo.numero)}
+      liberado={liberado}
+      aoAbrir={() => navegar(`/modulo/${modulo.id}`)}
+      avisar={avisar}
+    />
   );
 }
 
@@ -202,8 +171,7 @@ function CartaoPresente({
   return (
     <Cartao
       titulo={presente.titulo}
-      capa={presente.capaPath}
-      indice={indice}
+      capa={presente.capaPath ?? capaPresente(Math.max(0, indice))}
       liberado={presenteLiberado(categoriaId, presente.id)}
       aoAbrir={() => navegar(`/presente/${presente.id}`)}
       avisar={avisar}
@@ -214,14 +182,12 @@ function CartaoPresente({
 function Cartao({
   titulo,
   capa,
-  indice,
   liberado,
   aoAbrir,
   avisar,
 }: {
   titulo: string;
-  capa: string | null;
-  indice: number;
+  capa: string;
   liberado: boolean;
   aoAbrir: () => void;
   avisar: (m: string) => void;
@@ -230,7 +196,7 @@ function Cartao({
     <button
       onClick={() => {
         if (!liberado) {
-          avisar("Este presente será disponibilizado no momento certo da sua jornada.");
+          avisar("Este conteúdo será disponibilizado no momento certo da sua jornada.");
           return;
         }
         aoAbrir();
@@ -246,10 +212,7 @@ function Cartao({
           boxShadow: "0 16px 34px -26px rgba(0,0,0,.9)",
         }}
       >
-        <Capa
-          caminhos={[capa ?? capaPresente(Math.max(0, indice))]}
-          alt={`Capa de ${titulo}`}
-        />
+        <Capa caminhos={[capa]} alt={`Capa de ${titulo}`} />
         <span
           className="absolute inset-0"
           style={{
@@ -289,7 +252,7 @@ function Cartao({
               />
             </span>
           )}
-          {liberado ? "Assistir" : "Em breve"}
+          {liberado ? "Abrir" : "Em breve"}
         </span>
         <span className="absolute inset-x-3 bottom-4 text-center font-titulo text-realce leading-[1.18] text-marfim">
           {liberado ? titulo : ""}

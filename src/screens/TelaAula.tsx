@@ -118,8 +118,23 @@ export function TelaAula() {
   const [video, setVideo] = useState<api.Video | null>(null);
   const [segundos, setSegundos] = useState(0);
 
-  const modulo = catalogo.modulos.find((m) => m.numero === numeroModulo);
+  /*
+   * Por id primeiro, por número depois — a mesma regra da
+   * `PaginaModulo`. `numero` só é único dentro de um produto, e os
+   * endereços antigos (`/aula/3/2`) sempre quiseram dizer a mentoria.
+   */
+  const modulo =
+    catalogo.modulos.find((m) => m.id === mi) ??
+    catalogo.modulos.find(
+      (m) =>
+        m.numero === numeroModulo &&
+        (catalogo.produtoJornada === null || m.produtoId === catalogo.produtoJornada),
+    );
   const aula = modulo?.aulas[ordem];
+
+  /** Na mentoria isto é "Módulo 3 • Aula 2". Num e-book, não é. */
+  const naJornada =
+    catalogo.produtoJornada === null || modulo?.produtoId === catalogo.produtoJornada;
 
   const aulaId = aula?.id ?? null;
 
@@ -282,32 +297,48 @@ export function TelaAula() {
     setSaindo(true);
     // O mesmo tempo do desaparecimento, em `index.css`. Navegar antes
     // corta a saída pela metade; depois, deixa a tela apagada parada.
-    window.setTimeout(() => navegar(`/modulo/${modulo!.numero}`), 220);
+    window.setTimeout(() => navegar(`/modulo/${modulo!.id}`), 220);
   }
 
+  /*
+   * Anterior e próximo andam pelos irmãos do MESMO produto.
+   *
+   * Antes andavam por `numero` no catálogo inteiro. Com mais de um
+   * produto, `numero` deixou de ser único: o "próximo" da última aula
+   * do Módulo 1 podia ser o capítulo de um e-book.
+   */
+  const irmaos = catalogo.modulos
+    .filter((m) => m.produtoId === modulo?.produtoId)
+    .sort((a, b) => a.ordem - b.ordem);
+
+  const vizinho = (passo: -1 | 1) => {
+    const aqui = irmaos.findIndex((m) => m.id === modulo?.id);
+    return aqui < 0 ? undefined : irmaos[aqui + passo];
+  };
+
   function irParaAnterior() {
-    if (ordem > 0) return navegar(`/aula/${numeroModulo}/${ordem - 1}`);
-    const anterior = catalogo.modulos.find((m) => m.numero === numeroModulo - 1);
+    if (ordem > 0) return navegar(`/aula/${modulo!.id}/${ordem - 1}`);
+    const anterior = vizinho(-1);
     if (anterior && moduloLiberado(anterior)) {
-      return navegar(`/aula/${anterior.numero}/${anterior.aulas.length - 1}`);
+      return navegar(`/aula/${anterior.id}/${anterior.aulas.length - 1}`);
     }
-    aviso.mostrar("Esta é a primeira aula da mentoria.");
+    aviso.mostrar("Este é o primeiro desta trilha.");
   }
 
   function irParaProxima() {
     if (ordem + 1 < modulo!.aulas.length) {
-      return navegar(`/aula/${numeroModulo}/${ordem + 1}`);
+      return navegar(`/aula/${modulo!.id}/${ordem + 1}`);
     }
-    const seguinte = catalogo.modulos.find((m) => m.numero === numeroModulo + 1);
+    const seguinte = vizinho(1);
     if (!seguinte) {
-      aviso.mostrar("Você chegou à última aula da mentoria.");
+      aviso.mostrar("Você chegou ao fim desta trilha.");
       return;
     }
     if (!moduloLiberado(seguinte)) {
-      aviso.mostrar("Este módulo será liberado no momento certo da sua jornada.");
+      aviso.mostrar("Isto será liberado no momento certo da sua jornada.");
       return;
     }
-    navegar(`/aula/${seguinte.numero}/0`);
+    navegar(`/aula/${seguinte.id}/0`);
   }
 
   /*
@@ -606,7 +637,9 @@ export function TelaAula() {
         </div>
 
         <p className="mb-0 mt-1 text-corpo text-white/55">
-          Módulo {modulo.numero} • Aula {aula.numero}
+          {naJornada
+            ? `Módulo ${modulo.numero} • Aula ${aula.numero}`
+            : `${modulo.titulo} • ${aula.numero} de ${modulo.aulas.length}`}
         </p>
 
         {/*
@@ -881,7 +914,7 @@ export function TelaAula() {
                     );
                     return;
                   }
-                  navegar(`/aula/${modulo.numero}/${outra.ordem}`);
+                  navegar(`/aula/${modulo.id}/${outra.ordem}`);
                 }}
                 className="flex items-start gap-4 border-none bg-transparent py-3 text-left transition-opacity hover:opacity-[.82]"
                 style={{ borderBottom: "1px solid rgba(255,255,255,.08)", cursor: "pointer" }}

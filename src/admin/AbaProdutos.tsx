@@ -1,9 +1,8 @@
 import { useState, type FormEvent } from "react";
-import type { Presente, Produto } from "@/data/tipos";
+import type { Produto } from "@/data/tipos";
 import { AbaConteudo } from "./AbaConteudo";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
-import { EditorConteudos } from "./EditorConteudos";
 import {
   botaoNeutro,
   botaoNeutroGrande,
@@ -15,7 +14,6 @@ import {
   rotulo,
 } from "./estilos";
 import { Fileira, Voltar } from "./Fileira";
-import { idDoVideo, provedorDoLink } from "./video";
 import type { Painel } from "./usePainel";
 
 /*
@@ -396,38 +394,18 @@ function ProdutoAberto({
       </h3>
 
       {/*
-        Três degraus, e nenhum obrigatório. O e-book usa só o primeiro;
-        o curso usa só o terceiro; o produto misto usa os três. É a
-        hierarquia flexível pedida, sem um "tipo de produto" decidindo
-        por quem edita.
+        Um caminho só, o mesmo da mentoria:
+
+          categoria  ->  MÓDULO   (o que é: "Manuscritos Sagrados")
+                     ->  CONTEÚDO (a peça: "O livro", "Aula 3")
+                     ->  mídia    (vídeo, áudio, texto, PDF, link, imagem)
+
+        Havia três: "conteúdo direto do produto", "itens do produto" e
+        "módulos e aulas". Três portas para a mesma sala, e quem ia
+        cadastrar um e-book não tinha como saber qual abrir — e, pela
+        primeira, a aluna não ganhava a tela de abertura que a mentoria
+        tem. Ficou a que já estava provada.
       */}
-      <div
-        className="mb-4 rounded-cartao p-4"
-        style={{ background: tema.superficie, border: `1px solid ${tema.linhaSuave}` }}
-      >
-        <span className="mb-1 block" style={rotulo}>
-          Conteúdo direto do produto
-        </span>
-        <p className="m-0 mb-3 text-[12px]" style={{ color: tema.textoTerciario }}>
-          Capa, texto de apresentação, PDF, áudio, vídeo — sem precisar de
-          módulo nem de aula.
-        </p>
-        <EditorConteudos
-          dono={{ produtoId: produto.id }}
-          conteudos={produto.conteudos}
-          painel={painel}
-          pedirConfirmacao={pedirConfirmacao}
-          avisar={avisar}
-        />
-      </div>
-
-      <ItensDoProduto
-        produto={produto}
-        painel={painel}
-        pedirConfirmacao={pedirConfirmacao}
-        avisar={avisar}
-      />
-
       <AbaConteudo
         painel={painel}
         produtoId={produto.id}
@@ -435,305 +413,5 @@ function ProdutoAberto({
         avisar={avisar}
       />
     </section>
-  );
-}
-
-/**
- * Os itens do produto.
- *
- * É a tabela `presentes` — a mesma de sempre, com a mesma liberação e
- * a mesma função `pode_ver_presente`. O que mudou é que agora ela
- * pendura num produto em vez de pendurar direto numa categoria: as
- * dezessete frequências são dezessete itens de um produto, e cada uma
- * monta o próprio conteúdo.
- */
-function ItensDoProduto({
-  produto,
-  painel,
-  pedirConfirmacao,
-  avisar,
-}: {
-  produto: Produto;
-  painel: Painel;
-  pedirConfirmacao: (p: PedidoConfirmacao) => void;
-  avisar: (m: string) => void;
-}) {
-  const { executar } = painel;
-  const [novo, setNovo] = useState("");
-  const [abertoId, setAbertoId] = useState("");
-
-  const itens = [...produto.presentes].sort((a, b) => a.ordem - b.ordem);
-
-  async function adicionar(e: FormEvent) {
-    e.preventDefault();
-    if (!novo.trim()) {
-      avisar("Dê um nome ao item.");
-      return;
-    }
-    const falha = await executar(() =>
-      dados.criarPresente(produto.categoriaId, novo.trim(), itens.length, produto.id),
-    );
-    if (!falha) setNovo("");
-    avisar(falha ?? "Item criado.");
-  }
-
-  async function mover(id: string, direcao: -1 | 1) {
-    const atual = itens.findIndex((i) => i.id === id);
-    const destino = atual + direcao;
-    if (atual < 0 || destino < 0 || destino >= itens.length) return;
-    const um = itens[atual];
-    const dois = itens[destino];
-    const falha = await executar(async () => {
-      await dados.atualizarPresente(um.id, { ordem: dois.ordem });
-      await dados.atualizarPresente(dois.id, { ordem: um.ordem });
-    });
-    avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
-  }
-
-  return (
-    <div
-      className="mb-4 rounded-cartao p-4"
-      style={{ background: tema.superficie, border: `1px solid ${tema.linhaSuave}` }}
-    >
-      <span className="mb-1 block" style={rotulo}>
-        Itens do produto
-      </span>
-      <p className="m-0 mb-3 text-[12px]" style={{ color: tema.textoTerciario }}>
-        Cada item é uma peça da coleção — uma frequência, uma oração, um
-        capítulo — e monta o próprio conteúdo. A liberação continua sendo item
-        a item, como já era.
-      </p>
-
-      {itens.length === 0 ? (
-        <p className="m-0 mb-3 text-[13px]" style={{ color: tema.textoSecundario }}>
-          Nenhum item. Produtos sem coleção não precisam de nenhum.
-        </p>
-      ) : (
-        <ol className="m-0 mb-3 flex list-none flex-col gap-[8px] p-0">
-          {itens.map((item, i) => (
-            <li key={item.id}>
-              <div
-                className="flex flex-wrap items-center gap-[10px] rounded-cartao px-4 py-3"
-                style={{
-                  background: tema.superficieAlta,
-                  border: `1px solid ${
-                    item.bloqueadoGeral ? tema.perigoLinha : tema.linhaSuave
-                  }`,
-                }}
-              >
-                <span className="text-[13px]" style={{ color: tema.textoTerciario }}>
-                  {i + 1}.
-                </span>
-                <span
-                  className="min-w-0 flex-1 truncate text-[14px]"
-                  style={{ color: tema.texto }}
-                >
-                  {item.titulo}
-                  {item.bloqueadoGeral ? " · bloqueado" : ""}
-                </span>
-                <button
-                  onClick={() => mover(item.id, -1)}
-                  disabled={i === 0}
-                  aria-label={`Subir ${item.titulo}`}
-                  style={{ ...BOTAO_SETA, opacity: i === 0 ? 0.4 : 1 }}
-                >
-                  ↑
-                </button>
-                <button
-                  onClick={() => mover(item.id, 1)}
-                  disabled={i === itens.length - 1}
-                  aria-label={`Descer ${item.titulo}`}
-                  style={{ ...BOTAO_SETA, opacity: i === itens.length - 1 ? 0.4 : 1 }}
-                >
-                  ↓
-                </button>
-                <button
-                  onClick={() => setAbertoId(abertoId === item.id ? "" : item.id)}
-                  style={{ ...botaoNeutro, minHeight: 44, padding: "0 16px", fontSize: 14 }}
-                >
-                  {abertoId === item.id ? "Fechar" : "Abrir"}
-                </button>
-              </div>
-
-              {abertoId === item.id ? (
-                <ItemAberto
-                  item={item}
-                  produtoId={produto.id}
-                  painel={painel}
-                  pedirConfirmacao={pedirConfirmacao}
-                  avisar={avisar}
-                />
-              ) : null}
-            </li>
-          ))}
-        </ol>
-      )}
-
-      <form onSubmit={adicionar} className="flex flex-wrap items-end gap-[10px]">
-        <label className="flex min-w-[200px] flex-1 flex-col gap-[6px]">
-          <span style={rotulo}>Nome do novo item</span>
-          <input value={novo} onChange={(e) => setNovo(e.target.value)} style={campo} />
-        </label>
-        <button type="submit" style={botaoNeutroGrande}>
-          + Adicionar item
-        </button>
-      </form>
-    </div>
-  );
-}
-
-function ItemAberto({
-  item,
-  produtoId,
-  painel,
-  pedirConfirmacao,
-  avisar,
-}: {
-  item: Presente;
-  produtoId: string;
-  painel: Painel;
-  pedirConfirmacao: (p: PedidoConfirmacao) => void;
-  avisar: (m: string) => void;
-}) {
-  const { executar, midiaPresentes } = painel;
-  const [nome, setNome] = useState(item.titulo);
-  const [descricao, setDescricao] = useState(item.descricao);
-  const [capa, setCapa] = useState(item.capaPath ?? "");
-  const [video, setVideo] = useState(midiaPresentes.get(item.id)?.ref ?? "");
-
-  async function salvar(e: FormEvent) {
-    e.preventDefault();
-    if (!nome.trim()) {
-      avisar("O nome não pode ficar vazio.");
-      return;
-    }
-    /*
-     * O vídeo principal continua em `presente_midia`, e não virou um
-     * conteúdo qualquer: é dele que `video_do_presente` e a Edge
-     * Function `video-assinado` tiram a referência para assinar, e é
-     * o que a tela do presente já toca hoje. Mover isso para
-     * `conteudos` seria trocar o caminho que funciona por um que
-     * ainda teria de ser provado.
-     */
-    const bruto = video.trim();
-    const ref = idDoVideo(bruto);
-    if (bruto && !ref) {
-      avisar("Não reconheci esse endereço de vídeo.");
-      return;
-    }
-
-    const falha = await executar(async () => {
-      await dados.atualizarPresente(item.id, {
-        titulo: nome.trim(),
-        descricao: descricao.trim(),
-        capa_path: capa.trim() || null,
-      });
-      await dados.definirMidiaDoPresente(item.id, provedorDoLink(bruto), ref);
-    });
-    avisar(falha ?? "Item salvo.");
-  }
-
-  async function alternarBloqueio() {
-    const falha = await executar(() =>
-      dados.atualizarPresente(item.id, { bloqueado_geral: !item.bloqueadoGeral }),
-    );
-    avisar(
-      falha ??
-        (item.bloqueadoGeral
-          ? "Item de volta ao ar."
-          : "Item bloqueado para todas. Nada foi apagado."),
-    );
-  }
-
-  function liberarParaTodas() {
-    pedirConfirmacao({
-      tom: "normal",
-      rotuloConfirmar: "Liberar para todas",
-      titulo: `Liberar "${item.titulo}" para todas?`,
-      mensagem:
-        "Todas as alunas ativas passam a ter este item. É uma mudança de " +
-        "LIBERAÇÃO, não de organização — e não se desfaz sozinha.",
-      executar: async () => {
-        try {
-          const l = await dados.liberarPresenteParaTodas(item.id);
-          avisar(dados.resumoDaLiberacao(l, "presente"));
-        } catch (falha) {
-          avisar(falha instanceof Error ? falha.message : "Não foi possível liberar.");
-        }
-      },
-    });
-  }
-
-  function remover() {
-    pedirConfirmacao({
-      titulo: `Remover ${item.titulo}?`,
-      mensagem:
-        "O item e os conteúdos dele saem do produto e da área da aluna, junto " +
-        "com as liberações dele. Para só tirar da frente, use Bloquear.",
-      executar: async () => {
-        const falha = await executar(() => dados.removerPresente(item.id));
-        avisar(falha ?? "Item removido.");
-      },
-    });
-  }
-
-  return (
-    <div
-      className="mt-2 rounded-cartao p-4"
-      style={{ background: tema.superficie, border: `1px solid ${tema.linhaSuave}` }}
-    >
-      <form onSubmit={salvar}>
-        <div className="flex flex-wrap items-end gap-[10px]">
-          <label className="flex min-w-[180px] flex-[2] flex-col gap-[6px]">
-            <span style={rotulo}>Nome</span>
-            <input value={nome} onChange={(e) => setNome(e.target.value)} style={campo} />
-          </label>
-          <label className="flex min-w-[180px] flex-1 flex-col gap-[6px]">
-            <span style={rotulo}>Capa · caminho no Storage</span>
-            <input value={capa} onChange={(e) => setCapa(e.target.value)} style={campo} />
-          </label>
-          <label className="flex min-w-[180px] flex-1 flex-col gap-[6px]">
-            <span style={rotulo}>Vídeo principal · link ou id</span>
-            <input value={video} onChange={(e) => setVideo(e.target.value)} style={campo} />
-          </label>
-        </div>
-        <label className="mt-3 flex flex-col gap-[6px]">
-          <span style={rotulo}>Descrição</span>
-          <textarea
-            value={descricao}
-            onChange={(e) => setDescricao(e.target.value)}
-            rows={2}
-            style={{ ...campo, minHeight: 64, padding: "12px 14px", resize: "vertical" }}
-          />
-        </label>
-        <div className="mt-3 flex flex-wrap gap-[10px]">
-          <button type="submit" style={{ ...botaoOuro, minHeight: 40, fontSize: 13 }}>
-            Salvar item
-          </button>
-          <button type="button" onClick={alternarBloqueio} style={{ ...botaoNeutro, minHeight: 40 }}>
-            {item.bloqueadoGeral ? "Desbloquear" : "Bloquear para todas"}
-          </button>
-          <button type="button" onClick={liberarParaTodas} style={{ ...botaoNeutro, minHeight: 40 }}>
-            Liberar para todas
-          </button>
-          <button type="button" onClick={remover} style={{ ...botaoRemover, minHeight: 40 }}>
-            Remover item
-          </button>
-        </div>
-      </form>
-
-      <div className="mt-4 pt-4" style={{ borderTop: `1px solid ${tema.linhaSuave}` }}>
-        <span className="mb-2 block" style={rotulo}>
-          Conteúdos deste item
-        </span>
-        <EditorConteudos
-          dono={{ produtoId, presenteId: item.id }}
-          conteudos={item.conteudos}
-          painel={painel}
-          pedirConfirmacao={pedirConfirmacao}
-          avisar={avisar}
-        />
-      </div>
-    </div>
   );
 }

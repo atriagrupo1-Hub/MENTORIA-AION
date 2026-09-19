@@ -14,12 +14,13 @@ import type { Painel } from "./usePainel";
 import { idDoVideo, provedorDoLink } from "./video";
 
 /*
- * O editor universal de conteúdo.
+ * A mídia — o último degrau.
  *
- * Um componente só, montado em quatro lugares: direto no produto, numa
- * seção, num item de acervo e numa aula. É o que faz a hierarquia ser
- * flexível de verdade — a mesma caixa de conteúdo serve para o e-book
- * que não tem módulo nenhum e para a aula 37 do curso.
+ *   módulo  ->  conteúdo  ->  MÍDIA
+ *
+ * Um componente só, montado no módulo e no conteúdo. É o que faz um
+ * e-book e uma aula terem a mesma forma: onde a aula tem vídeo, o
+ * e-book tem PDF, e a caixa que os cadastra é a mesma.
  *
  * Seis tipos, e não um por palavra do catálogo: "e-book" é um PDF,
  * "material complementar" é um PDF ou um link, "capa" é uma imagem.
@@ -48,7 +49,7 @@ const BOTAO_SETA: React.CSSProperties = {
   fontSize: 16,
 };
 
-/** Onde o conteúdo pendura. Os três nulos = direto no produto. */
+/** Onde a mídia pendura. Os três nulos = direto no produto. */
 export type DonoDoConteudo = {
   produtoId: string;
   moduloId?: string | null;
@@ -78,7 +79,7 @@ export function EditorConteudos({
 
   async function adicionar() {
     if (!tituloNovo.trim()) {
-      avisar("Dê um nome ao conteúdo.");
+      avisar("Dê um nome à mídia.");
       return;
     }
     const falha = await executar(() =>
@@ -96,7 +97,7 @@ export function EditorConteudos({
       setTituloNovo("");
       setAdicionando(false);
     }
-    avisar(falha ?? "Conteúdo adicionado.");
+    avisar(falha ?? "Mídia adicionada.");
   }
 
   async function mover(id: string, direcao: -1 | 1) {
@@ -117,14 +118,14 @@ export function EditorConteudos({
       <div className="mb-3 flex flex-wrap items-center gap-[10px]">
         <span className="flex-1 text-[13px]" style={{ color: tema.textoSecundario }}>
           {lista.length === 0
-            ? "Nenhum conteúdo aqui ainda."
-            : `${lista.length} ${lista.length === 1 ? "conteúdo" : "conteúdos"}`}
+            ? "Nenhuma mídia aqui ainda."
+            : `${lista.length} ${lista.length === 1 ? "mídia" : "mídias"}`}
         </span>
         <button
           onClick={() => setAdicionando((v) => !v)}
           style={{ ...botaoNeutro, minHeight: 44, padding: "0 16px", fontSize: 14 }}
         >
-          {adicionando ? "Cancelar" : "+ Adicionar conteúdo"}
+          {adicionando ? "Cancelar" : "+ Adicionar mídia"}
         </button>
       </div>
 
@@ -157,7 +158,7 @@ export function EditorConteudos({
           </div>
           <div className="flex flex-wrap items-end gap-[10px]">
             <label className="flex min-w-[200px] flex-1 flex-col gap-[6px]">
-              <span style={rotulo}>Nome do conteúdo</span>
+              <span style={rotulo}>Nome da mídia</span>
               <input
                 value={tituloNovo}
                 onChange={(e) => setTituloNovo(e.target.value)}
@@ -252,7 +253,7 @@ function LinhaConteudo({
     }
 
     const falha = await executar(() => dados.atualizarConteudo(conteudo.id, patch));
-    avisar(falha ?? "Conteúdo salvo.");
+    avisar(falha ?? "Mídia salva.");
   }
 
   /* Ocultar não apaga: a linha continua no banco, fora da vista da aluna. */
@@ -262,7 +263,7 @@ function LinhaConteudo({
     );
     avisar(
       falha ??
-        (conteudo.publicado ? "Conteúdo oculto. Nada foi apagado." : "Conteúdo visível."),
+        (conteudo.publicado ? "Mídia oculta. Nada foi apagado." : "Mídia visível."),
     );
   }
 
@@ -270,11 +271,11 @@ function LinhaConteudo({
     pedirConfirmacao({
       titulo: `Remover ${conteudo.titulo}?`,
       mensagem:
-        "Este conteúdo some do produto e da área da aluna. Para só tirar da " +
+        "Esta mídia some do produto e da área da aluna. Para só tirar da " +
         "frente sem perder nada, use Ocultar.",
       executar: async () => {
         const falha = await executar(() => dados.removerConteudo(conteudo.id));
-        avisar(falha ?? "Conteúdo removido.");
+        avisar(falha ?? "Mídia removida.");
       },
     });
   }
@@ -299,7 +300,7 @@ function LinhaConteudo({
         <input
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
-          aria-label="Nome do conteúdo"
+          aria-label="Nome da mídia"
           style={{ ...campo, flex: "1 1 180px", minWidth: 0 }}
         />
         <button
@@ -354,7 +355,7 @@ function LinhaConteudo({
             className="flex items-center text-[12px]"
             style={{ color: tema.textoTerciario }}
           >
-            Oculto para a aluna
+            Oculta para a aluna
           </span>
         )}
       </div>

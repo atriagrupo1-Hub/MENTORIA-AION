@@ -27,6 +27,7 @@ const CATALOGO_VAZIO: Catalogo = {
   categorias: [],
   aoVivo: {},
   produtos: [],
+  produtoJornada: null,
 };
 
 /**

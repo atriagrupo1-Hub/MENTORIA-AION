@@ -87,7 +87,22 @@ export function PaginaModulo() {
   const navegar = useNavigate();
   const aviso = useAviso();
 
-  const modulo = catalogo.modulos.find((m) => m.numero === numero);
+  /*
+   * Por id primeiro, por número depois.
+   *
+   * `modulos` deixou de ser só o curso, e `numero` só é único dentro
+   * de um produto: o Módulo 1 da mentoria e o Módulo 1 de outro
+   * produto teriam o mesmo endereço. Os links novos usam o id; os
+   * antigos, `/modulo/3`, continuam valendo e são lidos como sendo da
+   * jornada, que é o que sempre significaram.
+   */
+  const modulo =
+    catalogo.modulos.find((m) => m.id === mi) ??
+    catalogo.modulos.find(
+      (m) =>
+        m.numero === numero &&
+        (catalogo.produtoJornada === null || m.produtoId === catalogo.produtoJornada),
+    );
   // Módulo que não é dela responde igual a módulo inexistente: digitar o
   // endereço na barra não pode revelar que ele existe.
   if (!modulo || !moduloVisivel(modulo)) {
@@ -96,21 +111,37 @@ export function PaginaModulo() {
 
   const e = estadoDoModulo(modulo, moduloLiberado(modulo), concluida, moduloAbreEm(modulo));
   const cor = paleta(modulo.numero);
+  /*
+   * "Módulo 3" e "Aula ao vivo" são da mentoria. Num e-book, o mesmo
+   * rótulo diria uma coisa que não é verdade — e a aula ao vivo
+   * pertence ao módulo do curso, não a um capítulo.
+   */
+  const naJornada =
+    catalogo.produtoJornada === null || modulo.produtoId === catalogo.produtoJornada;
   const aoVivo = catalogo.aoVivo[modulo.id];
   const extras = modulo.conteudos.filter((c) => c.publicado);
   const proxima = modulo.aulas.findIndex((a) => !concluida(a.id));
 
-  function irPara(destino: number) {
-    const alvo = catalogo.modulos.filter(moduloVisivel).find((m) => m.numero === destino);
+  /*
+   * Anterior e próximo, dentro do MESMO produto.
+   *
+   * Antes andava por `numero` no catálogo inteiro — com mais de um
+   * produto, o "próximo" podia ser o capítulo de um e-book.
+   */
+  const irmaos = catalogo.modulos
+    .filter((m) => m.produtoId === modulo.produtoId && moduloVisivel(m))
+    .sort((a, b) => a.ordem - b.ordem);
+
+  function irPara(passo: -1 | 1) {
+    const aqui = irmaos.findIndex((m) => m.id === modulo!.id);
+    const alvo = irmaos[aqui + passo];
     if (!alvo) {
       aviso.mostrar(
-        destino < numero
-          ? "Este é o primeiro módulo da sua jornada."
-          : "Este é o último módulo da sua jornada.",
+        passo < 0 ? "Este é o primeiro desta trilha." : "Este é o último desta trilha.",
       );
       return;
     }
-    navegar(`/modulo/${destino}`);
+    navegar(`/modulo/${alvo.id}`);
   }
 
   function abrirAula(ordem: number) {
@@ -125,7 +156,7 @@ export function PaginaModulo() {
       );
       return;
     }
-    navegar(`/aula/${modulo!.numero}/${ordem}`);
+    navegar(`/aula/${modulo!.id}/${ordem}`);
   }
 
   const iniciar = () => abrirAula(proxima >= 0 ? proxima : 0);
@@ -138,7 +169,7 @@ export function PaginaModulo() {
         style={{ height: "62vh", minHeight: 380 }}
       >
         <Capa
-          caminhos={[capaModulo(modulo.numero)]}
+          caminhos={[modulo.capaPath ?? capaModulo(modulo.numero)]}
           alt={`Capa do Módulo ${modulo.numero} — ${modulo.titulo}`}
           style={{ background: cores.placeholderCapa }}
         />
@@ -160,10 +191,10 @@ export function PaginaModulo() {
             ‹ Todos
           </button>
           <div className="ml-auto flex gap-2">
-            <button onClick={() => irPara(numero - 1)} style={SETA} aria-label="Módulo anterior">
+            <button onClick={() => irPara(-1)} style={SETA} aria-label="Módulo anterior">
               ‹
             </button>
-            <button onClick={() => irPara(numero + 1)} style={SETA} aria-label="Próximo módulo">
+            <button onClick={() => irPara(1)} style={SETA} aria-label="Próximo módulo">
               ›
             </button>
           </div>
@@ -171,7 +202,8 @@ export function PaginaModulo() {
 
         <div className="absolute inset-x-5 bottom-6">
           <p className="m-0 text-rotulo uppercase tracking-rotulo" style={{ color: SUAVE }}>
-            Módulo {modulo.numero} · {rotuloEstadoModulo(e, e.abreEm)}
+            {naJornada ? `Módulo ${modulo.numero} · ` : ""}
+            {rotuloEstadoModulo(e, e.abreEm)}
           </p>
           {modulo.tituloNaArte ? null : (
             <h1
@@ -197,10 +229,10 @@ export function PaginaModulo() {
             <button onClick={() => navegar("/inicio")} style={NAV}>
               ‹ Todos
             </button>
-            <button onClick={() => irPara(numero - 1)} style={NAV}>
+            <button onClick={() => irPara(-1)} style={NAV}>
               ‹ Anterior
             </button>
-            <button onClick={() => irPara(numero + 1)} style={NAV}>
+            <button onClick={() => irPara(1)} style={NAV}>
               Próximo ›
             </button>
           </div>
@@ -214,7 +246,7 @@ export function PaginaModulo() {
               }}
             >
               <Capa
-                caminhos={[capaModulo(modulo.numero)]}
+                caminhos={[modulo.capaPath ?? capaModulo(modulo.numero)]}
                 alt={`Capa do Módulo ${modulo.numero} — ${modulo.titulo}`}
               />
               {modulo.tituloNaArte ? null : (
@@ -234,7 +266,8 @@ export function PaginaModulo() {
 
             <div className="flex flex-[1_1_420px] flex-col gap-3">
               <p className="m-0 text-rotulo uppercase tracking-rotulo" style={{ color: SUAVE }}>
-                Módulo {modulo.numero} · {rotuloEstadoModulo(e, e.abreEm)}
+                {naJornada ? `Módulo ${modulo.numero} · ` : ""}
+            {rotuloEstadoModulo(e, e.abreEm)}
               </p>
               <h1
                 className="text-titulo m-0 font-titulo font-semibold text-marfim"
@@ -300,6 +333,7 @@ export function PaginaModulo() {
               );
             })}
 
+            {!naJornada ? null : (
             <LinhaDaAula
               aoAbrir={() => {
                 if (!aoVivo?.liberada) {
@@ -319,6 +353,7 @@ export function PaginaModulo() {
               travada={!aoVivo?.liberada}
               feita={false}
             />
+            )}
           </div>
         </section>
 
