@@ -59,6 +59,22 @@ export function AbaConteudo({
     ? catalogo.modulos.filter((m) => m.produtoId === produtoId)
     : catalogo.modulos;
   const [expandido, setExpandido] = useState(true);
+  /*
+   * Quais módulos estão abertos. Vazio de saída: onze módulos abertos
+   * ao mesmo tempo são cinquenta aulas empilhadas numa página só, e
+   * chegar ao módulo 7 vira rolagem. Fechado é o padrão, e o
+   * cabeçalho já diz quantas aulas há dentro — que é a informação que
+   * faz decidir se vale abrir.
+   */
+  const [modulosAbertos, setModulosAbertos] = useState<Set<string>>(new Set());
+
+  const alternarModulo = (id: string) =>
+    setModulosAbertos((atual) => {
+      const proximo = new Set(atual);
+      if (proximo.has(id)) proximo.delete(id);
+      else proximo.add(id);
+      return proximo;
+    });
   const [novoModulo, setNovoModulo] = useState("");
   const [novaAulaEm, setNovaAulaEm] = useState("");
   const [novaAula, setNovaAula] = useState("");
@@ -199,6 +215,10 @@ export function AbaConteudo({
                     <button
                       onClick={() => {
                         const chave = `m:${modulo.id}`;
+                        // O campo que este botão revela vive do lado de
+                        // dentro: com o módulo fechado, clicar aqui não
+                        // mostraria nada.
+                        setModulosAbertos((a) => new Set(a).add(modulo.id));
                         setEditando(editando === chave ? "" : chave);
                         setTextoEdicao(modulo.titulo);
                       }}
@@ -298,8 +318,21 @@ export function AbaConteudo({
                     >
                       Remover módulo
                     </button>
+                    <button
+                      onClick={() => alternarModulo(modulo.id)}
+                      aria-expanded={modulosAbertos.has(modulo.id)}
+                      aria-label={`${
+                        modulosAbertos.has(modulo.id) ? "Fechar" : "Abrir"
+                      } o módulo ${modulo.titulo}`}
+                      style={{ ...BOTAO_LINHA, minWidth: 36, padding: 0 }}
+                    >
+                      {modulosAbertos.has(modulo.id) ? "⌃" : "⌄"}
+                    </button>
                   </span>
                 </div>
+
+                {!modulosAbertos.has(modulo.id) ? null : (
+                 <>
 
                 {editando === `m:${modulo.id}` ? (
                   <form
@@ -850,6 +883,8 @@ export function AbaConteudo({
                     ) : null}
                   </form>
                 </div>
+                 </>
+                )}
               </div>
             ))}
 
