@@ -628,6 +628,14 @@ export async function ordenarAulas(moduloId: string, ids: string[]) {
   if (error) throw new Error(`ordem dos conteúdos: ${error.message}`);
 }
 
+export type ValorDoConteudo = Partial<{
+  texto: string | null;
+  arquivo_path: string | null;
+  url: string | null;
+  video_provider: string | null;
+  video_ref: string | null;
+}>;
+
 export type NovoConteudo = {
   produtoId: string;
   /** Onde pendura. Os três ausentes = conteúdo direto do produto. */
@@ -637,6 +645,13 @@ export type NovoConteudo = {
   tipo: TipoConteudo;
   titulo: string;
   ordem: number;
+  /**
+   * O valor já na criação — o link do vídeo, o caminho do PDF.
+   *
+   * Nasce preenchido: criar vazio e editar em seguida eram duas idas
+   * ao banco e duas telas para a mesma coisa.
+   */
+  valor?: ValorDoConteudo;
 };
 
 export async function criarConteudo(c: NovoConteudo) {
@@ -648,8 +663,72 @@ export async function criarConteudo(c: NovoConteudo) {
     tipo: c.tipo,
     titulo: c.titulo,
     ordem: c.ordem,
+    ...(c.valor ?? {}),
   });
   if (error) throw new Error(`criar conteúdo: ${error.message}`);
+}
+
+/** Os três depósitos do Storage, e o que mora em cada um. */
+export type Deposito = "audios" | "materiais" | "capas";
+
+/**
+ * Envia o arquivo e devolve o caminho gravado.
+ *
+ * O painel não tinha envio nenhum: o arquivo ia pelo painel do
+ * Supabase e o caminho era copiado à mão — e errar o depósito fazia a
+ * aluna ver "ainda não está disponível" sem ninguém entender por quê.
+ * Quem escolhe o depósito passa a ser o TIPO da mídia, não a memória
+ * de quem cadastra.
+ *
+ * Cada produto tem a sua pasta, e o nome leva um carimbo de tempo:
+ * dois arquivos chamados `capa.jpg` de produtos diferentes não se
+ * atropelam, e reenviar não apaga o que já estava lá.
+ *
+ * A política do Storage já exige `eh_admin()` no insert dos três
+ * depósitos (0002_storage.sql). Aqui não há porta nova.
+ */
+export async function enviarArquivo(
+  deposito: Deposito,
+  produtoId: string,
+  arquivo: File,
+): Promise<string> {
+  const limpo = arquivo.name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9.-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+  const caminho = `${produtoId}/${Date.now()}-${limpo || "arquivo"}`;
+
+  const { error } = await supabase.storage
+    .from(deposito)
+    .upload(caminho, arquivo, { contentType: arquivo.type || undefined });
+  if (error) throw new Error(`enviar arquivo: ${error.message}`);
+  return caminho;
+}
+
+/**
+ * O arquivo está mesmo lá?
+ *
+ * Um caminho digitado errado era gravado em silêncio, e só aparecia
+ * como "ainda não está disponível" na tela da aluna, semanas depois.
+ *
+ * `list` da pasta, e não um download: é a leitura mais barata, e vale
+ * igual nos depósitos fechados, onde a administradora enxerga tudo.
+ */
+export async function arquivoExiste(
+  deposito: Deposito,
+  caminho: string,
+): Promise<boolean> {
+  const corte = caminho.lastIndexOf("/");
+  const pasta = corte < 0 ? "" : caminho.slice(0, corte);
+  const nome = caminho.slice(corte + 1);
+  const { data, error } = await supabase.storage
+    .from(deposito)
+    .list(pasta, { search: nome, limit: 100 });
+  // Não deu para conferir não é o mesmo que não existe: na dúvida, deixa passar.
+  if (error) return true;
+  return (data ?? []).some((a) => a.name === nome);
 }
 
 export async function atualizarConteudo(
