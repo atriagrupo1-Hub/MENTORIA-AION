@@ -586,21 +586,25 @@ export async function removerProduto(id: string) {
  */
 
 /**
- * Renumera de 0 em diante, na ordem recebida.
+ * Renumera de 0 em diante, na ordem recebida — numa ida só.
  *
- * É o que arrastar precisa, e as setas não: soltar um item no meio da
- * lista muda a posição de todos os que vêm depois, e isso não é uma
- * troca de dois. O que muda continua sendo só a ORDEM — os ids, os
- * módulos e as liberações de cada linha ficam onde estavam.
+ * É o que arrastar precisa: soltar um item no meio da lista muda a
+ * posição de todos os que vêm depois, e isso não é uma troca de dois.
+ * O que muda continua sendo só a ORDEM — os ids, os módulos e as
+ * liberações de cada linha ficam onde estavam.
+ *
+ * Era um `UPDATE` por linha, um esperando o outro: dez idas ao banco
+ * para dez categorias, e esse era o tempo entre soltar e ver.
  */
 export async function ordenar(
   tabela: "categorias" | "produtos" | "modulos" | "conteudos",
   ids: string[],
 ) {
-  for (let i = 0; i < ids.length; i++) {
-    const { error } = await supabase.from(tabela).update({ ordem: i }).eq("id", ids[i]);
-    if (error) throw new Error(`ordem: ${error.message}`);
-  }
+  const { error } = await supabase.rpc("ordenar_lista", {
+    p_tabela: tabela,
+    p_ids: ids,
+  });
+  if (error) throw new Error(`ordem: ${error.message}`);
 }
 
 export const ordenarCategorias = (ids: string[]) => ordenar("categorias", ids);

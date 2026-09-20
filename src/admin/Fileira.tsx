@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { marcaDoDestino, useArrastar } from "./arrastar";
+import { useArrastar } from "./arrastar";
 import { botaoNeutro, painel as tema, RAIO } from "./estilos";
 
 /**
@@ -101,7 +101,6 @@ export function Fileira({
               borderRadius: RAIO,
               cursor: "pointer",
               ...(aoReordenar ? arrasto.props(i).style : {}),
-              ...(aoReordenar ? marcaDoDestino(arrasto, i, "linha") : {}),
             }}
             {...(aoReordenar
               ? (({ style: _estilo, ...resto }) => resto)(arrasto.props(i))

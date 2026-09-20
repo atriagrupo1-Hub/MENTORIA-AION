@@ -24,17 +24,36 @@ import { useCallback, useEffect, useRef, useState } from "react";
  *   3. `touch-action: none` no item, senão o navegador entende o
  *      gesto como rolagem e a lista foge da mão.
  *
+ * E o gesto APARECE: o item acompanha o ponteiro, levantado, e a
+ * lista abre espaço onde ele vai cair. Antes ele ficava parado a 50%
+ * de opacidade e o destino era uma linha de 2px — arrastava-se no
+ * escuro, descobrindo o resultado só depois de soltar.
+ *
  * Quem decide o que fazer com a ordem nova é quem monta: o hook chama
  * `aoSoltar` UMA vez, com os ids já reordenados, e não grava nada.
  */
 
 const LIMIAR = 6;
 
+/**
+ * Quanto tempo os vizinhos levam para abrir espaço.
+ *
+ * Mais rápido que isto e a lista "pula" — o olho não vê o movimento,
+ * só o antes e o depois. Mais lento e o gesto começa a arrastar peso.
+ */
+const DESLIZE = "transform 120ms cubic-bezier(.22,.61,.36,1)";
+
 export type Arrasto = {
   /** Índice sendo carregado, ou -1. */
   daOrigem: number;
   /** Índice onde ele cairia, ou -1. */
   noDestino: number;
+  /** Para onde o ponteiro levou o item, em pixels. */
+  desvio: { x: number; y: number };
+  /** O passo que os vizinhos dão para abrir espaço, em pixels. */
+  passo: number;
+  /** Na fileira o espaço abre de lado; nas listas, de cima para baixo. */
+  sentido: "linha" | "coluna";
   /** Props para a raiz de cada item da lista. */
   props: (indice: number) => {
     onPointerDown: (e: React.PointerEvent) => void;
@@ -44,7 +63,76 @@ export type Arrasto = {
   };
 };
 
-type Gesto = { x: number; y: number; indice: number; lista: HTMLElement };
+type Gesto = {
+  x: number;
+  y: number;
+  indice: number;
+  lista: HTMLElement;
+  /** Tamanho do item mais o espaço até o vizinho, no eixo do gesto. */
+  passo: number;
+  sentido: "linha" | "coluna";
+  /**
+   * Onde cada item estava quando o gesto começou, em coordenadas da
+   * página.
+   *
+   * O alvo NÃO pode ser lido das caixas de agora: o item arrastado
+   * anda com o ponteiro e os vizinhos abrem espaço, então as caixas
+   * de agora são consequência do gesto. Medir nelas é perguntar ao
+   * próprio movimento onde ele deveria ir — o item ficava se achando
+   * como destino, e a ordem nunca mudava.
+   */
+  caixas: Array<{ e: number; d: number; c: number; b: number }>;
+};
+
+/**
+ * O eixo da lista e o tamanho de um passo, lidos do DOM.
+ *
+ * Lado a lado ou empilhado é o `flex-direction` na prática: o item e o
+ * VIZINHO DE VERDADE — o de antes ou o de depois — com o mesmo topo
+ * estão em linha. Tem que ser o vizinho: medindo contra "o primeiro
+ * irmão diferente de mim", arrastar o quarto chip dava um passo de
+ * três casas, e a lista abria um buraco enorme.
+ *
+ * E o passo é a distância entre os dois — de esquerda a esquerda na
+ * fileira, de topo a topo na lista —, que é exatamente quanto cada
+ * vizinho anda para abrir espaço.
+ */
+function medirLista(raiz: HTMLElement, lista: HTMLElement) {
+  const filhos = Array.from(lista.children) as HTMLElement[];
+  const eu = raiz.getBoundingClientRect();
+  const meu = filhos.indexOf(raiz);
+
+  const caixas = filhos.map((f) => {
+    const r = f.getBoundingClientRect();
+    return {
+      e: r.left + window.scrollX,
+      d: r.right + window.scrollX,
+      c: r.top + window.scrollY,
+      b: r.bottom + window.scrollY,
+    };
+  });
+
+  const vizinhos = [filhos[meu + 1], filhos[meu - 1]]
+    .filter(Boolean)
+    .map((f) => f.getBoundingClientRect());
+
+  /*
+   * A fileira quebra linha (`flex-wrap`), então o vizinho seguinte
+   * pode estar na linha de baixo. Quem manda é o que estiver na MESMA
+   * linha; não havendo nenhum, a lista é empilhada.
+   */
+  const aoLado = vizinhos.find((r) => Math.abs(r.top - eu.top) < eu.height / 2);
+  const sentido: "linha" | "coluna" = aoLado ? "linha" : "coluna";
+
+  const outro = aoLado ?? vizinhos[0];
+  const passo = !outro
+    ? 0
+    : sentido === "linha"
+      ? Math.abs(outro.left - eu.left)
+      : Math.abs(outro.top - eu.top);
+
+  return { sentido, passo, caixas };
+}
 
 export function useArrastar(
   ids: string[],
@@ -52,6 +140,11 @@ export function useArrastar(
 ): Arrasto {
   const [daOrigem, setDaOrigem] = useState(-1);
   const [noDestino, setNoDestino] = useState(-1);
+  const [desvio, setDesvio] = useState({ x: 0, y: 0 });
+  const [medida, setMedida] = useState<{ passo: number; sentido: "linha" | "coluna" }>({
+    passo: 0,
+    sentido: "coluna",
+  });
   const gesto = useRef<Gesto | null>(null);
   const passou = useRef(false);
   const destino = useRef(-1);
@@ -81,25 +174,15 @@ export function useArrastar(
         if (Math.hypot(e.clientX - de.x, e.clientY - de.y) < LIMIAR) return;
         passou.current = true;
         setDaOrigem(de.indice);
+        setMedida({ passo: de.passo, sentido: de.sentido });
       }
 
-      /*
-       * Onde cairia: o item cuja caixa está sob o ponteiro.
-       *
-       * Lido do DOM a cada movimento, e não de uma lista de medidas
-       * guardada no começo: a fileira quebra linha, e as caixas mudam
-       * de lugar enquanto se arrasta.
-       */
-      const filhos = Array.from(de.lista.children) as HTMLElement[];
-      const sob = filhos.findIndex((f) => {
-        const r = f.getBoundingClientRect();
-        return (
-          e.clientX >= r.left &&
-          e.clientX <= r.right &&
-          e.clientY >= r.top &&
-          e.clientY <= r.bottom
-        );
-      });
+      setDesvio({ x: e.clientX - de.x, y: e.clientY - de.y });
+
+      // Onde cairia: o item cuja caixa ORIGINAL está sob o ponteiro.
+      const sob = de.caixas.findIndex(
+        (r) => e.pageX >= r.e && e.pageX <= r.d && e.pageY >= r.c && e.pageY <= r.b,
+      );
       destino.current = sob;
       setNoDestino(sob);
     };
@@ -114,6 +197,7 @@ export function useArrastar(
       destino.current = -1;
       setDaOrigem(-1);
       setNoDestino(-1);
+      setDesvio({ x: 0, y: 0 });
       setAtivo(false);
 
       // Clique curto: não era arrasto, e o clique segue o caminho dele.
@@ -177,6 +261,7 @@ export function useArrastar(
           y: e.clientY,
           indice,
           lista: raiz.parentElement,
+          ...medirLista(raiz, raiz.parentElement),
         };
         passou.current = false;
         destino.current = -1;
@@ -205,40 +290,80 @@ export function useArrastar(
         e.stopPropagation();
       },
 
-      style: {
-        touchAction: "none",
-        userSelect: "none",
-        WebkitUserSelect: "none",
-        opacity: daOrigem === indice ? 0.5 : 1,
-        cursor: daOrigem >= 0 ? "grabbing" : "grab",
-      } as React.CSSProperties,
+      style: estiloDoItem(
+        indice,
+        daOrigem,
+        noDestino,
+        desvio,
+        medida.passo,
+        medida.sentido,
+      ),
     }),
-    [daOrigem],
+    [daOrigem, noDestino, desvio, medida],
   );
 
-  return { daOrigem, noDestino, props };
+  return { daOrigem, noDestino, desvio, passo: medida.passo, sentido: medida.sentido, props };
 }
 
 /**
- * A marca de onde o item vai cair: uma linha de 2px na borda que o
- * gesto encosta. Horizontal na fileira, vertical na lista.
+ * Como cada item se desenha durante o gesto.
+ *
+ *   o arrastado  — acompanha o ponteiro, levantado e por cima;
+ *   os do meio   — andam uma casa, abrindo o buraco onde ele cai;
+ *   o resto      — parado.
+ *
+ * `pointerEvents: none` no arrastado não é detalhe: sem isso ele fica
+ * sob o próprio cursor e é ele que o `elementFromPoint` encontra —
+ * o destino passaria a ser sempre ele mesmo.
  */
-export function marcaDoDestino(
-  arrasto: Arrasto,
+function estiloDoItem(
   indice: number,
+  daOrigem: number,
+  noDestino: number,
+  desvio: { x: number; y: number },
+  passo: number,
   sentido: "linha" | "coluna",
 ): React.CSSProperties {
-  const marcado =
-    arrasto.daOrigem >= 0 && arrasto.noDestino === indice && arrasto.daOrigem !== indice;
-  if (!marcado) return {};
+  const base: React.CSSProperties = {
+    touchAction: "none",
+    userSelect: "none",
+    WebkitUserSelect: "none",
+    cursor: daOrigem >= 0 ? "grabbing" : "grab",
+  };
 
-  // Vindo de trás, cai depois deste; vindo da frente, antes dele.
-  const depois = arrasto.daOrigem < indice;
-  const traco = "2px solid #ffffff";
-  if (sentido === "linha") {
-    return depois ? { borderRight: traco } : { borderLeft: traco };
+  if (daOrigem < 0) return base;
+
+  if (indice === daOrigem) {
+    return {
+      ...base,
+      transform: `translate(${desvio.x}px, ${desvio.y}px) scale(1.03)`,
+      transition: "none",
+      zIndex: 40,
+      position: "relative",
+      opacity: 0.95,
+      pointerEvents: "none",
+      boxShadow: "0 18px 40px -18px rgba(0,0,0,.9)",
+    };
   }
-  return depois ? { borderBottom: traco } : { borderTop: traco };
+
+  /*
+   * Quem abre espaço: os que estão entre a origem e o destino. Subindo,
+   * eles descem uma casa; descendo, eles sobem uma.
+   */
+  const noCaminho =
+    noDestino >= 0 &&
+    (daOrigem < noDestino
+      ? indice > daOrigem && indice <= noDestino
+      : indice >= noDestino && indice < daOrigem);
+
+  if (!noCaminho) return { ...base, transform: "none", transition: DESLIZE };
+
+  const anda = daOrigem < noDestino ? -passo : passo;
+  return {
+    ...base,
+    transform: sentido === "linha" ? `translateX(${anda}px)` : `translateY(${anda}px)`,
+    transition: DESLIZE,
+  };
 }
 
 /**

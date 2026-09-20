@@ -10,7 +10,7 @@ import {
   painel as tema,
   rotulo,
 } from "./estilos";
-import { marcaDoDestino, useArrastar } from "./arrastar";
+import { useArrastar } from "./arrastar";
 import type { Painel } from "./usePainel";
 import { idDoVideo, provedorDoLink } from "./video";
 
@@ -71,7 +71,7 @@ export function EditorConteudos({
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
-  const { executar } = painel;
+  const { executar, reordenar } = painel;
   const [adicionando, setAdicionando] = useState(false);
   const [tipoNovo, setTipoNovo] = useState<TipoConteudo>("video");
   const [tituloNovo, setTituloNovo] = useState("");
@@ -102,7 +102,7 @@ export function EditorConteudos({
   }
 
   async function gravarOrdem(ids: string[]) {
-    const falha = await executar(() => dados.ordenarConteudos(ids));
+    const falha = await reordenar(ids, () => dados.ordenarConteudos(ids));
     avisar(falha ?? "Ordem salva.");
   }
 
@@ -302,7 +302,6 @@ function LinhaConteudo({
         background: tema.superficie,
         border: `1px solid ${tema.linhaSuave}`,
         ...arrasto.props(indice).style,
-        ...marcaDoDestino(arrasto, indice, "coluna"),
       }}
     >
       <div className="flex flex-wrap items-center gap-[10px]">

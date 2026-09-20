@@ -13,6 +13,65 @@ export type Midia = { provider: string; ref: string };
  * aceitou, não o que ela supôs que aconteceria. É mais chamadas, e é o
  * que impede o painel de divergir do que a aluna enxerga.
  */
+/**
+ * O catálogo com a ordem nova já aplicada.
+ *
+ * Todas as listas do painel e da área da aluna ordenam por `ordem`, e
+ * por isso basta reescrever esse campo de quem está na lista nova: as
+ * cinco listas se acertam sozinhas, sem saber qual delas mudou.
+ *
+ * Conteúdo leva `numero` junto — é o "1." na frente do nome, e no
+ * banco `ordenar_aulas` grava os dois. Se aqui só andasse a `ordem`,
+ * a numeração piscaria errada até a releitura chegar.
+ */
+function comNovaOrdem(c: Catalogo, ids: string[]): Catalogo {
+  const posicao = new Map(ids.map((id, i) => [id, i]));
+  if (posicao.size === 0) return c;
+
+  const põe = <T extends { id: string; ordem: number }>(item: T): T => {
+    const i = posicao.get(item.id);
+    return i === undefined ? item : { ...item, ordem: i };
+  };
+
+  const aula = (a: Catalogo["modulos"][number]["aulas"][number]) => {
+    const i = posicao.get(a.id);
+    return i === undefined ? a : { ...a, ordem: i, numero: i + 1 };
+  };
+
+  const modulo = (m: Catalogo["modulos"][number]) =>
+    põe({ ...m, aulas: m.aulas.map(aula).sort((x, y) => x.ordem - y.ordem) });
+
+  const modulos = c.modulos.map(modulo).sort((x, y) => x.ordem - y.ordem);
+  const porId = new Map(modulos.map((m) => [m.id, m]));
+
+  const produtos = c.produtos
+    .map((p) =>
+      põe({
+        ...p,
+        modulos: p.modulos.map((m) => porId.get(m.id) ?? m).sort((x, y) => x.ordem - y.ordem),
+        presentes: p.presentes.map(põe).sort((x, y) => x.ordem - y.ordem),
+        conteudos: p.conteudos.map(põe).sort((x, y) => x.ordem - y.ordem),
+      }),
+    )
+    .sort((x, y) => x.ordem - y.ordem);
+
+  const produtoPorId = new Map(produtos.map((p) => [p.id, p]));
+
+  const categorias = c.categorias
+    .map((cat) =>
+      põe({
+        ...cat,
+        produtos: cat.produtos
+          .map((p) => produtoPorId.get(p.id) ?? p)
+          .sort((x, y) => x.ordem - y.ordem),
+        presentes: cat.presentes.map(põe).sort((x, y) => x.ordem - y.ordem),
+      }),
+    )
+    .sort((x, y) => x.ordem - y.ordem);
+
+  return { ...c, modulos, produtos, categorias };
+}
+
 export function usePainel() {
   const { recarregar: recarregarSessao } = useEstado();
   const [carregando, setCarregando] = useState(true);
@@ -102,6 +161,34 @@ export function usePainel() {
     [recarregar, recarregarSessao],
   );
 
+  /**
+   * Reordenar: pinta primeiro, grava depois.
+   *
+   * A tela mudava só quando o banco respondia — e, com o arrasto,
+   * esse era o tempo entre soltar e ver. Agora a ordem nova entra no
+   * catálogo na hora, e a gravação segue pelo caminho de sempre.
+   *
+   * O banco continua sendo a autoridade: voltando igual, nada pisca;
+   * recusando, a releitura desfaz a pintura e o aviso diz o que houve.
+   */
+  const reordenar = useCallback(
+    async (ids: string[], escrever: () => Promise<unknown>): Promise<string | null> => {
+      setCatalogo((c) => comNovaOrdem(c, ids));
+      const falha = await executar(escrever);
+      /*
+       * Recusou: relê, e a releitura desfaz a pintura.
+       *
+       * `executar` só relê quando dá certo — e é o correto para as
+       * outras escritas, onde a tela não adiantou nada. Aqui ela
+       * adiantou: sem esta releitura a lista ficaria na ordem nova,
+       * que o banco não tem, e o painel passaria a mentir.
+       */
+      if (falha) await recarregar();
+      return falha;
+    },
+    [executar, recarregar],
+  );
+
   return {
     carregando,
     erro,
@@ -112,6 +199,7 @@ export function usePainel() {
     configuracao,
     recarregar,
     executar,
+    reordenar,
   };
 }
 

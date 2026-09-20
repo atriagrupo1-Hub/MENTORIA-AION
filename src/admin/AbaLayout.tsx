@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import type { Categoria } from "@/data/tipos";
 import type { PedidoConfirmacao } from "./Confirmacao";
-import { marcaDoDestino, useArrastar } from "./arrastar";
+import { useArrastar } from "./arrastar";
 import * as dados from "./dados";
 import {
   botaoNeutro,
@@ -45,7 +45,7 @@ export function AbaLayout({
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
-  const { catalogo, executar } = painel;
+  const { catalogo, executar, reordenar } = painel;
   const [abertaId, setAbertaId] = useState("");
   const [criando, setCriando] = useState(false);
   const [nova, setNova] = useState("");
@@ -77,7 +77,7 @@ export function AbaLayout({
    * posição de todas as seguintes.
    */
   async function gravarOrdem(ids: string[]) {
-    const falha = await executar(() => dados.ordenarCategorias(ids));
+    const falha = await reordenar(ids, () => dados.ordenarCategorias(ids));
     avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
   }
 
@@ -172,7 +172,7 @@ function CategoriaAberta({
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
-  const { executar } = painel;
+  const { executar, reordenar } = painel;
   const [nome, setNome] = useState(categoria.titulo);
 
   const produtos = [...categoria.produtos].sort((a, b) => a.ordem - b.ordem);
@@ -230,7 +230,7 @@ function CategoriaAberta({
   }
 
   async function gravarOrdemDosProdutos(ids: string[]) {
-    const falha = await executar(() => dados.ordenarProdutos(ids));
+    const falha = await reordenar(ids, () => dados.ordenarProdutos(ids));
     avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
   }
 
@@ -362,7 +362,6 @@ function CategoriaAberta({
                 background: tema.superficie,
                 border: `1px solid ${tema.linhaSuave}`,
                 ...arrasto.props(i).style,
-                ...marcaDoDestino(arrasto, i, "coluna"),
               }}
             >
               <span className="text-[13px]" style={{ color: tema.textoTerciario }}>

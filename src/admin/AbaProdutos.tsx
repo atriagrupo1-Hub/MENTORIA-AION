@@ -44,7 +44,7 @@ export function AbaProdutos({
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
-  const { catalogo, executar } = painel;
+  const { catalogo, executar, reordenar } = painel;
   const [abertoId, setAbertoId] = useState("");
   const [criando, setCriando] = useState(false);
   const [nome, setNome] = useState("");
@@ -72,7 +72,7 @@ export function AbaProdutos({
       lista.push(id);
       porCategoria.set(p.categoriaId, lista);
     }
-    const falha = await executar(async () => {
+    const falha = await reordenar(ids, async () => {
       for (const lista of porCategoria.values()) await dados.ordenarProdutos(lista);
     });
     avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");

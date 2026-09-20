@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import type { Aula, Modulo } from "@/data/tipos";
 import type { PedidoConfirmacao } from "./Confirmacao";
-import { Arrastavel, marcaDoDestino, useArrastar } from "./arrastar";
+import { Arrastavel, useArrastar } from "./arrastar";
 import * as dados from "./dados";
 import { EditorConteudos } from "./EditorConteudos";
 import {
@@ -54,7 +54,7 @@ export function AbaConteudo({
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
-  const { catalogo, midiaAulas, alunas, executar } = painel;
+  const { catalogo, midiaAulas, alunas, executar, reordenar } = painel;
 
   const modulos = produtoId
     ? catalogo.modulos.filter((m) => m.produtoId === produtoId)
@@ -118,7 +118,7 @@ export function AbaConteudo({
   }
 
   async function gravarOrdemDosModulos(ids: string[]) {
-    const falha = await executar(() => dados.ordenarModulos(ids));
+    const falha = await reordenar(ids, () => dados.ordenarModulos(ids));
     avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
   }
 
@@ -138,7 +138,7 @@ export function AbaConteudo({
   );
 
   async function gravarOrdemDosConteudos(moduloId: string, ids: string[]) {
-    const falha = await executar(() => dados.ordenarAulas(moduloId, ids));
+    const falha = await reordenar(ids, () => dados.ordenarAulas(moduloId, ids));
     avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
   }
 
@@ -207,7 +207,6 @@ export function AbaConteudo({
                     modulo.bloqueadoGeral ? tema.perigoLinha : "rgba(255,255,255,.1)"
                   }`,
                   ...arrastoModulo.props(iModulo).style,
-                  ...marcaDoDestino(arrastoModulo, iModulo, "coluna"),
                 }}
               >
                 <div className="flex flex-wrap items-center gap-[10px]">
@@ -478,7 +477,6 @@ export function AbaConteudo({
                         {...(({ style: _e, ...resto }) => resto)(arrastoAula.props(iAula))}
                         style={{
                           ...arrastoAula.props(iAula).style,
-                          ...marcaDoDestino(arrastoAula, iAula, "coluna"),
                         }}
                       >
                         <div
