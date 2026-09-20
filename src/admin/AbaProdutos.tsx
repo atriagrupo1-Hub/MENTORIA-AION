@@ -269,6 +269,8 @@ function ProdutoAberto({
     avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
   }
 
+  const totalDeAulas = produto.modulos.reduce((soma, m) => soma + m.aulas.length, 0);
+
   function remover() {
     const temDentro =
       produto.modulos.length + produto.presentes.length + produto.conteudos.length;
@@ -413,9 +415,21 @@ function ProdutoAberto({
         </div>
       </form>
 
-      <h3 className="m-0 mb-3" style={rotulo}>
-        Estrutura / conteúdo
-      </h3>
+      {/*
+        A contagem vive AQUI, com o rótulo — e não num cabeçalho
+        próprio dentro da lista. Era ali que nasciam os dois "estrutura"
+        seguidos e o cartão dentro do cartão.
+      */}
+      <div className="mb-3 flex flex-wrap items-baseline gap-[10px]">
+        <h3 className="m-0" style={rotulo}>
+          Conteúdo do produto
+        </h3>
+        <span className="text-[13px]" style={{ color: tema.textoSecundario }}>
+          {produto.modulos.length}{" "}
+          {produto.modulos.length === 1 ? "módulo" : "módulos"} ·{" "}
+          {totalDeAulas} {totalDeAulas === 1 ? "aula" : "aulas"}
+        </span>
+      </div>
 
       {/*
         Um caminho só, o mesmo da mentoria:

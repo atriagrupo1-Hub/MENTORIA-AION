@@ -350,7 +350,21 @@ export async function criarModulo(
     ordem,
     ...(produtoId ? { produto_id: produtoId } : {}),
   });
-  if (error) throw new Error(`criar módulo: ${error.message}`);
+  if (!error) return;
+
+  /*
+   * O texto cru do Postgres não é para quem cadastra.
+   *
+   * "duplicate key value violates unique constraint
+   * modulos_numero_unico" apareceu na tela inteiro, e não dizia o que
+   * fazer. Traduz aqui, onde se sabe o que foi tentado.
+   */
+  if (error.message.includes("modulos_numero_unico")) {
+    throw new Error(
+      "Já existe um módulo com esse número neste produto. Atualize a página e tente de novo.",
+    );
+  }
+  throw new Error(`criar módulo: ${error.message}`);
 }
 
 export async function atualizarModulo(

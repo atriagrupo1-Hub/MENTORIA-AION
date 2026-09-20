@@ -157,24 +157,41 @@ export function AbaConteudo({
     await gravarOrdemDosConteudos(modulo.id, ordenada.map((a) => a.id));
   }
 
+  /*
+   * Dentro de um produto, esta lista NÃO tem cabeçalho nem moldura
+   * próprios.
+   *
+   * Tinha: a página do produto mostrava "ESTRUTURA / CONTEÚDO" e, logo
+   * abaixo, outro cartão dizendo "ESTRUTURA / Módulos" com um botão
+   * Recolher. Dois rótulos iguais em sequência e duas caixas aninhadas
+   * — a mesma coisa parecendo três coisas soltas. Na aba antiga, onde
+   * a lista é a página inteira, o cabeçalho continua fazendo falta.
+   */
+  const solta = !produtoId;
+
   return (
     <>
       <section
-        className="rounded-cartao-lg p-4"
-        style={{ background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.1)" }}
+        className={solta ? "rounded-cartao-lg p-4" : ""}
+        style={
+          solta
+            ? { background: "rgba(255,255,255,.03)", border: "1px solid rgba(255,255,255,.1)" }
+            : undefined
+        }
       >
+      {solta ? (
       <div className="flex flex-wrap items-center gap-[10px]">
         <span className="flex min-w-0 flex-[1_1_220px] flex-col gap-[3px]">
           <span className="text-[11px] uppercase tracking-[.24em] text-[#a58a52]">
-            {produtoId ? "Estrutura" : "Mentoria"}
+            Mentoria
           </span>
           <span className="font-titulo text-[22px] text-white">
-            {produtoId ? "Módulos" : "Caminho do Desbloqueio"}
+            Caminho do Desbloqueio
           </span>
         </span>
         <span className="text-[13px] text-[rgba(255,255,255,.55)]">
           {modulos.length} {modulos.length === 1 ? "módulo" : "módulos"} · {totalAulas}{" "}
-          {totalAulas === 1 ? "conteúdo" : "conteúdos"}
+          {totalAulas === 1 ? "aula" : "aulas"}
         </span>
         <button
           onClick={() => setExpandido((v) => !v)}
@@ -183,9 +200,29 @@ export function AbaConteudo({
           {expandido ? "Recolher" : "Expandir"}
         </button>
       </div>
+      ) : null}
 
-      {!expandido ? null : (
-        <div className="mt-4 pt-4" style={{ borderTop: "1px solid rgba(255,255,255,.1)" }}>
+      {solta && !expandido ? null : (
+        <div
+          className={solta ? "mt-4 pt-4" : ""}
+          style={solta ? { borderTop: "1px solid rgba(255,255,255,.1)" } : undefined}
+        >
+          {/*
+            Produto sem módulo nenhum abria mostrando um campo solto,
+            e nada dizia que era ali que o curso é montado. Uma linha
+            basta: o caminho inteiro, do módulo ao que a aluna recebe.
+          */}
+          {produtoId && modulos.length === 0 ? (
+            <p
+              className="m-0 mb-3 text-[13px] leading-[1.6]"
+              style={{ color: tema.textoSecundario }}
+            >
+              Comece pelo módulo. Dentro dele vêm as aulas, e dentro de cada
+              aula o conteúdo: vídeo, áudio, texto, PDF/e-book, link ou
+              imagem — quantos quiser. A aluna só recebe o que for
+              preenchido.
+            </p>
+          ) : null}
           {/*
             O formulário de criar vive DEPOIS do último item, e não
             antes do primeiro.
@@ -216,8 +253,8 @@ export function AbaConteudo({
                     </span>
                     <span className="text-[12px] text-[rgba(255,255,255,.5)]">
                       {modulo.aulas.length === 1
-                        ? "1 conteúdo"
-                        : `${modulo.aulas.length} conteúdos`}
+                        ? "1 aula"
+                        : `${modulo.aulas.length} aulas`}
                     </span>
                   </span>
                   <span
@@ -446,7 +483,7 @@ export function AbaConteudo({
                     style={{ borderTop: "1px solid rgba(255,255,255,.07)" }}
                   >
                     <span className="mb-2 block" style={rotulo}>
-                      Mídia do módulo, fora dos conteúdos
+                      Conteúdo do módulo, fora das aulas
                     </span>
                     <EditorConteudos
                       dono={{ produtoId: modulo.produtoId, moduloId: modulo.id }}
@@ -549,7 +586,7 @@ export function AbaConteudo({
                               border: "1px solid rgba(255,255,255,.4)",
                             }}
                           >
-                            {conteudoDe === aula.id ? "Fechar mídia" : "Mídia"}
+                            {conteudoDe === aula.id ? "Fechar" : "Conteúdos"}
                           </button>
                           {/*
                             Liberar para a turma inteira.
@@ -821,7 +858,7 @@ export function AbaConteudo({
                         {conteudoDe === aula.id && modulo.produtoId ? (
                           <div className="mb-3">
                             <span className="mb-2 block" style={rotulo}>
-                              Mais mídia deste conteúdo
+                              Conteúdo desta aula
                             </span>
                             <EditorConteudos
                               dono={{ produtoId: modulo.produtoId, aulaId: aula.id }}
@@ -838,7 +875,7 @@ export function AbaConteudo({
                             onSubmit={async (e) => {
                               e.preventDefault();
                               if (!textoEdicao.trim()) {
-                                avisar("Informe o nome do conteúdo.");
+                                avisar("Informe o nome da aula.");
                                 return;
                               }
                               const falha = await executar(() =>
@@ -896,7 +933,7 @@ export function AbaConteudo({
                       e.preventDefault();
                       const titulo = (novaAulaEm === modulo.id ? novaAula : "").trim();
                       if (!titulo) {
-                        avisar("Informe o nome do conteúdo.");
+                        avisar("Informe o nome da aula.");
                         return;
                       }
                       const falha = await executar(() =>
@@ -908,7 +945,7 @@ export function AbaConteudo({
                         ),
                       );
                       if (!falha) setNovaAula("");
-                      avisar(falha ?? "Conteúdo adicionado.");
+                      avisar(falha ?? "Aula criada.");
                     }}
                     className="mt-3 flex flex-wrap gap-2"
                   >
@@ -925,15 +962,15 @@ export function AbaConteudo({
                         }
                       }}
                       onChange={(e) => setNovaAula(e.target.value)}
-                      placeholder="Nome do novo conteúdo"
-                      aria-label={`Nome do novo conteúdo de ${modulo.titulo}`}
+                      placeholder="Nome da nova aula"
+                      aria-label={`Nome da nova aula de ${modulo.titulo}`}
                       style={{ ...campo, flex: "2 1 240px", minHeight: 42, fontSize: 13 }}
                     />
                     <button
                       type="submit"
                       style={{ ...botaoNeutroGrande }}
                     >
-                      + Adicionar conteúdo
+                      + Adicionar aula
                     </button>
                     {/*
                       O cancelar só existe depois que alguém escreveu.
