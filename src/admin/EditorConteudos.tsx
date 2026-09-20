@@ -10,6 +10,7 @@ import {
   painel as tema,
   rotulo,
 } from "./estilos";
+import { marcaDoDestino, useArrastar } from "./arrastar";
 import type { Painel } from "./usePainel";
 import { idDoVideo, provedorDoLink } from "./video";
 
@@ -100,18 +101,25 @@ export function EditorConteudos({
     avisar(falha ?? "Mídia adicionada.");
   }
 
+  async function gravarOrdem(ids: string[]) {
+    const falha = await executar(() => dados.ordenarConteudos(ids));
+    avisar(falha ?? "Ordem salva.");
+  }
+
   async function mover(id: string, direcao: -1 | 1) {
     const atual = lista.findIndex((k) => k.id === id);
     const destino = atual + direcao;
     if (atual < 0 || destino < 0 || destino >= lista.length) return;
-    const falha = await executar(() =>
-      dados.trocarOrdemDosConteudos(
-        { id: lista[atual].id, ordem: lista[atual].ordem },
-        { id: lista[destino].id, ordem: lista[destino].ordem },
-      ),
-    );
-    avisar(falha ?? "Ordem salva.");
+    const ordenada = [...lista];
+    const [movido] = ordenada.splice(atual, 1);
+    ordenada.splice(destino, 0, movido);
+    await gravarOrdem(ordenada.map((k) => k.id));
   }
+
+  const arrasto = useArrastar(
+    lista.map((k) => k.id),
+    gravarOrdem,
+  );
 
   return (
     <div>
@@ -179,6 +187,8 @@ export function EditorConteudos({
             conteudo={k}
             primeiro={i === 0}
             ultimo={i === lista.length - 1}
+            arrasto={arrasto}
+            indice={i}
             painel={painel}
             aoMover={mover}
             pedirConfirmacao={pedirConfirmacao}
@@ -194,6 +204,8 @@ function LinhaConteudo({
   conteudo,
   primeiro,
   ultimo,
+  arrasto,
+  indice,
   painel,
   aoMover,
   pedirConfirmacao,
@@ -202,6 +214,8 @@ function LinhaConteudo({
   conteudo: Conteudo;
   primeiro: boolean;
   ultimo: boolean;
+  arrasto: ReturnType<typeof useArrastar>;
+  indice: number;
   painel: Painel;
   aoMover: (id: string, direcao: -1 | 1) => void;
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
@@ -282,8 +296,14 @@ function LinhaConteudo({
 
   return (
     <li
+      {...(({ style: _e, ...resto }) => resto)(arrasto.props(indice))}
       className="rounded-cartao p-4"
-      style={{ background: tema.superficie, border: `1px solid ${tema.linhaSuave}` }}
+      style={{
+        background: tema.superficie,
+        border: `1px solid ${tema.linhaSuave}`,
+        ...arrasto.props(indice).style,
+        ...marcaDoDestino(arrasto, indice, "coluna"),
+      }}
     >
       <div className="flex flex-wrap items-center gap-[10px]">
         <span

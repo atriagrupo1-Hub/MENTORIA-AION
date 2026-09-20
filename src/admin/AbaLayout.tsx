@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import type { Categoria } from "@/data/tipos";
 import type { PedidoConfirmacao } from "./Confirmacao";
+import { marcaDoDestino, useArrastar } from "./arrastar";
 import * as dados from "./dados";
 import {
   botaoNeutro,
@@ -67,14 +68,19 @@ export function AbaLayout({
   }
 
   /*
-   * Mover troca a ORDEM das duas linhas — nunca a identidade. Os ids,
-   * os produtos e as liberações de cada uma continuam sendo os mesmos.
+   * Mover muda a ORDEM — nunca a identidade. Os ids, os produtos e as
+   * liberações de cada categoria continuam sendo os mesmos.
    *
-   * As categorias antigas nasceram com ordem 0,1,2,3, mas nada no
-   * banco garante que continuem sem buracos nem empates. Renumerar a
-   * lista inteira na posição nova é o único jeito que funciona nos
-   * dois casos.
+   * Renumera a lista inteira, e não troca duas: as categorias antigas
+   * nasceram com ordem 0,1,2,3, mas nada no banco garante que
+   * continuem sem buracos nem empates — e arrastar para o meio muda a
+   * posição de todas as seguintes.
    */
+  async function gravarOrdem(ids: string[]) {
+    const falha = await executar(() => dados.ordenarCategorias(ids));
+    avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
+  }
+
   async function mover(id: string, direcao: -1 | 1) {
     const atual = categorias.findIndex((c) => c.id === id);
     const destino = atual + direcao;
@@ -83,9 +89,7 @@ export function AbaLayout({
     const ordenada = [...categorias];
     const [movida] = ordenada.splice(atual, 1);
     ordenada.splice(destino, 0, movida);
-
-    const falha = await executar(() => dados.ordenarCategorias(ordenada.map((c) => c.id)));
-    avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
+    await gravarOrdem(ordenada.map((c) => c.id));
   }
 
   if (aberta) {
@@ -142,6 +146,7 @@ export function AbaLayout({
           }${c.bloqueadaGeral ? " · oculta" : ""}`,
         }))}
         aoAbrir={setAbertaId}
+        aoReordenar={gravarOrdem}
         vazio="Nenhuma categoria ainda. Crie a primeira acima."
       />
     </section>
@@ -224,19 +229,26 @@ function CategoriaAberta({
     });
   }
 
+  async function gravarOrdemDosProdutos(ids: string[]) {
+    const falha = await executar(() => dados.ordenarProdutos(ids));
+    avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
+  }
+
   async function moverProduto(id: string, direcao: -1 | 1) {
     const atual = produtos.findIndex((p) => p.id === id);
     const destino = atual + direcao;
     if (atual < 0 || destino < 0 || destino >= produtos.length) return;
 
-    const falha = await executar(() =>
-      dados.trocarOrdemDosProdutos(
-        { id: produtos[atual].id, ordem: produtos[atual].ordem },
-        { id: produtos[destino].id, ordem: produtos[destino].ordem },
-      ),
-    );
-    avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
+    const ordenada = [...produtos];
+    const [movido] = ordenada.splice(atual, 1);
+    ordenada.splice(destino, 0, movido);
+    await gravarOrdemDosProdutos(ordenada.map((p) => p.id));
   }
+
+  const arrasto = useArrastar(
+    produtos.map((p) => p.id),
+    gravarOrdemDosProdutos,
+  );
 
   return (
     <section>
@@ -344,10 +356,13 @@ function CategoriaAberta({
           {produtos.map((p, i) => (
             <li
               key={p.id}
+              {...(({ style: _e, ...resto }) => resto)(arrasto.props(i))}
               className="flex flex-wrap items-center gap-[10px] rounded-cartao px-4 py-3"
               style={{
                 background: tema.superficie,
                 border: `1px solid ${tema.linhaSuave}`,
+                ...arrasto.props(i).style,
+                ...marcaDoDestino(arrasto, i, "coluna"),
               }}
             >
               <span className="text-[13px]" style={{ color: tema.textoTerciario }}>

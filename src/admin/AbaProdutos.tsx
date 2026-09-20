@@ -55,6 +55,29 @@ export function AbaProdutos({
   const produtos = catalogo.produtos;
   const aberto = produtos.find((p) => p.id === abertoId) ?? null;
 
+  /*
+   * Arrastar aqui reordena DENTRO da categoria de cada produto.
+   *
+   * A fileira mistura produtos de categorias diferentes, e `ordem` é
+   * uma posição dentro da categoria — renumerar a fileira inteira de
+   * 0 em diante embaralharia as outras. Então a ordem nova é aplicada
+   * categoria a categoria, na sequência em que a fileira ficou.
+   */
+  async function gravarOrdem(ids: string[]) {
+    const porCategoria = new Map<string, string[]>();
+    for (const id of ids) {
+      const p = produtos.find((x) => x.id === id);
+      if (!p) continue;
+      const lista = porCategoria.get(p.categoriaId) ?? [];
+      lista.push(id);
+      porCategoria.set(p.categoriaId, lista);
+    }
+    const falha = await executar(async () => {
+      for (const lista of porCategoria.values()) await dados.ordenarProdutos(lista);
+    });
+    avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
+  }
+
   const tituloDaCategoria = (id: string) =>
     categorias.find((c) => c.id === id)?.titulo ?? "sem categoria";
 
@@ -163,6 +186,7 @@ export function AbaProdutos({
           detalhe: `${tituloDaCategoria(p.categoriaId)}${p.publicado ? "" : " · oculto"}`,
         }))}
         aoAbrir={setAbertoId}
+        aoReordenar={gravarOrdem}
         vazio="Nenhum produto ainda. Crie o primeiro acima."
       />
     </section>
@@ -236,11 +260,11 @@ function ProdutoAberto({
   async function mover(direcao: -1 | 1) {
     const destino = posicao + direcao;
     if (posicao < 0 || destino < 0 || destino >= irmaos.length) return;
+    const ordenada = [...irmaos];
+    const [movido] = ordenada.splice(posicao, 1);
+    ordenada.splice(destino, 0, movido);
     const falha = await executar(() =>
-      dados.trocarOrdemDosProdutos(
-        { id: irmaos[posicao].id, ordem: irmaos[posicao].ordem },
-        { id: irmaos[destino].id, ordem: irmaos[destino].ordem },
-      ),
+      dados.ordenarProdutos(ordenada.map((p) => p.id)),
     );
     avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
   }

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { marcaDoDestino, useArrastar } from "./arrastar";
 import { botaoNeutro, painel as tema, RAIO } from "./estilos";
 
 /**
@@ -32,11 +33,22 @@ export function Fileira({
   itens,
   porPagina = 8,
   aoAbrir,
+  aoReordenar,
   vazio,
 }: {
   itens: ItemDaFileira[];
   porPagina?: number;
   aoAbrir: (id: string) => void;
+  /**
+   * Arrastar um chip para outro lugar. Sem isto, a fileira segue só
+   * clicável, como era.
+   *
+   * Recebe a lista INTEIRA na ordem nova, e não só a página: a
+   * paginação é ferramenta de administração, e o que vai para o banco
+   * é a ordem de tudo. A junção é feita aqui, onde se sabe qual
+   * página está aberta.
+   */
+  aoReordenar?: (ids: string[]) => void;
   vazio: string;
 }) {
   const [pagina, setPagina] = useState(0);
@@ -62,10 +74,19 @@ export function Fileira({
 
   const daPagina = itens.slice(pagina * porPagina, pagina * porPagina + porPagina);
 
+  const arrasto = useArrastar(
+    daPagina.map((i) => i.id),
+    (novaDaPagina) => {
+      const antes = itens.slice(0, pagina * porPagina).map((i) => i.id);
+      const depois = itens.slice(pagina * porPagina + porPagina).map((i) => i.id);
+      aoReordenar?.([...antes, ...novaDaPagina, ...depois]);
+    },
+  );
+
   return (
     <div>
       <div className="flex flex-wrap gap-[10px]">
-        {daPagina.map((item) => (
+        {daPagina.map((item, i) => (
           <button
             key={item.id}
             onClick={() => aoAbrir(item.id)}
@@ -79,7 +100,12 @@ export function Fileira({
               border: `1px solid ${tema.linha}`,
               borderRadius: RAIO,
               cursor: "pointer",
+              ...(aoReordenar ? arrasto.props(i).style : {}),
+              ...(aoReordenar ? marcaDoDestino(arrasto, i, "linha") : {}),
             }}
+            {...(aoReordenar
+              ? (({ style: _estilo, ...resto }) => resto)(arrasto.props(i))
+              : {})}
           >
             <span className="max-w-full truncate text-[14px] font-semibold">
               {item.titulo}

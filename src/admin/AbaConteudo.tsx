@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import type { Aula, Modulo } from "@/data/tipos";
 import type { PedidoConfirmacao } from "./Confirmacao";
+import { Arrastavel, marcaDoDestino, useArrastar } from "./arrastar";
 import * as dados from "./dados";
 import { EditorConteudos } from "./EditorConteudos";
 import {
@@ -116,34 +117,44 @@ export function AbaConteudo({
     avisar(falha ?? "Módulo criado.");
   }
 
+  async function gravarOrdemDosModulos(ids: string[]) {
+    const falha = await executar(() => dados.ordenarModulos(ids));
+    avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
+  }
+
   async function moverModulo(modulo: Modulo, passo: -1 | 1) {
     const atual = modulos.findIndex((m) => m.id === modulo.id);
     const destino = atual + passo;
     if (atual < 0 || destino < 0 || destino >= modulos.length) return;
-    const falha = await executar(() =>
-      dados.trocarOrdemDosModulos(
-        { id: modulos[atual].id, ordem: modulos[atual].ordem },
-        { id: modulos[destino].id, ordem: modulos[destino].ordem },
-      ),
-    );
+    const ordenada = [...modulos];
+    const [movido] = ordenada.splice(atual, 1);
+    ordenada.splice(destino, 0, movido);
+    await gravarOrdemDosModulos(ordenada.map((m) => m.id));
+  }
+
+  const arrastoModulo = useArrastar(
+    modulos.map((m) => m.id),
+    gravarOrdemDosModulos,
+  );
+
+  async function gravarOrdemDosConteudos(moduloId: string, ids: string[]) {
+    const falha = await executar(() => dados.ordenarAulas(moduloId, ids));
     avisar(falha ?? "Ordem salva. A área da aluna já segue esta ordem.");
   }
 
   async function mover(modulo: Modulo, aula: Aula, passo: number) {
-    const destino = modulo.aulas[aula.ordem + passo];
-    if (!destino) {
+    const atual = modulo.aulas.findIndex((a) => a.id === aula.id);
+    const destino = atual + passo;
+    if (destino < 0 || destino >= modulo.aulas.length) {
       avisar(
         passo < 0 ? "Este já é o primeiro conteúdo." : "Este já é o último conteúdo.",
       );
       return;
     }
-    const falha = await executar(() =>
-      dados.trocarOrdemDasAulas(
-        { id: aula.id, numero: aula.numero, ordem: aula.ordem },
-        { id: destino.id, numero: destino.numero, ordem: destino.ordem },
-      ),
-    );
-    if (falha) avisar(falha);
+    const ordenada = [...modulo.aulas];
+    const [movida] = ordenada.splice(atual, 1);
+    ordenada.splice(destino, 0, movida);
+    await gravarOrdemDosConteudos(modulo.id, ordenada.map((a) => a.id));
   }
 
   return (
@@ -185,15 +196,18 @@ export function AbaConteudo({
             quando alguém chega ao final da lista pensando "falta um".
           */}
           <div className="flex flex-col gap-3">
-            {modulos.map((modulo) => (
+            {modulos.map((modulo, iModulo) => (
               <div
                 key={modulo.id}
+                {...(({ style: _e, ...resto }) => resto)(arrastoModulo.props(iModulo))}
                 className="rounded-cartao p-4"
                 style={{
                   background: "rgba(255,255,255,.03)",
                   border: `1px solid ${
                     modulo.bloqueadoGeral ? tema.perigoLinha : "rgba(255,255,255,.1)"
                   }`,
+                  ...arrastoModulo.props(iModulo).style,
+                  ...marcaDoDestino(arrastoModulo, iModulo, "coluna"),
                 }}
               >
                 <div className="flex flex-wrap items-center gap-[10px]">
@@ -445,8 +459,13 @@ export function AbaConteudo({
                   </div>
                 ) : null}
 
+                <Arrastavel
+                  ids={modulo.aulas.map((a) => a.id)}
+                  aoSoltar={(nova) => void gravarOrdemDosConteudos(modulo.id, nova)}
+                >
+                {(arrastoAula) => (
                 <div className="mt-[10px] flex flex-col">
-                  {modulo.aulas.map((aula) => {
+                  {modulo.aulas.map((aula, iAula) => {
                     const midia = midiaAulas.get(aula.id);
                     const anexos = [
                       midia ? `vídeo (${midia.provider})` : null,
@@ -454,7 +473,14 @@ export function AbaConteudo({
                     ].filter(Boolean);
 
                     return (
-                      <div key={aula.id}>
+                      <div
+                        key={aula.id}
+                        {...(({ style: _e, ...resto }) => resto)(arrastoAula.props(iAula))}
+                        style={{
+                          ...arrastoAula.props(iAula).style,
+                          ...marcaDoDestino(arrastoAula, iAula, "coluna"),
+                        }}
+                      >
                         <div
                           className="flex flex-wrap items-center gap-[10px] py-[9px]"
                           style={{ borderBottom: "1px solid rgba(255,255,255,.07)" }}
@@ -930,6 +956,8 @@ export function AbaConteudo({
                     ) : null}
                   </form>
                 </div>
+                )}
+                </Arrastavel>
                  </>
                 )}
               </div>

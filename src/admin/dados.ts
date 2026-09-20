@@ -406,22 +406,6 @@ export async function removerAula(id: string) {
   if (error) throw new Error(`remover aula: ${error.message}`);
 }
 
-/**
- * Troca duas aulas de posição numa transação só. As constraints de
- * `numero` são adiáveis justamente para isto — dois UPDATEs separados
- * quebrariam no primeiro.
- */
-export async function trocarOrdemDasAulas(
-  a: { id: string; numero: number; ordem: number },
-  b: { id: string; numero: number; ordem: number },
-) {
-  const { error } = await supabase.rpc("trocar_ordem_aulas", {
-    p_aula_a: a.id,
-    p_aula_b: b.id,
-  });
-  if (error) throw new Error(`reordenar: ${error.message}`);
-}
-
 export async function definirMidiaDaAula(
   aulaId: string,
   provider: string,
@@ -591,53 +575,53 @@ export async function removerProduto(id: string) {
   if (error) throw new Error(`remover produto: ${error.message}`);
 }
 
-/**
- * Troca duas posições.
+/*
+ * A troca de dois saiu.
  *
- * Trocar a ORDEM, nunca a identidade: as duas linhas continuam sendo
- * as mesmas, com os mesmos ids, os mesmos módulos e as mesmas
- * liberações. Mover é renumerar.
+ * As setas e o arrasto passam pelo mesmo caminho agora: renumerar a
+ * lista inteira na posição nova. Arrastar para o meio muda a posição
+ * de todos os seguintes, e a troca de dois não daria conta — manter
+ * as duas formas era manter dois jeitos de escrever a mesma coisa,
+ * com um deles quase nunca exercitado.
  */
-async function trocarOrdem(
-  tabela: "categorias" | "produtos" | "conteudos" | "modulos",
-  a: { id: string; ordem: number },
-  b: { id: string; ordem: number },
+
+/**
+ * Renumera de 0 em diante, na ordem recebida.
+ *
+ * É o que arrastar precisa, e as setas não: soltar um item no meio da
+ * lista muda a posição de todos os que vêm depois, e isso não é uma
+ * troca de dois. O que muda continua sendo só a ORDEM — os ids, os
+ * módulos e as liberações de cada linha ficam onde estavam.
+ */
+export async function ordenar(
+  tabela: "categorias" | "produtos" | "modulos" | "conteudos",
+  ids: string[],
 ) {
-  const um = await supabase.from(tabela).update({ ordem: b.ordem }).eq("id", a.id);
-  if (um.error) throw new Error(`ordem: ${um.error.message}`);
-  const dois = await supabase.from(tabela).update({ ordem: a.ordem }).eq("id", b.id);
-  if (dois.error) throw new Error(`ordem: ${dois.error.message}`);
+  for (let i = 0; i < ids.length; i++) {
+    const { error } = await supabase.from(tabela).update({ ordem: i }).eq("id", ids[i]);
+    if (error) throw new Error(`ordem: ${error.message}`);
+  }
 }
 
-export const trocarOrdemDasCategorias = (
-  a: { id: string; ordem: number },
-  b: { id: string; ordem: number },
-) => trocarOrdem("categorias", a, b);
+export const ordenarCategorias = (ids: string[]) => ordenar("categorias", ids);
+export const ordenarProdutos = (ids: string[]) => ordenar("produtos", ids);
+export const ordenarModulos = (ids: string[]) => ordenar("modulos", ids);
+export const ordenarConteudos = (ids: string[]) => ordenar("conteudos", ids);
 
-export const trocarOrdemDosProdutos = (
-  a: { id: string; ordem: number },
-  b: { id: string; ordem: number },
-) => trocarOrdem("produtos", a, b);
-
-export const trocarOrdemDosModulos = (
-  a: { id: string; ordem: number },
-  b: { id: string; ordem: number },
-) => trocarOrdem("modulos", a, b);
-
-export const trocarOrdemDosConteudos = (
-  a: { id: string; ordem: number },
-  b: { id: string; ordem: number },
-) => trocarOrdem("conteudos", a, b);
-
-/** Renumera as categorias de 0 em diante, na ordem recebida. */
-export async function ordenarCategorias(ids: string[]) {
-  for (let i = 0; i < ids.length; i++) {
-    const { error } = await supabase
-      .from("categorias")
-      .update({ ordem: i })
-      .eq("id", ids[i]);
-    if (error) throw new Error(`ordem das categorias: ${error.message}`);
-  }
+/**
+ * Renumera os conteúdos de um módulo — no banco, numa transação só.
+ *
+ * `aulas_numero_unico (modulo_id, numero)` é deferrable: dentro de UMA
+ * transação os passos intermediários passam. Pelo navegador cada
+ * UPDATE é uma transação própria, e o segundo já esbarraria num
+ * `numero` repetido. Por isso esta mora numa função do banco.
+ */
+export async function ordenarAulas(moduloId: string, ids: string[]) {
+  const { error } = await supabase.rpc("ordenar_aulas", {
+    p_modulo: moduloId,
+    p_ids: ids,
+  });
+  if (error) throw new Error(`ordem dos conteúdos: ${error.message}`);
 }
 
 export type NovoConteudo = {
