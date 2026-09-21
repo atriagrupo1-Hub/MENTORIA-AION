@@ -12,6 +12,7 @@ import { ehAdmin as podeTudo, ehDono, ehEquipe, NOME_DO_PAPEL } from "./papeis";
 import { Confirmacao, type PedidoConfirmacao } from "./Confirmacao";
 import { aba, botaoNeutro, botaoOuro, campo, painel as tema } from "./estilos";
 import { usePainel } from "./usePainel";
+import { ProvedorTelaCheia } from "./telaCheia";
 
 const FUNDO = tema.fundo;
 
@@ -260,6 +261,11 @@ function PainelLogado() {
   const aviso = useAviso();
   const [abaAtiva, setAbaAtiva] = useState<Chave>("alunas");
   const [pedido, setPedido] = useState<PedidoConfirmacao | null>(null);
+  /*
+   * Uma tela aberta ocupa o painel inteiro. Quem liga é o `Voltar` da
+   * tela, pelo contexto — ver `telaCheia.tsx`.
+   */
+  const [telaCheia, setTelaCheia] = useState(false);
 
   const papel = aluna?.papel;
   const meuNome = aluna?.nome ?? "";
@@ -311,7 +317,16 @@ function PainelLogado() {
 
   return (
     <div className="min-h-screen" style={{ background: FUNDO }}>
-      {/* Barra da marca. Fica separada do conteúdo por uma linha só. */}
+      {/*
+        Barra da marca. Fica separada do conteúdo por uma linha só — e
+        sai inteira em tela cheia.
+
+        Some do DOM, e não com o atributo `hidden`: `hidden` é
+        `display:none` na folha do navegador, e qualquer `flex` do
+        Tailwind na mesma tag ganha dele. A marca sumiu; o título e as
+        abas, que têm `flex`, continuaram na tela.
+      */}
+      {telaCheia ? null : (
       <div style={{ borderBottom: `1px solid ${tema.linhaSuave}` }}>
         <div className="mx-auto flex max-w-[1180px] flex-wrap items-center gap-4 px-6 py-4">
           <Marca altura={38} />
@@ -340,8 +355,14 @@ function PainelLogado() {
           </button>
         </div>
       </div>
+      )}
 
-      <div className="entra mx-auto max-w-[1180px] px-6 pb-[90px] pt-9">
+      <div
+        className={`entra mx-auto px-6 pb-[90px] ${
+          telaCheia ? "max-w-none pt-6" : "max-w-[1180px] pt-9"
+        }`}
+      >
+        {telaCheia ? null : (
         <header className="mb-7 flex flex-wrap items-baseline gap-x-4 gap-y-1">
           <h1 className="m-0 text-[27px] font-semibold" style={{ color: tema.texto }}>
             {TITULO[abaAtiva]}
@@ -362,6 +383,7 @@ function PainelLogado() {
                       : resumoAlunas}
           </span>
         </header>
+        )}
 
         {erro ? (
           <p
@@ -384,6 +406,7 @@ function PainelLogado() {
           CORTADO, não rolável. A aba Equipe simplesmente não existia em
           tela pequena.
         */}
+        {telaCheia ? null : (
         <div
           className="mb-7 flex flex-wrap"
           style={{ borderBottom: `1px solid ${tema.linhaSuave}` }}
@@ -394,7 +417,9 @@ function PainelLogado() {
             </button>
           ))}
         </div>
+        )}
 
+        <ProvedorTelaCheia value={setTelaCheia}>
         {abaAtiva === "comentarios" ? (
           <AbaComentarios
             meuNome={meuNome}
@@ -415,6 +440,7 @@ function PainelLogado() {
             avisar={aviso.mostrar}
           />
         )}
+        </ProvedorTelaCheia>
       </div>
 
       {pedido ? <Confirmacao pedido={pedido} aoCancelar={() => setPedido(null)} /> : null}

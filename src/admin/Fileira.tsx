@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useArrastar } from "./arrastar";
+import { useTelaCheia } from "./telaCheia";
 import { botaoNeutro, painel as tema, RAIO } from "./estilos";
 
 /**
@@ -165,8 +166,15 @@ export function Fileira({
   );
 }
 
-/** O `← VOLTAR` que fecha o item aberto e devolve a listagem. */
+/**
+ * O `← VOLTAR` que fecha o item aberto e devolve a listagem.
+ *
+ * E é ele que põe a tela em TELA CHEIA. Renderizar um "voltar" é o que
+ * define uma tela aberta: enquanto ela estiver na tela, a moldura do
+ * painel — marca, título, abas — sai da frente.
+ */
 export function Voltar({ aoVoltar, oQue }: { aoVoltar: () => void; oQue: string }) {
+  useTelaCheia();
   return (
     <button
       onClick={aoVoltar}
