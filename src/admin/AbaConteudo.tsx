@@ -110,10 +110,26 @@ export function AbaConteudo({
       return;
     }
     const numero = modulos.length ? Math.max(...modulos.map((m) => m.numero)) + 1 : 0;
-    const falha = await executar(() =>
-      dados.criarModulo(novoModulo.trim(), numero, modulos.length, produtoId),
-    );
-    if (!falha) setNovoModulo("");
+    /*
+     * Abre sozinho o módulo que acabou de nascer.
+     *
+     * Criar e depois ter de achar a seta para abrir era um clique a mais
+     * entre o módulo e a aula — e é exatamente aí que o trabalho
+     * continua. Os outros seguem fechados.
+     */
+    let nascido = "";
+    const falha = await executar(async () => {
+      nascido = await dados.criarModulo(
+        novoModulo.trim(),
+        numero,
+        modulos.length,
+        produtoId,
+      );
+    });
+    if (!falha) {
+      setNovoModulo("");
+      if (nascido) setModulosAbertos((atual) => new Set(atual).add(nascido));
+    }
     avisar(falha ?? "Módulo criado.");
   }
 

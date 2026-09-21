@@ -344,13 +344,18 @@ export async function criarModulo(
   ordem: number,
   produtoId?: string,
 ) {
-  const { error } = await supabase.from("modulos").insert({
-    titulo: titulo.toUpperCase(),
-    numero,
-    ordem,
-    ...(produtoId ? { produto_id: produtoId } : {}),
-  });
-  if (!error) return;
+  const { data, error } = await supabase
+    .from("modulos")
+    .insert({
+      titulo: titulo.toUpperCase(),
+      numero,
+      ordem,
+      ...(produtoId ? { produto_id: produtoId } : {}),
+    })
+    .select("id")
+    .single();
+  // Devolve o id para a tela já abrir o módulo que acabou de nascer.
+  if (!error) return data.id as string;
 
   /*
    * O texto cru do Postgres não é para quem cadastra.

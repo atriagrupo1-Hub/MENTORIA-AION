@@ -5,7 +5,6 @@ import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
 import {
   botaoNeutro,
-  botaoNeutroGrande,
   botaoOuro,
   botaoRemover,
   campo,
@@ -15,6 +14,15 @@ import {
 } from "./estilos";
 import { Fileira, Voltar } from "./Fileira";
 import type { Painel } from "./usePainel";
+
+/**
+ * O nome que o curso leva no instante em que nasce.
+ *
+ * Ele existe por um segundo: a página abre com o campo Nome vazio e o
+ * cursor dentro. Este texto é o que aparece se alguém sair sem digitar
+ * nada — e é melhor que uma linha em branco na lista.
+ */
+const NOME_DE_RASCUNHO = "Curso sem nome";
 
 /*
  * CURSOS E CONTEÚDOS
@@ -44,12 +52,10 @@ export function AbaProdutos({
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
-  const { catalogo, executar, reordenar } = painel;
+  const { catalogo, reordenar } = painel;
   const [abertoId, setAbertoId] = useState("");
-  const [criando, setCriando] = useState(false);
-  const [nome, setNome] = useState("");
-  const [categoriaId, setCategoriaId] = useState("");
-  const [visivel, setVisivel] = useState(true);
+  /** Qual produto acabou de nascer aqui — o único em modo "curso novo". */
+  const [novoId, setNovoId] = useState("");
 
   const categorias = [...catalogo.categorias].sort((a, b) => a.ordem - b.ordem);
   const produtos = catalogo.produtos;
@@ -81,26 +87,35 @@ export function AbaProdutos({
   const tituloDaCategoria = (id: string) =>
     categorias.find((c) => c.id === id)?.titulo ?? "sem categoria";
 
-  async function criar(e: FormEvent) {
-    e.preventDefault();
-    const destino = categoriaId || categorias[0]?.id;
-    if (!nome.trim()) {
-      avisar("Dê um nome ao produto.");
-      return;
-    }
+  /*
+   * Criar abre a PÁGINA, não uma faixa sobre a lista.
+   *
+   * Montar um curso era uma ida e volta: preencher o nome na faixa,
+   * clicar Criar, achar o curso na lista, abrir, e só então chegar ao
+   * módulo. Agora é um clique: o curso nasce aqui e a página dele abre
+   * com tudo à vista — nome, módulo e conteúdo.
+   *
+   * Nasce OCULTO. Ele precisa existir no banco para o módulo poder
+   * pender dele, mas um curso pela metade não pode aparecer para a
+   * aluna enquanto está sendo montado. A visibilidade está no topo da
+   * própria página. Criar um curso continua não liberando nada para
+   * ninguém: `acessos` não é tocado.
+   */
+  async function criarEabrir() {
+    const destino = categorias[0]?.id;
     if (!destino) {
       avisar("Crie uma categoria antes, em Categorias / Layout.");
       return;
     }
     const quantos = categorias.find((c) => c.id === destino)?.produtos.length ?? 0;
-    const falha = await executar(() =>
-      dados.criarProduto(destino, nome.trim(), quantos, visivel),
-    );
-    if (!falha) {
-      setNome("");
-      setCriando(false);
+    try {
+      const id = await dados.criarProduto(destino, NOME_DE_RASCUNHO, quantos, false);
+      await painel.recarregar();
+      setNovoId(id);
+      setAbertoId(id);
+    } catch (falha) {
+      avisar(falha instanceof Error ? falha.message : "Não consegui criar o curso.");
     }
-    avisar(falha ?? "Produto criado. Abra-o para montar o conteúdo.");
   }
 
   if (aberto) {
@@ -108,7 +123,11 @@ export function AbaProdutos({
       <ProdutoAberto
         produto={aberto}
         painel={painel}
-        aoVoltar={() => setAbertoId("")}
+        novo={aberto.id === novoId}
+        aoVoltar={() => {
+          setAbertoId("");
+          setNovoId("");
+        }}
         pedirConfirmacao={pedirConfirmacao}
         avisar={avisar}
       />
@@ -121,62 +140,10 @@ export function AbaProdutos({
         <span className="flex-1 text-[14px]" style={{ color: tema.textoSecundario }}>
           Todos os produtos. Clique num deles para montar o conteúdo.
         </span>
-        <button onClick={() => setCriando((v) => !v)} style={botaoNeutroGrande}>
-          {criando ? "Cancelar" : "+ Criar novo"}
+        <button onClick={criarEabrir} style={botaoOuro}>
+          + Criar novo
         </button>
       </div>
-
-      {criando ? (
-        <form
-          onSubmit={criar}
-          className="mb-5 rounded-cartao p-4"
-          style={{ background: tema.superficie, border: `1px solid ${tema.linhaSuave}` }}
-        >
-          <div className="flex flex-wrap items-end gap-[10px]">
-            <label className="flex min-w-[200px] flex-[2] flex-col gap-[6px]">
-              <span style={rotulo}>Nome</span>
-              <input
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                style={campo}
-                autoFocus
-              />
-            </label>
-            <label className="flex min-w-[180px] flex-1 flex-col gap-[6px]">
-              <span style={rotulo}>Categoria onde aparecerá</span>
-              <select
-                value={categoriaId || (categorias[0]?.id ?? "")}
-                onChange={(e) => setCategoriaId(e.target.value)}
-                style={campo}
-              >
-                {categorias.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.titulo}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex min-w-[150px] flex-col gap-[6px]">
-              <span style={rotulo}>Visibilidade</span>
-              <select
-                value={visivel ? "sim" : "nao"}
-                onChange={(e) => setVisivel(e.target.value === "sim")}
-                style={campo}
-              >
-                <option value="sim">Visível</option>
-                <option value="nao">Oculto</option>
-              </select>
-            </label>
-            <button type="submit" style={botaoOuro}>
-              Criar
-            </button>
-          </div>
-          <p className="m-0 mt-3 text-[12px]" style={{ color: tema.textoTerciario }}>
-            A posição é o fim da categoria escolhida; mover é em Categorias /
-            Layout. Criar um produto não libera nada para ninguém.
-          </p>
-        </form>
-      ) : null}
 
       <Fileira
         itens={produtos.map((p) => ({
@@ -196,18 +163,21 @@ export function AbaProdutos({
 function ProdutoAberto({
   produto,
   painel,
+  novo = false,
   aoVoltar,
   pedirConfirmacao,
   avisar,
 }: {
   produto: Produto;
   painel: Painel;
+  /** Acabou de nascer neste clique: o nome vem vazio e há Descartar. */
+  novo?: boolean;
   aoVoltar: () => void;
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
   const { catalogo, executar } = painel;
-  const [nome, setNome] = useState(produto.titulo);
+  const [nome, setNome] = useState(novo ? "" : produto.titulo);
   const [descricao, setDescricao] = useState(produto.descricao);
   const [categoriaId, setCategoriaId] = useState(produto.categoriaId);
 
@@ -293,15 +263,60 @@ function ProdutoAberto({
     });
   }
 
+  /*
+   * Descartar existe só no curso recém-criado, e só enquanto ele
+   * estiver vazio.
+   *
+   * O clique em "+ Criar novo" já grava a linha; sem uma saída, desistir
+   * deixaria um curso sem nome na lista. Tendo qualquer coisa dentro
+   * ele recusa e manda usar Ocultar — apagar o que já foi montado nunca
+   * é o caminho curto.
+   */
+  const vazio =
+    produto.modulos.length === 0 &&
+    produto.presentes.length === 0 &&
+    produto.conteudos.length === 0;
+
+  async function descartar() {
+    if (!vazio) {
+      avisar("Este curso já tem conteúdo dentro. Use Ocultar em vez de descartar.");
+      return;
+    }
+    const falha = await executar(() => dados.removerProduto(produto.id));
+    if (!falha) aoVoltar();
+    avisar(falha ?? "Rascunho descartado.");
+  }
+
   return (
     <section>
-      <div className="mb-5">
+      <div className="mb-5 flex flex-wrap items-center gap-[10px]">
         <Voltar aoVoltar={aoVoltar} oQue="para os produtos" />
+        {novo ? (
+          <button
+            type="button"
+            onClick={descartar}
+            style={{ ...botaoRemover, minHeight: 44, padding: "0 18px", fontSize: 14 }}
+          >
+            Descartar rascunho
+          </button>
+        ) : null}
       </div>
 
-      <h2 className="m-0 mb-5 font-titulo text-[24px]" style={{ color: tema.texto }}>
-        {produto.titulo}
+      <h2 className="m-0 mb-1 font-titulo text-[24px]" style={{ color: tema.texto }}>
+        {novo ? (nome.trim() || "Curso novo") : produto.titulo}
       </h2>
+
+      {/*
+        Tudo numa tela só: nome, módulo e conteúdo. Era criar, voltar,
+        achar na lista e abrir — quatro passos para chegar onde o
+        trabalho começa.
+      */}
+      <p className="m-0 mb-5 text-[13px]" style={{ color: tema.textoSecundario }}>
+        {novo
+          ? "Dê o nome, escolha a categoria e monte os módulos e o conteúdo aqui mesmo. " +
+            "Ele nasce oculto: ninguém vê até você deixar Visível."
+          : "\u00a0"}
+      </p>
 
       <h3 className="m-0 mb-3" style={rotulo}>
         Configurações
@@ -315,7 +330,13 @@ function ProdutoAberto({
         <div className="flex flex-wrap items-end gap-[10px]">
           <label className="flex min-w-[200px] flex-[2] flex-col gap-[6px]">
             <span style={rotulo}>Nome</span>
-            <input value={nome} onChange={(e) => setNome(e.target.value)} style={campo} />
+            <input
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              style={campo}
+              autoFocus={novo}
+              placeholder={novo ? "Nome do curso" : undefined}
+            />
           </label>
 
           <label className="flex min-w-[180px] flex-1 flex-col gap-[6px]">
@@ -372,20 +393,28 @@ function ProdutoAberto({
             </span>
           </span>
 
-          <span className="flex flex-col gap-[6px]">
+          {/*
+            A visibilidade era um selo que só informava, e quem mudava
+            era um botão lá embaixo, "Ocultar". No curso recém-criado —
+            que nasce oculto — isso é justamente o que se precisa achar
+            primeiro. Vira um seletor, aqui em cima, com o rótulo do
+            lado do nome.
+          */}
+          <label className="flex flex-col gap-[6px]">
             <span style={rotulo}>Visibilidade</span>
-            <span
-              className="flex items-center px-[14px] text-[14px]"
+            <select
+              value={produto.publicado ? "sim" : "nao"}
+              onChange={() => void alternarVisibilidade()}
               style={{
-                minHeight: 44,
+                ...campo,
                 color: produto.publicado ? tema.texto : tema.perigo,
                 border: `1px solid ${produto.publicado ? tema.linha : tema.perigoLinha}`,
-                borderRadius: RAIO,
               }}
             >
-              {produto.publicado ? "Visível" : "Oculto"}
-            </span>
-          </span>
+              <option value="sim">Visível</option>
+              <option value="nao">Oculto</option>
+            </select>
+          </label>
         </div>
 
         <label className="mt-3 flex flex-col gap-[6px]">
@@ -401,9 +430,6 @@ function ProdutoAberto({
         <div className="mt-4 flex flex-wrap gap-[10px]">
           <button type="submit" style={botaoOuro}>
             Salvar
-          </button>
-          <button type="button" onClick={alternarVisibilidade} style={botaoNeutroGrande}>
-            {produto.publicado ? "Ocultar" : "Mostrar"}
           </button>
           <button
             type="button"
