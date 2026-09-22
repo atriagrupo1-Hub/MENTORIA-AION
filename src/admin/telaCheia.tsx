@@ -13,9 +13,11 @@ import { createContext, useContext, useEffect } from "react";
  * VOLTAR da própria tela é o caminho de saída, e ao voltar a moldura
  * reaparece.
  *
- * Quem liga isto é o `Voltar`, e não cada tela: renderizar um "voltar"
- * é exatamente o que define uma tela aberta. Telas novas ganham o
- * comportamento sem precisar lembrar dele.
+ * Cada tela que abre chama `useTelaCheia()` na primeira linha:
+ * `CategoriaAberta` e `ProdutoAberto`. Já esteve pendurado no `Voltar`,
+ * o que parecia mais esperto — até a tela de curso novo trocar o
+ * "voltar" por concluir/guardar/cancelar e perder a tela cheia junto.
+ * Quem abre é quem sabe que abriu.
  */
 const Contexto = createContext<(ligada: boolean) => void>(() => {});
 

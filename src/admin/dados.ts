@@ -589,6 +589,29 @@ export async function atualizarProduto(
   if (error) throw new Error(`produto: ${error.message}`);
 }
 
+/**
+ * Desiste de um curso que está nascendo — ele e tudo que foi montado.
+ *
+ * Não é um `delete` no produto: `modulos.produto_id` é ON DELETE
+ * RESTRICT de propósito, para que apagar um produto nunca leve junto,
+ * em silêncio, o progresso e os comentários das alunas. A função do
+ * banco limpa na ordem, numa transação, e antes confere que é mesmo um
+ * rascunho: recusa produto publicado e produto que alguém já tem.
+ */
+export async function descartarRascunho(id: string) {
+  const { error } = await supabase.rpc("descartar_rascunho", { p_produto: id });
+  if (!error) return;
+  if (error.message.includes("produto_publicado")) {
+    throw new Error("Este curso já está visível. Deixe Oculto antes de descartar.");
+  }
+  if (error.message.includes("produto_em_uso")) {
+    throw new Error(
+      "Alguma aluna já tem este curso liberado. Ele não é mais um rascunho — use Ocultar.",
+    );
+  }
+  throw new Error(`descartar: ${error.message}`);
+}
+
 export async function removerProduto(id: string) {
   const { error } = await supabase.from("produtos").delete().eq("id", id);
   if (error) throw new Error(`remover produto: ${error.message}`);

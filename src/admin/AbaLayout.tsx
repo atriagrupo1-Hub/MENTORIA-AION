@@ -14,6 +14,7 @@ import {
   rotulo,
 } from "./estilos";
 import { Fileira, Voltar } from "./Fileira";
+import { useTelaCheia } from "./telaCheia";
 import type { Painel } from "./usePainel";
 
 /*
@@ -172,6 +173,7 @@ function CategoriaAberta({
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
+  useTelaCheia();
   const { executar, reordenar } = painel;
   const [nome, setNome] = useState(categoria.titulo);
 

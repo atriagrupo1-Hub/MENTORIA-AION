@@ -13,6 +13,7 @@ import {
   rotulo,
 } from "./estilos";
 import { Fileira, Voltar } from "./Fileira";
+import { useTelaCheia } from "./telaCheia";
 import type { Painel } from "./usePainel";
 
 /**
@@ -176,8 +177,20 @@ function ProdutoAberto({
   pedirConfirmacao: (p: PedidoConfirmacao) => void;
   avisar: (m: string) => void;
 }) {
+  useTelaCheia();
   const { catalogo, executar } = painel;
   const [nome, setNome] = useState(novo ? "" : produto.titulo);
+  /*
+   * As CONFIGURAÇÕES fecham depois de salvas, como um módulo fecha.
+   *
+   * Ficavam abertas para sempre, ocupando meia tela com os campos
+   * todos, mesmo com o nome já dado — e dali em diante o que se quer
+   * ver é o conteúdo. Fechada, vira uma linha com o que importa e um
+   * Editar. Só na tela de curso novo: o curso já existente segue
+   * abrindo com os campos à mão.
+   */
+  const [editandoConfig, setEditandoConfig] = useState(true);
+  const configAberta = !novo || editandoConfig;
   const [descricao, setDescricao] = useState(produto.descricao);
   const [categoriaId, setCategoriaId] = useState(produto.categoriaId);
 
@@ -212,7 +225,65 @@ function ProdutoAberto({
         ordem: quantosLa,
       }),
     );
+    if (!falha) setEditandoConfig(false);
     avisar(falha ?? "Configurações salvas.");
+  }
+
+  /** Grava o que está nos campos, sem fechar nem publicar. */
+  async function gravarConfiguracoes(): Promise<string | null> {
+    const mudouDeCasa = categoriaId !== produto.categoriaId;
+    const quantosLa = mudouDeCasa
+      ? (categorias.find((c) => c.id === categoriaId)?.produtos.length ?? 0)
+      : produto.ordem;
+    return executar(() =>
+      dados.atualizarProduto(produto.id, {
+        titulo: nome.trim(),
+        descricao: descricao.trim(),
+        categoria_id: categoriaId,
+        ordem: quantosLa,
+      }),
+    );
+  }
+
+  /* Guardo para depois: fica como está, oculto, e volta para a lista. */
+  async function salvarRascunho() {
+    const falha = nome.trim() ? await gravarConfiguracoes() : null;
+    if (falha) {
+      avisar(falha);
+      return;
+    }
+    aoVoltar();
+    avisar("Rascunho salvo. Ele fica oculto até você concluir.");
+  }
+
+  /*
+   * Terminei: grava e deixa visível.
+   *
+   * Sem nome não conclui. O nome é o que a aluna vê antes de abrir
+   * qualquer coisa, e um "Curso sem nome" na prateleira dela é pior
+   * que um curso a menos.
+   */
+  async function concluir() {
+    if (!nome.trim()) {
+      avisar("Dê um nome ao curso antes de concluir.");
+      return;
+    }
+    const falha = await gravarConfiguracoes();
+    if (falha) {
+      avisar(falha);
+      return;
+    }
+    if (!produto.publicado) {
+      const falhaPublicar = await executar(() =>
+        dados.atualizarProduto(produto.id, { publicado: true }),
+      );
+      if (falhaPublicar) {
+        avisar(falhaPublicar);
+        return;
+      }
+    }
+    aoVoltar();
+    avisar("Curso concluído e visível. Liberar para cada aluna é na aba Alunas.");
   }
 
   async function alternarVisibilidade() {
@@ -264,43 +335,61 @@ function ProdutoAberto({
   }
 
   /*
-   * Descartar existe só no curso recém-criado, e só enquanto ele
-   * estiver vazio.
+   * Cancelar: não grava nada, e apaga o que já nasceu.
    *
-   * O clique em "+ Criar novo" já grava a linha; sem uma saída, desistir
-   * deixaria um curso sem nome na lista. Tendo qualquer coisa dentro
-   * ele recusa e manda usar Ocultar — apagar o que já foi montado nunca
-   * é o caminho curto.
+   * O clique em "+ Criar novo" já grava a linha do curso, então
+   * desistir tem de apagá-la junto com os módulos e as aulas que
+   * vieram depois. Quem faz isso é `descartar_rascunho` no banco, numa
+   * transação — e ela recusa curso publicado, ou que alguma aluna já
+   * tenha. A confirmação diz o tamanho exato do que vai embora: "2
+   * módulos" faz pensar; "o conteúdo" é paisagem.
    */
-  const vazio =
-    produto.modulos.length === 0 &&
-    produto.presentes.length === 0 &&
-    produto.conteudos.length === 0;
+  const totalDeConteudos =
+    produto.conteudos.length +
+    produto.modulos.reduce(
+      (soma, m) =>
+        soma + m.conteudos.length + m.aulas.reduce((x, a) => x + a.conteudos.length, 0),
+      0,
+    );
 
-  async function descartar() {
-    if (!vazio) {
-      avisar("Este curso já tem conteúdo dentro. Use Ocultar em vez de descartar.");
+  function cancelar() {
+    const apagar = async () => {
+      const falha = await executar(() => dados.descartarRascunho(produto.id));
+      if (!falha) aoVoltar();
+      avisar(falha ?? "Cancelado. Nada foi gravado.");
+    };
+
+    if (produto.modulos.length === 0 && totalDeAulas === 0 && totalDeConteudos === 0) {
+      void apagar();
       return;
     }
-    const falha = await executar(() => dados.removerProduto(produto.id));
-    if (!falha) aoVoltar();
-    avisar(falha ?? "Rascunho descartado.");
+
+    pedirConfirmacao({
+      titulo: "Cancelar este curso?",
+      rotuloConfirmar: "Cancelar e apagar",
+      mensagem:
+        `${produto.modulos.length} ${produto.modulos.length === 1 ? "módulo" : "módulos"}, ` +
+        `${totalDeAulas} ${totalDeAulas === 1 ? "aula" : "aulas"} e ` +
+        `${totalDeConteudos} ${totalDeConteudos === 1 ? "conteúdo" : "conteúdos"} ` +
+        "serão apagados junto com o curso, e não tem como desfazer. Para " +
+        "guardar e continuar depois, use Salvar rascunho.",
+      executar: apagar,
+    });
   }
 
   return (
     <section>
-      <div className="mb-5 flex flex-wrap items-center gap-[10px]">
-        <Voltar aoVoltar={aoVoltar} oQue="para os produtos" />
-        {novo ? (
-          <button
-            type="button"
-            onClick={descartar}
-            style={{ ...botaoRemover, minHeight: 44, padding: "0 18px", fontSize: 14 }}
-          >
-            Descartar rascunho
-          </button>
-        ) : null}
-      </div>
+      {/*
+        No curso novo o VOLTAR sai: sair dali é uma decisão — concluir,
+        guardar ou cancelar —, e são os três botões do pé da tela que a
+        tomam. Um "voltar" ao lado deles seria uma quarta saída sem
+        nome, que grava pela metade sem dizer nada.
+      */}
+      {novo ? null : (
+        <div className="mb-5">
+          <Voltar aoVoltar={aoVoltar} oQue="para os produtos" />
+        </div>
+      )}
 
       <h2 className="m-0 mb-1 font-titulo text-[24px]" style={{ color: tema.texto }}>
         {novo ? (nome.trim() || "Curso novo") : produto.titulo}
@@ -322,6 +411,31 @@ function ProdutoAberto({
         Configurações
       </h3>
 
+      {configAberta ? null : (
+        <div
+          className="mb-8 flex flex-wrap items-center gap-[10px] rounded-cartao p-4"
+          style={{ background: tema.superficie, border: `1px solid ${tema.linhaSuave}` }}
+        >
+          <span className="flex min-w-0 flex-[1_1_240px] flex-col gap-[3px]">
+            <span className="text-[15px] font-bold" style={{ color: tema.texto }}>
+              {produto.titulo}
+            </span>
+            <span className="text-[12px]" style={{ color: tema.textoSecundario }}>
+              {categorias.find((c) => c.id === categoriaId)?.titulo ?? "sem categoria"} · {produto.publicado ? "Visível" : "Oculto"} ·
+              {" "}posição {posicao + 1}
+            </span>
+          </span>
+          <button
+            type="button"
+            onClick={() => setEditandoConfig(true)}
+            style={{ ...botaoNeutro, minHeight: 44, padding: "0 18px", fontSize: 14 }}
+          >
+            Editar
+          </button>
+        </div>
+      )}
+
+      {!configAberta ? null : (
       <form
         onSubmit={salvar}
         className="mb-8 rounded-cartao p-4"
@@ -431,15 +545,23 @@ function ProdutoAberto({
           <button type="submit" style={botaoOuro}>
             Salvar
           </button>
-          <button
-            type="button"
-            onClick={remover}
-            style={{ ...botaoRemover, minHeight: 44, padding: "0 18px", fontSize: 14 }}
-          >
-            Remover
-          </button>
+          {/*
+            No curso que está nascendo, Remover aqui no meio não é o que
+            se procura: quem desiste usa o Cancelar do pé da tela, que
+            diz o tamanho do estrago antes de apagar.
+          */}
+          {novo ? null : (
+            <button
+              type="button"
+              onClick={remover}
+              style={{ ...botaoRemover, minHeight: 44, padding: "0 18px", fontSize: 14 }}
+            >
+              Remover
+            </button>
+          )}
         </div>
       </form>
+      )}
 
       {/*
         A contagem vive AQUI, com o rótulo — e não num cabeçalho
@@ -476,6 +598,40 @@ function ProdutoAberto({
         pedirConfirmacao={pedirConfirmacao}
         avisar={avisar}
       />
+
+      {/*
+        As três saídas do curso novo, no fim e sempre à vista.
+        
+        Antes a única forma de sair era o VOLTAR, que guardava no meio
+        do caminho sem dizer nada — não havia "pronto, publiquei", nem
+        "guardo para depois", nem "desisti". Ficam aqui embaixo, onde a
+        mão para quando o trabalho acabou.
+      */}
+      {novo ? (
+        <div
+          className="mt-10 flex flex-wrap items-center gap-[10px] pt-5"
+          style={{ borderTop: `1px solid ${tema.linhaSuave}` }}
+        >
+          <button type="button" onClick={() => void concluir()} style={botaoOuro}>
+            Concluir curso
+          </button>
+          <button
+            type="button"
+            onClick={() => void salvarRascunho()}
+            style={{ ...botaoNeutro, minHeight: 44, padding: "0 18px", fontSize: 14 }}
+          >
+            Salvar rascunho
+          </button>
+          <span className="flex-1" />
+          <button
+            type="button"
+            onClick={cancelar}
+            style={{ ...botaoRemover, minHeight: 44, padding: "0 18px", fontSize: 14 }}
+          >
+            Cancelar
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 }
