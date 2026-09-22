@@ -364,15 +364,26 @@ function ProdutoAberto({
       return;
     }
 
+    /*
+     * Pergunta sim/não, sem a palavra REMOVER.
+     *
+     * Cancelar é DESISTIR do que está sendo feito agora, não destruir
+     * o que já existia — e para guardar existe o Salvar rascunho, ali
+     * do lado. A palavra digitada é a trava de apagar o que já está no
+     * ar; pedi-la aqui ensina a digitá-la por reflexo, que é
+     * exatamente o que ela existe para impedir.
+     */
     pedirConfirmacao({
-      titulo: "Cancelar este curso?",
-      rotuloConfirmar: "Cancelar e apagar",
+      titulo: "Desistir deste curso?",
+      tom: "normal",
+      rotuloConfirmar: "Sim, descartar",
       mensagem:
-        `${produto.modulos.length} ${produto.modulos.length === 1 ? "módulo" : "módulos"}, ` +
+        `Você montou ${produto.modulos.length} ` +
+        `${produto.modulos.length === 1 ? "módulo" : "módulos"}, ` +
         `${totalDeAulas} ${totalDeAulas === 1 ? "aula" : "aulas"} e ` +
         `${totalDeConteudos} ${totalDeConteudos === 1 ? "conteúdo" : "conteúdos"} ` +
-        "serão apagados junto com o curso, e não tem como desfazer. Para " +
-        "guardar e continuar depois, use Salvar rascunho.",
+        "aqui. Desistindo, isso se perde. Para guardar e continuar " +
+        "depois, use Salvar rascunho.",
       executar: apagar,
     });
   }
