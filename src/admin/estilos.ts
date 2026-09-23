@@ -51,6 +51,22 @@ export const painel = {
 
 export const RAIO = 8;
 
+/**
+ * O quanto um campo de NOME cresce.
+ *
+ * Com a tela aberta ocupando o painel inteiro, "Nome do novo módulo"
+ * virou uma barra de ponta a ponta num monitor largo, com três palavras
+ * dentro. Um nome tem vinte, trinta caracteres — o campo tem que ter o
+ * tamanho do que se escreve nele, não o da tela.
+ *
+ * É teto, não largura: o `flex-grow` continua fazendo o campo ocupar a
+ * linha no celular.
+ */
+export const LARGURA_DE_NOME = 520;
+
+/** O mesmo para a descrição, que é texto corrido de duas linhas. */
+export const LARGURA_DE_TEXTO = 780;
+
 export const campo: React.CSSProperties = {
   minHeight: 44,
   padding: "0 14px",

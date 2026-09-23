@@ -7,6 +7,7 @@ import {
   botaoOuro,
   botaoRemover,
   campo,
+  LARGURA_DE_NOME,
   painel as tema,
   rotulo,
 } from "./estilos";
@@ -426,7 +427,10 @@ export function EditorConteudos({
           </div>
 
           <div className="mb-3 flex flex-wrap items-end gap-[10px]">
-            <label className="flex min-w-[200px] flex-1 flex-col gap-[6px]">
+            <label
+              className="flex min-w-[200px] flex-1 flex-col gap-[6px]"
+              style={{ maxWidth: LARGURA_DE_NOME }}
+            >
               <span style={rotulo}>Nome do conteúdo</span>
               <input
                 value={tituloNovo}
@@ -580,7 +584,7 @@ function LinhaConteudo({
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
           aria-label="Nome do conteúdo"
-          style={{ ...campo, flex: "1 1 180px", minWidth: 0 }}
+          style={{ ...campo, flex: "1 1 180px", minWidth: 0, maxWidth: LARGURA_DE_NOME }}
         />
         <button
           onClick={() => aoMover(conteudo.id, -1)}

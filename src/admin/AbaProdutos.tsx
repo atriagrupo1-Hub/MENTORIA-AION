@@ -8,6 +8,8 @@ import {
   botaoOuro,
   botaoRemover,
   campo,
+  LARGURA_DE_NOME,
+  LARGURA_DE_TEXTO,
   painel as tema,
   RAIO,
   rotulo,
@@ -453,7 +455,10 @@ function ProdutoAberto({
         style={{ background: tema.superficie, border: `1px solid ${tema.linhaSuave}` }}
       >
         <div className="flex flex-wrap items-end gap-[10px]">
-          <label className="flex min-w-[200px] flex-[2] flex-col gap-[6px]">
+          <label
+            className="flex min-w-[200px] flex-[2] flex-col gap-[6px]"
+            style={{ maxWidth: LARGURA_DE_NOME }}
+          >
             <span style={rotulo}>Nome</span>
             <input
               value={nome}
@@ -542,7 +547,10 @@ function ProdutoAberto({
           </label>
         </div>
 
-        <label className="mt-3 flex flex-col gap-[6px]">
+        <label
+          className="mt-3 flex flex-col gap-[6px]"
+          style={{ maxWidth: LARGURA_DE_TEXTO }}
+        >
           <span style={rotulo}>Descrição</span>
           <textarea
             value={descricao}

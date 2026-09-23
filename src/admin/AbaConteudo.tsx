@@ -10,6 +10,7 @@ import {
   botaoOuro,
   botaoRemover,
   campo,
+  LARGURA_DE_NOME,
   painel as tema,
   rotulo,
 } from "./estilos";
@@ -434,7 +435,7 @@ export function AbaConteudo({
                       value={textoEdicao}
                       onChange={(e) => setTextoEdicao(e.target.value)}
                       aria-label="Nome do módulo"
-                      style={{ ...campo, flex: "2 1 240px", minHeight: 44, fontSize: 14 }}
+                      style={{ ...campo, flex: "2 1 240px", maxWidth: LARGURA_DE_NOME, minHeight: 44, fontSize: 14 }}
                     />
                     {/*
                       A descrição do módulo.
@@ -907,7 +908,7 @@ export function AbaConteudo({
                               value={textoEdicao}
                               onChange={(e) => setTextoEdicao(e.target.value)}
                               aria-label="Nome do conteúdo"
-                              style={{ ...campo, flex: "2 1 220px", minHeight: 42, fontSize: 14 }}
+                              style={{ ...campo, flex: "2 1 220px", maxWidth: LARGURA_DE_NOME, minHeight: 42, fontSize: 14 }}
                             />
                             <button
                               type="submit"
@@ -980,7 +981,7 @@ export function AbaConteudo({
                       onChange={(e) => setNovaAula(e.target.value)}
                       placeholder="Nome da nova aula"
                       aria-label={`Nome da nova aula de ${modulo.titulo}`}
-                      style={{ ...campo, flex: "2 1 240px", minHeight: 42, fontSize: 13 }}
+                      style={{ ...campo, flex: "2 1 240px", maxWidth: LARGURA_DE_NOME, minHeight: 42, fontSize: 13 }}
                     />
                     <button
                       type="submit"
@@ -1028,7 +1029,7 @@ export function AbaConteudo({
                 onChange={(e) => setNovoModulo(e.target.value)}
                 placeholder="Nome do novo módulo"
                 aria-label="Nome do novo módulo"
-                style={{ ...campo, flex: "2 1 260px" }}
+                style={{ ...campo, flex: "2 1 260px", maxWidth: LARGURA_DE_NOME }}
               />
               <button type="submit" style={{ ...botaoOuro, flex: "0 0 auto" }}>
                 Adicionar módulo
