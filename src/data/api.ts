@@ -430,6 +430,7 @@ export async function carregarCatalogo(): Promise<Catalogo> {
     liberada: boolean;
   }>) {
     mapaAoVivo[v.modulo_id] = {
+      id: v.id,
       moduloId: v.modulo_id,
       quandoTexto: v.quando_texto,
       liberada: v.liberada,

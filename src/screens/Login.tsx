@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { SilhuetaCadeado, SilhuetaPessoa } from "@/components/Icones";
 import { Marca } from "@/components/Marca";
@@ -23,7 +23,7 @@ const SELOS = [
 ];
 
 export function Login() {
-  const { entrar } = useEstado();
+  const { entrar, aluna, carregando } = useEstado();
   const navegar = useNavigate();
   const [nome, setNome] = useState("");
   const [codigo, setCodigo] = useState("");
@@ -31,6 +31,22 @@ export function Login() {
   const [erro, setErro] = useState("");
   const [focado, setFocado] = useState("");
   const [entrando, setEntrando] = useState(false);
+
+  /*
+   * Quem já entrou não pede para entrar de novo.
+   *
+   * `/` sempre desenhava a tela de entrada, com sessão ou sem. A aluna
+   * guardava o endereço do site nos favoritos, abria no dia seguinte —
+   * com a sessão viva — e lia "Bem-vinda de volta. Entre para
+   * continuar". Tendo esquecido o código, ela parava ali, num
+   * aplicativo em que já estava dentro.
+   *
+   * `carregando` importa: sem ele, a tela de entrada pisca por um
+   * instante antes do redirecionamento, em toda visita.
+   */
+  useEffect(() => {
+    if (!carregando && aluna) navegar("/inicio", { replace: true });
+  }, [carregando, aluna, navegar]);
 
   async function enviar(e: FormEvent) {
     e.preventDefault();

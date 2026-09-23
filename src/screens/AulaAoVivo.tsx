@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Capa, capaAoVivo, capaModulo } from "@/components/Capa";
+import { Player } from "@/components/Player";
+import * as api from "@/data/api";
 import { useEstado } from "@/data/estado";
 import { cores } from "@/design/tokens";
 
@@ -10,9 +13,36 @@ export function AulaAoVivo() {
   const navegar = useNavigate();
 
   const modulo = catalogo.modulos.find((m) => m.numero === numero);
-  if (!modulo) return <main className="p-8">Módulo não encontrado.</main>;
+  const aoVivo = modulo ? catalogo.aoVivo[modulo.id] : undefined;
+  const idAoVivo = aoVivo?.liberada ? (aoVivo.id ?? "") : "";
 
-  const aoVivo = catalogo.aoVivo[modulo.id];
+  /*
+   * O vídeo do encontro, pedido ao servidor.
+   *
+   * Vem daqui e não do catálogo pelo mesmo motivo da aula: a leitura da
+   * aluna não traz `video_ref`, e a Edge Function só assina depois de o
+   * banco confirmar a liberação — `video_da_ao_vivo` confere
+   * `pode_ver_ao_vivo`. Liberado sem vídeo cadastrado continua
+   * mostrando a data, que é o que ela veio buscar.
+   */
+  const [video, setVideo] = useState<api.Video | null>(null);
+
+  useEffect(() => {
+    if (!idAoVivo) {
+      setVideo(null);
+      return;
+    }
+    let valeAinda = true;
+    void api
+      .videoDaAoVivo(idAoVivo)
+      .then((v) => valeAinda && setVideo(v))
+      .catch(() => undefined);
+    return () => {
+      valeAinda = false;
+    };
+  }, [idAoVivo]);
+
+  if (!modulo) return <main className="p-8">Módulo não encontrado.</main>;
 
   return (
     <main className="entra mx-auto max-w-[1240px] px-7 pb-24 pt-9 cel-sm:px-5">
@@ -56,6 +86,36 @@ export function AulaAoVivo() {
         Encontro ao vivo do Módulo {numero} — {modulo.titulo}
       </h1>
 
+      {video ? (
+        /*
+          Tocando de verdade.
+
+          Aqui havia um botão "Assistir aula ao vivo" e uma barra de
+          progresso que não tocavam nada: não existia `<video>`,
+          `<iframe>` nem chamada de API nesta tela. A aluna clicava, lia
+          "Reproduzindo", via a barra andar um dedo e parar — e concluía
+          que o vídeo dela estava quebrado.
+
+          O que faltava era um id: `AulaAoVivo` trazia `moduloId`,
+          `quandoTexto` e `liberada`, e o catálogo jogava fora o `id`
+          que `videoDaAoVivo` precisa. Agora ele vem junto.
+        */
+        <Player
+          identificador={video.ref}
+          aoRenovar={async () => {
+            const novo = await api.videoDaAoVivo(idAoVivo);
+            if (!novo) return false;
+            setVideo(novo);
+            return true;
+          }}
+          capa={
+            <Capa
+              caminhos={[capaAoVivo(numero), capaModulo(numero)]}
+              alt={`Capa da aula ao vivo do Módulo ${numero}`}
+            />
+          }
+        />
+      ) : (
       <div
         className="relative aspect-video w-full overflow-hidden rounded-[20px]"
         style={{
@@ -74,23 +134,8 @@ export function AulaAoVivo() {
           style={{ background: "linear-gradient(180deg, rgba(5,8,16,.35), rgba(5,8,16,.85))" }}
         />
         {/*
-          Aqui havia um botão "Assistir aula ao vivo" e uma barra de
-          progresso. Nenhum dos dois tocava nada: não existe `<video>`,
-          `<iframe>` nem chamada de API nesta tela. O botão só alternava
-          o próprio rótulo e empurrava a barra de 0 para 4%.
-
-          A aluna clicava, lia "Reproduzindo", via a barra andar um
-          dedo e parar — e concluía que o vídeo dela estava quebrado.
-          Mentir sobre o estado é pior que não ter o recurso.
-
-          Para ligar isto de verdade falta uma coisa do lado dos dados:
-          `AulaAoVivo` (em `data/tipos.ts`) traz `moduloId`,
-          `quandoTexto` e `liberada`, mas NÃO traz o identificador da
-          aula ao vivo — e `api.videoDaAoVivo(id)`, que já existe,
-          precisa dele. Enquanto o catálogo não carregar esse id, esta
-          tela não tem como pedir o vídeo.
-
-          Até lá ela diz o que de fato sabe: quando é o encontro.
+          Sem vídeo ainda: diz o que de fato sabe, que é quando é o
+          encontro. Mentir sobre o estado é pior que não ter o recurso.
         */}
         <div className="absolute inset-0 grid place-items-center px-6">
           <div className="flex flex-col items-center gap-3 text-center">
@@ -102,19 +147,15 @@ export function AulaAoVivo() {
                 border: "1px solid rgba(255,255,255,.4)",
               }}
             >
-              A transmissão abre aqui
+              {aoVivo?.liberada ? "A transmissão abre aqui" : "Libera no momento certo"}
             </span>
-            {/*
-              O dia e a hora são a única coisa que a aluna veio buscar
-              nesta tela. Estavam a 15px numa legenda no rodapé do
-              quadro, competindo com a palavra "Pausado".
-            */}
             <span className="font-titulo text-titulo text-marfim">
               {aoVivo?.quandoTexto ?? "Data e horário a confirmar"}
             </span>
           </div>
         </div>
       </div>
+      )}
 
       <div className="mt-7 flex flex-wrap gap-5">
         <div

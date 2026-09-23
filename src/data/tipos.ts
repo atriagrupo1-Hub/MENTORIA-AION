@@ -43,6 +43,15 @@ export type Aula = {
 };
 
 export type AulaAoVivo = {
+  /**
+   * O identificador do encontro.
+   *
+   * Sem ele a tela do ao vivo não tinha como pedir o vídeo:
+   * `videoDaAoVivo(id)` existe desde sempre, mas o catálogo jogava o
+   * `id` fora ao montar o mapa. Era por isso que aquela tela mostrava
+   * só a data.
+   */
+  id: string;
   moduloId: string;
   quandoTexto: string | null;
   liberada: boolean;
