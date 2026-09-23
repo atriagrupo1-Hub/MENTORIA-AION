@@ -39,7 +39,11 @@ Total: 45 de 50. Faltam as cinco aulas do Módulo 10.
 
 ### Aulas ao vivo — 0 de 11
 
-Nenhuma capa `ao-vivo-modulo-N.png` produzida ainda.
+Nenhuma capa `ao-vivo-modulo-N.png` produzida ainda. Enquanto for
+assim, `capaAoVivo` em `src/components/Capa.tsx` devolve vazio — pedir
+um arquivo que não existe só rende um 400 do Storage antes de pintar a
+capa do módulo, que já está na pilha. Produzidas as artes, basta voltar
+o caminho lá.
 
 ### Presentes — 0
 

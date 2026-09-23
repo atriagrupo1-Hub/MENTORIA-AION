@@ -37,7 +37,17 @@ export function Capa({
        */
       style={{
         ...style,
-        backgroundImage: caminhos.map((p) => `url("${p}")`).join(", "),
+        /*
+         * Caminho vazio fica de fora.
+         *
+         * `url("")` é um pedido ao próprio endereço da página — o
+         * navegador busca, o Storage devolve 400, e a capa de baixo é
+         * que aparece. Quem não tem arte não entra na pilha.
+         */
+        backgroundImage: caminhos
+          .filter(Boolean)
+          .map((p) => `url("${p}")`)
+          .join(", "),
         backgroundSize: "cover",
         backgroundPosition: "center",
         opacity: opacidade,
@@ -70,7 +80,18 @@ const nomeDaCapa = (caminho: string) => urlDaCapa(caminho) ?? "";
 export const capaModulo = (numero: number) => nomeDaCapa(`modulo-${numero}.webp`);
 export const capaAula = (numero: number, ordem: number) =>
   nomeDaCapa(`modulo-${numero}-aula-${ordem + 1}.webp`);
-export const capaAoVivo = (numero: number) => nomeDaCapa(`ao-vivo-modulo-${numero}.webp`);
+/*
+ * Capa da aula ao vivo: a convenção é `ao-vivo-modulo-N.webp`, e
+ * nenhuma foi produzida até hoje — `assets/CAPAS.md` já registrava
+ * isso. Pedindo mesmo assim, cada bloco de ao vivo gastava um pedido
+ * para receber 400 do Storage, no celular, antes de pintar a capa do
+ * módulo que está logo atrás na pilha.
+ *
+ * Enquanto as artes não existirem, não se pede. No dia em que
+ * existirem, basta devolver `nomeDaCapa(`ao-vivo-modulo-${numero}.webp`)`
+ * — quem chama já passa a capa do módulo como reserva.
+ */
+export const capaAoVivo = (_numero: number) => "";
 export const capaPresente = (indice: number) => nomeDaCapa(`presente-${indice + 1}.webp`);
 
 export const fundoReserva = cores.placeholderCapa;
