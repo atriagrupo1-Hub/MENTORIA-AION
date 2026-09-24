@@ -393,16 +393,26 @@ export async function removerModulo(id: string) {
   if (error) throw new Error(`remover módulo: ${error.message}`);
 }
 
+/**
+ * Cria a aula e devolve o identificador dela.
+ *
+ * O identificador importa: a tela de aula nova grava o nome, o vídeo, a
+ * capa e o texto de uma vez, e os três últimos precisam saber em qual
+ * aula gravar. Antes esta função jogava fora o que o banco devolvia.
+ */
 export async function criarAula(
   moduloId: string,
   titulo: string,
   numero: number,
   ordem: number,
-) {
-  const { error } = await supabase
+): Promise<string> {
+  const { data, error } = await supabase
     .from("aulas")
-    .insert({ modulo_id: moduloId, titulo, numero, ordem });
+    .insert({ modulo_id: moduloId, titulo, numero, ordem })
+    .select("id")
+    .single();
   if (error) throw new Error(`criar aula: ${error.message}`);
+  return data.id as string;
 }
 
 export async function atualizarAula(

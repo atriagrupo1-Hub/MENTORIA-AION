@@ -203,11 +203,43 @@ export function AbaConteudo({
         .find((x) => x.aula.id === conteudoDe)
     : undefined;
 
+  /*
+   * A aula NOVA nasce na mesma tela em que se edita uma.
+   *
+   * Era um campo de nome com um botão ao lado, no fim da lista: a aula
+   * nascia só com nome, e para pôr o vídeo e o texto era preciso achar
+   * a linha dela e abrir. Agora o botão abre a tela inteira, e o nome,
+   * o vídeo, a capa e o texto são gravados de uma vez.
+   */
+  const moduloDaNova = novaAulaEm ? modulos.find((m) => m.id === novaAulaEm) : undefined;
+
+  if (moduloDaNova) {
+    return (
+      <AulaAberta
+        modulo={moduloDaNova}
+        painel={painel}
+        nome={novaAula}
+        setNome={setNovaAula}
+        video={video}
+        setVideo={setVideo}
+        capa={capa}
+        setCapa={setCapa}
+        texto={texto}
+        setTexto={setTexto}
+        fechar={() => setNovaAulaEm("")}
+        pedirConfirmacao={pedirConfirmacao}
+        avisar={avisar}
+      />
+    );
+  }
+
   if (aberta) {
     return (
       <AulaAberta
         aula={aberta.aula}
         modulo={aberta.modulo}
+        nome={aberta.aula.titulo}
+        setNome={() => {}}
         painel={painel}
         video={video}
         setVideo={setVideo}
@@ -530,23 +562,16 @@ export function AbaConteudo({
                   nenhuma aula dele. É o degrau que faltava para o
                   produto que tem seções mas não tem aulas.
                 */}
-                {modulo.produtoId ? (
-                  <div
-                    className="mt-3 pt-3"
-                    style={{ borderTop: "1px solid rgba(255,255,255,.07)" }}
-                  >
-                    <span className="mb-2 block" style={rotulo}>
-                      Conteúdo do módulo, fora das aulas
-                    </span>
-                    <EditorConteudos
-                      dono={{ produtoId: modulo.produtoId, moduloId: modulo.id }}
-                      conteudos={modulo.conteudos}
-                      painel={painel}
-                      pedirConfirmacao={pedirConfirmacao}
-                      avisar={avisar}
-                    />
-                  </div>
-                ) : null}
+                {/*
+                  O módulo não tem conteúdo próprio.
+                  
+                  Tinha: um "Conteúdo do módulo, fora das aulas" logo
+                  abaixo dos campos. Ninguém usou — zero linhas em toda
+                  a base —, e a cada módulo aberto aparecia mais um
+                  editor inteiro entre o nome e a lista de aulas, no
+                  meio do caminho de quem só queria chegar numa aula.
+                  Módulo é nome, capa e descrição; conteúdo é da aula.
+                */}
 
                 <Arrastavel
                   ids={modulo.aulas.map((a) => a.id)}
@@ -839,68 +864,19 @@ export function AbaConteudo({
                     ia aparecer. Agora o campo está onde a aula vai
                     ficar.
                   */}
-                  <form
-                    onSubmit={async (e) => {
-                      e.preventDefault();
-                      const titulo = (novaAulaEm === modulo.id ? novaAula : "").trim();
-                      if (!titulo) {
-                        avisar("Informe o nome da aula.");
-                        return;
-                      }
-                      const falha = await executar(() =>
-                        dados.criarAula(
-                          modulo.id,
-                          titulo,
-                          modulo.aulas.length + 1,
-                          modulo.aulas.length,
-                        ),
-                      );
-                      if (!falha) setNovaAula("");
-                      avisar(falha ?? "Aula criada.");
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setNovaAulaEm(modulo.id);
+                      setNovaAula("");
+                      setVideo("");
+                      setCapa("");
+                      setTexto("");
                     }}
-                    className="mt-3 flex flex-wrap gap-2"
+                    style={{ ...botaoNeutroGrande, marginTop: 12 }}
                   >
-                    <input
-                      type="text"
-                      value={novaAulaEm === modulo.id ? novaAula : ""}
-                      onFocus={() => {
-                        // Um campo por módulo, e o texto é de quem tem o
-                        // foco: sem isto, digitar no Módulo 3 apareceria
-                        // nos onze campos ao mesmo tempo.
-                        if (novaAulaEm !== modulo.id) {
-                          setNovaAulaEm(modulo.id);
-                          setNovaAula("");
-                        }
-                      }}
-                      onChange={(e) => setNovaAula(e.target.value)}
-                      placeholder="Nome da nova aula"
-                      aria-label={`Nome da nova aula de ${modulo.titulo}`}
-                      style={{ ...campo, flex: "2 1 240px", maxWidth: LARGURA_DE_NOME, minHeight: 42, fontSize: 13 }}
-                    />
-                    <button
-                      type="submit"
-                      style={{ ...botaoNeutroGrande }}
-                    >
-                      + Adicionar aula
-                    </button>
-                    {/*
-                      O cancelar só existe depois que alguém escreveu.
-                      Vazio, ele seria mais um botão em cada um dos onze
-                      módulos sem nada para desfazer.
-                    */}
-                    {novaAulaEm === modulo.id && novaAula.length > 0 ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setNovaAula("");
-                          setNovaAulaEm("");
-                        }}
-                        style={{ ...botaoNeutroGrande }}
-                      >
-                        Cancelar
-                      </button>
-                    ) : null}
-                  </form>
+                    + Adicionar aula
+                  </button>
                 </div>
                 )}
                 </Arrastavel>
@@ -968,6 +944,8 @@ function AulaAberta({
   aula,
   modulo,
   painel,
+  nome,
+  setNome,
   video,
   setVideo,
   capa,
@@ -978,9 +956,12 @@ function AulaAberta({
   pedirConfirmacao,
   avisar,
 }: {
-  aula: Aula;
+  /** Ausente quando a aula está nascendo. */
+  aula?: Aula;
   modulo: Modulo;
   painel: Painel;
+  nome: string;
+  setNome: (v: string) => void;
   video: string;
   setVideo: (v: string) => void;
   capa: string;
@@ -993,9 +974,40 @@ function AulaAberta({
 }) {
   useTelaCheia();
   const { executar } = painel;
+  const nascendo = !aula;
 
   async function salvar(e: FormEvent) {
     e.preventDefault();
+
+    /*
+      Nascendo, o nome vem primeiro e o resto depende dele: sem o
+      identificador que o banco devolve não há onde gravar o vídeo, a
+      capa nem o texto. Falhando a criação, para por aqui — e a
+      mensagem diz o que aconteceu, em vez de deixar a pessoa achando
+      que gravou.
+    */
+    let id = aula?.id ?? "";
+    if (nascendo) {
+      if (!nome.trim()) {
+        avisar("Informe o nome da aula.");
+        return;
+      }
+      let falhou: string | null = null;
+      const criado = await executar(async () => {
+        id = await dados.criarAula(
+          modulo.id,
+          nome.trim(),
+          modulo.aulas.length + 1,
+          modulo.aulas.length,
+        );
+      });
+      falhou = criado;
+      if (falhou) {
+        avisar(`A aula não foi criada. ${falhou}`);
+        return;
+      }
+    }
+
     /*
       Os dois sempre gravam, e os dois são contados.
 
@@ -1005,16 +1017,18 @@ function AulaAberta({
       também não gravou.
     */
     const falhaVideo = await executar(() =>
-      dados.definirMidiaDaAula(aula.id, provedorDoLink(video), idDoVideo(video)),
+      dados.definirMidiaDaAula(id, provedorDoLink(video), idDoVideo(video)),
     );
     const falhaResto = await executar(() =>
-      dados.atualizarAula(aula.id, {
+      dados.atualizarAula(id, {
+        ...(nascendo ? {} : { titulo: nome.trim() || modulo.titulo }),
         capa_path: capa.trim() || null,
         texto: texto.trim() || null,
       }),
     );
     if (!falhaVideo && !falhaResto) {
-      avisar("Aula salva.");
+      avisar(nascendo ? "Aula criada." : "Aula salva.");
+      if (nascendo) fechar();
     } else if (falhaVideo && falhaResto) {
       avisar(`Nada foi salvo. ${falhaVideo}`);
     } else if (falhaVideo) {
@@ -1035,9 +1049,12 @@ function AulaAberta({
       <div className="mb-6 flex flex-wrap items-start gap-4">
         <span className="flex min-w-0 flex-[1_1_320px] flex-col gap-[3px]">
           <span style={rotulo}>
-            Módulo {modulo.numero} · Aula {aula.numero}
+            Módulo {modulo.numero} ·{" "}
+            {nascendo ? "Aula nova" : `Aula ${aula.numero}`}
           </span>
-          <span className="font-titulo text-[22px] text-white">{aula.titulo}</span>
+          <span className="font-titulo text-[22px] text-white">
+            {nascendo ? modulo.titulo : aula.titulo}
+          </span>
         </span>
         <button type="button" onClick={fechar} style={botaoNeutroGrande}>
           ← Voltar
@@ -1045,6 +1062,22 @@ function AulaAberta({
       </div>
 
       <form onSubmit={salvar} className="flex flex-col gap-4">
+        {nascendo ? (
+          <label className="flex flex-col gap-2" style={{ maxWidth: LARGURA_DE_NOME }}>
+            <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
+              Nome da aula
+            </span>
+            <input
+              type="text"
+              value={nome}
+              onChange={(e) => setNome(e.target.value)}
+              aria-label="Nome da nova aula"
+              autoFocus
+              style={{ ...campo, minHeight: 44, fontSize: 14 }}
+            />
+          </label>
+        ) : null}
+
         {[
           {
             rotulo: "Vídeo — link ou identificador (Cloudflare Stream)",
@@ -1056,7 +1089,7 @@ function AulaAberta({
             rotulo: "Capa — arquivo no depósito `capas`",
             valor: capa,
             mudar: setCapa,
-            dica: `modulo-${modulo.numero}-aula-${aula.numero}.webp`,
+            dica: `modulo-${modulo.numero}-aula-${aula?.numero ?? modulo.aulas.length + 1}.webp`,
           },
         ].map((linha) => (
           <label key={linha.rotulo} className="flex flex-col gap-2" style={{ maxWidth: 780 }}>
@@ -1104,7 +1137,7 @@ function AulaAberta({
 
         <div className="flex flex-wrap gap-[10px]">
           <button type="submit" style={botaoOuro}>
-            Salvar aula
+            {nascendo ? "Criar aula" : "Salvar aula"}
           </button>
           <button type="button" onClick={fechar} style={botaoNeutroGrande}>
             Voltar sem salvar
@@ -1117,7 +1150,7 @@ function AulaAberta({
         acima; aqui entra o que a aula ganhou além disso — outro áudio,
         um PDF, um link.
       */}
-      {modulo.produtoId ? (
+      {aula && modulo.produtoId ? (
         <div className="mt-10">
           <span className="mb-2 block" style={rotulo}>
             Conteúdo extra desta aula
