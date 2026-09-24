@@ -19,3 +19,8 @@ previa/*
 # git nem olha para dentro da pasta e a exceção não vale.)
 !previa/producao.mjs
 !previa/README.md
+
+# O .zip do próprio projeto, gerado para download. Guardar dentro do
+# repositório uma cópia compactada do repositório só faz o histórico
+# pesar: a cada envio seria um arquivo novo de megabytes.
+*.zip
