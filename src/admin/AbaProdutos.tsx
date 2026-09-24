@@ -5,6 +5,7 @@ import type { PedidoConfirmacao } from "./Confirmacao";
 import * as dados from "./dados";
 import {
   botaoNeutro,
+  botaoNeutroGrande,
   botaoOuro,
   botaoRemover,
   campo,
@@ -197,6 +198,30 @@ function ProdutoAberto({
   const [fundacao, setFundacao] = useState(produto.fundacao ?? "");
   const [avisoMaterial, setAvisoMaterial] = useState(produto.avisoMaterial ?? "");
   const [categoriaId, setCategoriaId] = useState(produto.categoriaId);
+
+  /*
+   * Há o que descartar?
+   *
+   * O Cancelar só aparece quando existe alteração não salva. Botão que
+   * não faz nada é ruído — e pior: aqui ele ficaria ao lado do
+   * Remover, que faz muito.
+   */
+  const mudou =
+    nome !== produto.titulo ||
+    descricao !== produto.descricao ||
+    categoriaId !== produto.categoriaId ||
+    fundacao !== (produto.fundacao ?? "") ||
+    avisoMaterial !== (produto.avisoMaterial ?? "");
+
+  /** Volta os campos ao que está gravado. Não sai da tela, não apaga nada. */
+  function descartarEdicao() {
+    setNome(produto.titulo);
+    setDescricao(produto.descricao);
+    setCategoriaId(produto.categoriaId);
+    setFundacao(produto.fundacao ?? "");
+    setAvisoMaterial(produto.avisoMaterial ?? "");
+    avisar("Alterações descartadas.");
+  }
 
   const categorias = [...catalogo.categorias].sort((a, b) => a.ordem - b.ordem);
   const irmaos = (categorias.find((c) => c.id === produto.categoriaId)?.produtos ?? [])
@@ -621,6 +646,23 @@ function ProdutoAberto({
           <button type="submit" style={botaoOuro}>
             Salvar
           </button>
+          {/*
+            Cancelar aqui é desistir DA EDIÇÃO: os campos voltam ao que
+            está gravado, e nada sai do ar. Quem quer sair da tela usa o
+            Voltar; quem quer apagar o curso usa o Remover, que pede a
+            palavra antes.
+
+            Só aparece com alteração por salvar — sem isso, seria um
+            botão que não faz nada ao lado de um que apaga tudo. E não
+            aparece no curso que está nascendo: lá o pé da tela já tem
+            o seu Cancelar, e dois com o mesmo nome na mesma tela
+            fazendo coisas diferentes é pior do que nenhum.
+          */}
+          {mudou && !novo ? (
+            <button type="button" onClick={descartarEdicao} style={botaoNeutroGrande}>
+              Cancelar
+            </button>
+          ) : null}
           {/*
             No curso que está nascendo, Remover aqui no meio não é o que
             se procura: quem desiste usa o Cancelar do pé da tela, que
