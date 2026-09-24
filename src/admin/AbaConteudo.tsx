@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 import type { Aula, Modulo } from "@/data/tipos";
 import type { PedidoConfirmacao } from "./Confirmacao";
@@ -976,6 +976,38 @@ function AulaAberta({
   const { executar } = painel;
   const nascendo = !aula;
 
+  /*
+   * A capa sobe daqui.
+   *
+   * O campo sempre foi o CAMINHO de um arquivo que já estivesse no
+   * depósito — quem escrevia tinha de abrir o painel do Supabase, subir
+   * a imagem lá, copiar o nome e voltar. Errar uma letra não dava erro
+   * nenhum: gravava, e a capa não aparecia para a aluna semanas depois.
+   *
+   * O envio é o mesmo do editor de conteúdos (`dados.enviarArquivo`), e
+   * o caminho volta preenchido sozinho.
+   */
+  const seletorDeCapa = useRef<HTMLInputElement>(null);
+  const [enviandoCapa, setEnviandoCapa] = useState(false);
+
+  async function enviarCapa(arquivo: File | undefined) {
+    if (!arquivo) return;
+    if (!modulo.produtoId) {
+      avisar("Este módulo não pertence a um curso; não sei onde guardar a imagem.");
+      return;
+    }
+    setEnviandoCapa(true);
+    try {
+      setCapa(await dados.enviarArquivo("capas", modulo.produtoId, arquivo));
+      avisar("Imagem enviada. Agora é só salvar.");
+    } catch (falha) {
+      avisar(falha instanceof Error ? falha.message : "Não consegui enviar a imagem.");
+    } finally {
+      setEnviandoCapa(false);
+      if (seletorDeCapa.current) seletorDeCapa.current.value = "";
+    }
+  }
+
   async function salvar(e: FormEvent) {
     e.preventDefault();
 
@@ -1078,33 +1110,65 @@ function AulaAberta({
           </label>
         ) : null}
 
-        {[
-          {
-            rotulo: "Vídeo — link ou identificador (Cloudflare Stream)",
-            valor: video,
-            mudar: setVideo,
-            dica: "https://iframe.videodelivery.net/<uid>  ou só o uid",
-          },
-          {
-            rotulo: "Capa — arquivo no depósito `capas`",
-            valor: capa,
-            mudar: setCapa,
-            dica: `modulo-${modulo.numero}-aula-${aula?.numero ?? modulo.aulas.length + 1}.webp`,
-          },
-        ].map((linha) => (
-          <label key={linha.rotulo} className="flex flex-col gap-2" style={{ maxWidth: 780 }}>
-            <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
-              {linha.rotulo}
-            </span>
+        <label className="flex flex-col gap-2" style={{ maxWidth: 780 }}>
+          <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
+            Vídeo — link ou identificador (Cloudflare Stream)
+          </span>
+          <input
+            type="text"
+            value={video}
+            onChange={(e) => setVideo(e.target.value)}
+            placeholder="https://iframe.videodelivery.net/<uid>  ou só o uid"
+            style={{ ...campo, minHeight: 42, fontSize: 13 }}
+          />
+        </label>
+
+        <label className="flex flex-col gap-2" style={{ maxWidth: 780 }}>
+          <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
+            Capa da aula
+          </span>
+          <div className="flex flex-wrap items-start gap-2">
             <input
               type="text"
-              value={linha.valor}
-              onChange={(e) => linha.mudar(e.target.value)}
-              placeholder={linha.dica}
-              style={{ ...campo, minHeight: 42, fontSize: 13 }}
+              value={capa}
+              onChange={(e) => setCapa(e.target.value)}
+              placeholder={`modulo-${modulo.numero}-aula-${
+                aula?.numero ?? modulo.aulas.length + 1
+              }.webp`}
+              aria-label="Capa — arquivo no depósito capas"
+              style={{ ...campo, flex: "1 1 240px", minWidth: 0, minHeight: 42, fontSize: 13 }}
             />
-          </label>
-        ))}
+            <button
+              type="button"
+              onClick={() => seletorDeCapa.current?.click()}
+              disabled={enviandoCapa}
+              style={{
+                ...botaoNeutroGrande,
+                minHeight: 42,
+                fontSize: 13,
+                opacity: enviandoCapa ? 0.5 : 1,
+              }}
+            >
+              {enviandoCapa ? "Enviando…" : "Escolher imagem"}
+            </button>
+            {/*
+              O seletor do navegador não se deixa pintar, e cada um
+              desenha o seu. Fica atrás de um botão do painel.
+            */}
+            <input
+              ref={seletorDeCapa}
+              type="file"
+              accept="image/*"
+              onChange={(e) => void enviarCapa(e.target.files?.[0])}
+              className="hidden"
+              aria-label="Enviar imagem de capa"
+            />
+          </div>
+          <span className="text-[11px] leading-[1.5] text-[rgba(255,255,255,.36)]">
+            Escolha a imagem do computador e o caminho se preenche sozinho. Se a
+            imagem já está no depósito, dá para escrever o nome dela à mão.
+          </span>
+        </label>
 
         <label className="flex flex-col gap-2">
           <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
