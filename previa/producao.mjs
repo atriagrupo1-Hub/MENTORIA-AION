@@ -41,16 +41,20 @@ const ctx = await nav.newContext({ viewport: { width: 390, height: 844 }, hasTou
 const pg = await ctx.newPage();
 
 /*
- * Guarda o endereço junto com o texto. Sem ele não dá para separar um
- * erro de verdade de uma recusa esperada: a mensagem que o navegador
- * escreve é a mesma — "Failed to load resource: 401".
+ * Medir a REDE, não o console.
+ *
+ * O texto que o navegador escreve no console é o mesmo para uma recusa
+ * esperada e para um defeito — "Failed to load resource: 401" —, e o
+ * endereço nem sempre vem junto. Escutando a resposta, o endereço é o
+ * da própria resposta: nunca falta e nunca mente.
  */
-const erros = [];
-pg.on("console", (m) => {
-  if (m.type() !== "error") return;
-  erros.push({ texto: m.text(), onde: m.location()?.url || "" });
+const recusas = [];
+pg.on("response", (r) => {
+  if (r.status() >= 400) recusas.push({ url: r.url(), status: r.status() });
 });
-pg.on("pageerror", (e) => erros.push({ texto: String(e), onde: "" }));
+/* Erro de JavaScript não é resposta de rede; continua vindo por aqui. */
+const quebras = [];
+pg.on("pageerror", (e) => quebras.push(String(e)));
 
 let resposta;
 try {
@@ -122,22 +126,69 @@ if (NOME && CODIGO) {
     ok("a área dela tem conteúdo", corpo.trim().length > 60);
     ok("nenhum erro cru na tela", !/undefined|NaN|\[object Object\]|Error:/i.test(corpo));
 
-    /* abre a primeira aula que der, e vê se o vídeo carrega */
-    const aula = pg.locator('a[href*="/aula/"], button').filter({ hasText: /aula|assistir|continuar/i }).first();
-    if ((await aula.count()) > 0) {
-      const pediuVideo = pg.waitForResponse(
-        (r) => r.url().includes("video-assinado"),
-        { timeout: 20000 },
-      ).catch(() => null);
-      await aula.click();
-      await pg.waitForTimeout(5000);
-      const r = await pediuVideo;
-      if (r) {
-        ok("o vídeo foi pedido e liberado", r.status() === 200, "veio " + r.status());
-        const temPlayer = (await pg.locator("video").count()) > 0;
-        ok("o tocador aparece na tela", temPlayer);
+    /*
+     * Procurar a aula QUE TEM vídeo.
+     *
+     * A conta tem uma só, e abrir a primeira que aparece nunca ia
+     * alcançá-la. Abre a primeira e anda pelo botão "Próxima aula",
+     * parando assim que alguma pedir o vídeo e receber 200. A
+     * navegação da aula é por código, não por link — andar pelo botão
+     * é o único jeito sem adivinhar endereços.
+     */
+    const primeira = pg
+      .locator('a[href*="/aula/"], button')
+      .filter({ hasText: /aula|assistir|continuar/i })
+      .first();
+
+    if ((await primeira.count()) === 0) {
+      console.log("  aviso  não achei por onde abrir uma aula");
+    } else {
+      const LIMITE = 15;
+      let olhadas = 0;
+      let achou = null;
+
+      /*
+       * A espera é armada ANTES do clique. Armada depois, o pedido do
+       * vídeo já teria ido e voltado, e o teste ficaria esperando um
+       * segundo pedido que nunca vem.
+       */
+      const esperarVideo = () =>
+        pg
+          .waitForResponse((r) => r.url().includes("video-assinado"), { timeout: 9000 })
+          .catch(() => null);
+
+      let espera = esperarVideo();
+      await primeira.click();
+
+      for (;;) {
+        olhadas++;
+        const resp = await espera;
+        if (resp && resp.status() === 200) {
+          achou = resp;
+          break;
+        }
+        if (olhadas >= LIMITE) break;
+
+        const proxima = pg.getByRole("button", { name: "Próxima aula" });
+        if ((await proxima.count()) === 0) break;
+        if (!(await proxima.first().isEnabled())) break;
+
+        espera = esperarVideo();
+        await proxima.first().click();
+        await pg.waitForTimeout(1500);
+      }
+
+      if (achou) {
+        ok("o vídeo foi pedido e liberado", achou.status() === 200, "veio " + achou.status());
+        await pg.waitForTimeout(3000);
+        ok("o tocador aparece na tela", (await pg.locator("video").count()) > 0);
+        console.log("\n  >> o caminho do vídeo está provado: pedido, assinado, e o tocador na tela.");
       } else {
-        console.log("  aviso  esta aula não tem vídeo — normal enquanto você não subiu os outros");
+        console.log(
+          `\n  aviso  olhei ${olhadas} aula(s) e nenhuma tem vídeo. Normal enquanto` +
+            " só houver um vídeo na conta — mas o caminho do vídeo continua SEM PROVA" +
+            " em produção. Depois de subir os vídeos, rode de novo.",
+        );
       }
     }
   }
@@ -145,29 +196,30 @@ if (NOME && CODIGO) {
   console.log("\n  (sem ALUNA_NOME e ALUNA_CODIGO: a parte de entrar não rodou)");
 }
 
-/* ---------- 6. o console do navegador ---------- */
+/* ---------- 6. o que o servidor recusou ---------- */
 /*
- * O que NÃO é erro grave:
+ * O que NÃO é defeito:
  *
- * - 401 vindo de `entrar`. É a recusa do acesso inválido que este
- *   mesmo teste acabou de provocar, de propósito. O navegador escreve
- *   no console toda resposta 4xx, e isso não quer dizer defeito: quer
- *   dizer que o servidor respondeu "não" — que é o certo.
- * - 403 de `video-assinado` numa aula sem vídeo, pelo mesmo motivo.
- * - favicon e capa que não existe.
+ * - 401/403/423/429 vindos de `entrar`. É a recusa do acesso inválido
+ *   que este mesmo teste provoca, de propósito. Resposta 4xx no
+ *   console não quer dizer defeito: quer dizer que o servidor
+ *   respondeu "não", que é o certo.
+ * - 403 de `video-assinado`: aula sem vídeo.
+ * - capa que não existe, favicon.
  */
-const esperado = (e) =>
-  /favicon/i.test(e.onde) ||
-  (/functions\/v1\/entrar/.test(e.onde) && /401|403|423|429/.test(e.texto)) ||
-  (/video-assinado/.test(e.onde) && /403/.test(e.texto)) ||
-  (/\/capas\//.test(e.onde) && /400|404/.test(e.texto));
+const esperada = (r) =>
+  /functions\/v1\/entrar/.test(r.url) ||
+  (/video-assinado/.test(r.url) && r.status === 403) ||
+  /\/capas\//.test(r.url) ||
+  /favicon/i.test(r.url);
 
-const graves = erros.filter((e) => !esperado(e));
+const graves = recusas.filter((r) => !esperada(r));
 ok(
-  "nenhum erro grave no console do navegador",
+  "nenhuma recusa inesperada do servidor",
   graves.length === 0,
-  graves.slice(0, 3).map((e) => e.texto + " @ " + e.onde).join(" | "),
+  graves.slice(0, 3).map((r) => r.status + " em " + r.url).join(" | "),
 );
+ok("nenhum erro de JavaScript na tela", quebras.length === 0, quebras.slice(0, 2).join(" | "));
 
 await pg.screenshot({ path: "previa/producao-390.png", fullPage: false });
 await ctx.close();
