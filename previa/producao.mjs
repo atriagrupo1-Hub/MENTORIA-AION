@@ -127,69 +127,104 @@ if (NOME && CODIGO) {
     ok("nenhum erro cru na tela", !/undefined|NaN|\[object Object\]|Error:/i.test(corpo));
 
     /*
-     * Procurar a aula QUE TEM vídeo.
+     * Abrir uma aula DE VERDADE, e então procurar a que tem vídeo.
      *
-     * A conta tem uma só, e abrir a primeira que aparece nunca ia
-     * alcançá-la. Abre a primeira e anda pelo botão "Próxima aula",
-     * parando assim que alguma pedir o vídeo e receber 200. A
-     * navegação da aula é por código, não por link — andar pelo botão
-     * é o único jeito sem adivinhar endereços.
+     * A navegação da área da aluna é por código, não por link: não há
+     * `href` para casar. Clicar no primeiro botão cujo texto pareça de
+     * aula pega qualquer coisa — foi o que aconteceu, e o teste ficou
+     * esperando um vídeo numa tela que nem era de aula.
+     *
+     * O caminho certo é o mesmo que a aluna faz: lista de módulos →
+     * módulo → aula. Módulo trancado avisa e fica na lista; aula
+     * trancada idem, e por isso o filtro só aceita as que dizem
+     * "Disponível" ou "Concluída".
      */
-    const primeira = pg
-      .locator('a[href*="/aula/"], button')
-      .filter({ hasText: /aula|assistir|continuar/i })
-      .first();
+    /*
+     * Dispensar o convite de instalar antes de mais nada.
+     *
+     * É uma faixa presa no rodapé (`ConviteInstalar.tsx`), e no celular
+     * ela fica por cima do fim da lista: o clique na última aula bate
+     * nela. A aluna resolve tocando no ×, e é o que o teste faz — mas
+     * fica o registro de que ela atrapalha antes de ser dispensada.
+     */
+    const convite = pg.getByRole("button", { name: "Dispensar" });
+    if ((await convite.count()) > 0) {
+      await convite.first().click();
+      await pg.waitForTimeout(600);
+      console.log("  (o convite de instalar estava na frente; dispensado)");
+    }
 
-    if ((await primeira.count()) === 0) {
-      console.log("  aviso  não achei por onde abrir uma aula");
-    } else {
-      const LIMITE = 15;
-      let olhadas = 0;
-      let achou = null;
+    const TETO = 20;
+    let abertas = 0;
+    let achou = null;
+    let aulasQueAbrem = 0;
 
-      /*
-       * A espera é armada ANTES do clique. Armada depois, o pedido do
-       * vídeo já teria ido e voltado, e o teste ficaria esperando um
-       * segundo pedido que nunca vem.
-       */
-      const esperarVideo = () =>
-        pg
-          .waitForResponse((r) => r.url().includes("video-assinado"), { timeout: 9000 })
-          .catch(() => null);
+    const esperarVideo = () =>
+      pg
+        .waitForResponse((r) => r.url().includes("video-assinado"), { timeout: 9000 })
+        .catch(() => null);
 
-      let espera = esperarVideo();
-      await primeira.click();
+    await pg.goto(SITE + "/modulos", { waitUntil: "networkidle" });
+    await pg.waitForTimeout(1500);
 
-      for (;;) {
-        olhadas++;
-        const resp = await espera;
-        if (resp && resp.status() === 200) {
-          achou = resp;
-          break;
+    const quantosModulos = await pg.locator("main button").count();
+
+    for (let m = 0; m < quantosModulos && abertas < TETO && !achou; m++) {
+      await pg.goto(SITE + "/modulos", { waitUntil: "networkidle" });
+      await pg.waitForTimeout(1200);
+
+      const modulo = pg.locator("main button").nth(m);
+      if ((await modulo.count()) === 0) break;
+      await modulo.click();
+      await pg.waitForTimeout(1500);
+      if (!/\/modulo\//.test(pg.url())) continue; // trancado: só avisou
+
+      const enderecoDoModulo = pg.url();
+      const abrivel = pg
+        .locator("main button")
+        .filter({ hasText: /Disponível|Concluída/ });
+      const quantasAulas = await abrivel.count();
+      aulasQueAbrem += quantasAulas;
+
+      for (let a = 0; a < quantasAulas && abertas < TETO && !achou; a++) {
+        if (pg.url() !== enderecoDoModulo) {
+          await pg.goto(enderecoDoModulo, { waitUntil: "networkidle" });
+          await pg.waitForTimeout(1200);
         }
-        if (olhadas >= LIMITE) break;
+        const aula = pg
+          .locator("main button")
+          .filter({ hasText: /Disponível|Concluída/ })
+          .nth(a);
+        if ((await aula.count()) === 0) break;
 
-        const proxima = pg.getByRole("button", { name: "Próxima aula" });
-        if ((await proxima.count()) === 0) break;
-        if (!(await proxima.first().isEnabled())) break;
+        const espera = esperarVideo();
+        await aula.click();
+        await pg.waitForTimeout(1200);
+        if (!/\/aula\//.test(pg.url())) {
+          void espera;
+          continue;
+        }
+        abertas++;
 
-        espera = esperarVideo();
-        await proxima.first().click();
-        await pg.waitForTimeout(1500);
+        const resp = await espera;
+        if (resp && resp.status() === 200) achou = resp;
       }
+    }
 
-      if (achou) {
-        ok("o vídeo foi pedido e liberado", achou.status() === 200, "veio " + achou.status());
-        await pg.waitForTimeout(3000);
-        ok("o tocador aparece na tela", (await pg.locator("video").count()) > 0);
-        console.log("\n  >> o caminho do vídeo está provado: pedido, assinado, e o tocador na tela.");
-      } else {
-        console.log(
-          `\n  aviso  olhei ${olhadas} aula(s) e nenhuma tem vídeo. Normal enquanto` +
-            " só houver um vídeo na conta — mas o caminho do vídeo continua SEM PROVA" +
-            " em produção. Depois de subir os vídeos, rode de novo.",
-        );
-      }
+    ok("a aluna consegue abrir uma aula", abertas > 0, "nenhuma aula abriu");
+    console.log(`  (aulas que ela pode abrir hoje: ${aulasQueAbrem})`);
+
+    if (achou) {
+      ok("o vídeo foi pedido e liberado", achou.status() === 200, "veio " + achou.status());
+      await pg.waitForTimeout(3000);
+      ok("o tocador aparece na tela", (await pg.locator("video").count()) > 0);
+      console.log("\n  >> o caminho do vídeo está provado: pedido, assinado, e o tocador na tela.");
+    } else {
+      console.log(
+        `\n  aviso  abri ${abertas} aula(s) e nenhuma tem vídeo. Normal enquanto` +
+          " só houver um vídeo na conta — mas o caminho do vídeo continua SEM PROVA." +
+          " Depois de subir os vídeos, rode de novo.",
+      );
     }
   }
 } else {
