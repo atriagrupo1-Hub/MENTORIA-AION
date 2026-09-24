@@ -19,6 +19,14 @@ export type Modulo = {
   bloqueadoGeral: boolean;
   /** A arte da capa já traz o título; a tela não sobrepõe o dela. */
   tituloNaArte: boolean;
+  /**
+   * A frase do curso sobre material de apoio — "peça o PDF no grupo".
+   *
+   * Vem do produto, e desce até aqui de propósito: a tela da aula tem o
+   * módulo na mão, não o produto, e escrever a mesma frase em cinquenta
+   * e uma aulas seria cinquenta e uma chances de ela ficar diferente.
+   */
+  avisoMaterial: string | null;
   aulas: Aula[];
   /** Conteúdos da seção — pendurados no módulo, fora de qualquer aula. */
   conteudos: Conteudo[];
@@ -34,8 +42,19 @@ export type Aula = {
   videoProvider: string | null;
   videoRef: string | null;
   materialPath: string | null;
+  /**
+   * O que a aula ensina, em texto.
+   *
+   * Existe porque o vídeo não serve sozinho: quem está no ônibus, com o
+   * dado no fim ou numa casa de internet fraca ficava sem a aula
+   * inteira. E é o único conteúdo que algo automático — uma busca, um
+   * assistente de dúvidas — conseguiria ler: título não é conteúdo.
+   */
+  resumo: string | null;
   /** Passo a passo do exercício, uma linha por passo. Vazio = não tem. */
   exercicio: string | null;
+  /** O que fazer com a aula fora do caderno. Texto corrido. */
+  aplicacao: string | null;
   capaPath: string | null;
   bloqueadoGeral: boolean;
   /** Conteúdos extras desta aula, além do vídeo e do material de sempre. */
@@ -109,6 +128,10 @@ export type Produto = {
   presentes: Presente[];
   /** Conteúdo pendurado direto no produto, sem módulo nem item. */
   conteudos: Conteudo[];
+  /** O que é este curso: para quem, o que promete, com que voz. */
+  fundacao: string | null;
+  /** Frase única sobre material de apoio, escrita uma vez para todas as aulas. */
+  avisoMaterial: string | null;
 };
 
 export type Presente = {

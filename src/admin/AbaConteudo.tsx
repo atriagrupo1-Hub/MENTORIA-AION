@@ -87,7 +87,9 @@ export function AbaConteudo({
   const [conteudoDe, setConteudoDe] = useState("");
   const [video, setVideo] = useState("");
   const [capa, setCapa] = useState("");
+  const [resumo, setResumo] = useState("");
   const [exercicio, setExercicio] = useState("");
+  const [aplicacao, setAplicacao] = useState("");
 
   const totalAulas = modulos.reduce((s, m) => s + m.aulas.length, 0);
 
@@ -595,7 +597,9 @@ export function AbaConteudo({
                               setConteudoDe(aberto ? "" : aula.id);
                               setVideo(midia?.ref ?? "");
                               setCapa(aula.capaPath ?? "");
+                              setResumo(aula.resumo ?? "");
                               setExercicio(aula.exercicio ?? "");
+                              setAplicacao(aula.aplicacao ?? "");
                             }}
                             style={{
                               ...BOTAO_LINHA,
@@ -768,7 +772,9 @@ export function AbaConteudo({
                               const falhaResto = await executar(() =>
                                 dados.atualizarAula(aula.id, {
                                   capa_path: capa.trim() || null,
+                                  resumo: resumo.trim() || null,
                                   exercicio: exercicio.trim() || null,
+                                  aplicacao: aplicacao.trim() || null,
                                 }),
                               );
                               if (!falhaVideo && !falhaResto) {
@@ -777,9 +783,9 @@ export function AbaConteudo({
                               } else if (falhaVideo && falhaResto) {
                                 avisar(`Nada foi salvo. ${falhaVideo}`);
                               } else if (falhaVideo) {
-                                avisar(`Capa e exercício salvos. O vídeo não: ${falhaVideo}`);
+                                avisar(`Capa e textos salvos. O vídeo não: ${falhaVideo}`);
                               } else {
-                                avisar(`Vídeo salvo. Capa e exercício não: ${falhaResto}`);
+                                avisar(`Vídeo salvo. Capa e textos não: ${falhaResto}`);
                               }
                             }}
                             className="flex flex-col gap-2 pb-[14px] pt-[6px]"
@@ -812,6 +818,44 @@ export function AbaConteudo({
                               </label>
                             ))}
 
+                            {/*
+                              Os três textos da aula, na ordem em que a
+                              aluna lê: o que a aula ensinou, o que
+                              fazer no caderno, o que fazer na vida.
+
+                              O resumo não é enfeite. Quem está sem
+                              vídeo — ônibus, dado no fim, internet
+                              fraca — só tem ele.
+                            */}
+                            <label className="flex flex-col gap-2">
+                              <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
+                                Resumo — o que esta aula ensinou
+                              </span>
+                              <textarea
+                                value={resumo}
+                                onChange={(e) => setResumo(e.target.value)}
+                                rows={10}
+                                placeholder={
+                                  "Texto corrido. Uma linha em branco separa parágrafo.\n\n" +
+                                  "Escreva como se estivesse contando a aula para quem\n" +
+                                  "não pôde assistir hoje."
+                                }
+                                style={{
+                                  ...campo,
+                                  minHeight: 200,
+                                  padding: "10px 14px",
+                                  fontSize: 13,
+                                  lineHeight: 1.6,
+                                  resize: "vertical",
+                                  fontFamily: "inherit",
+                                }}
+                              />
+                              <span className="text-[11px] leading-[1.5] text-[rgba(255,255,255,.36)]">
+                                A aluna lê na aba "Resumo e exercício". Deixe
+                                vazio e a aula fica só com o vídeo.
+                              </span>
+                            </label>
+
                             <label className="flex flex-col gap-2">
                               <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
                                 Exercício — uma linha por passo
@@ -836,10 +880,34 @@ export function AbaConteudo({
                                 }}
                               />
                               <span className="text-[11px] leading-[1.5] text-[rgba(255,255,255,.36)]">
-                                A aluna vê os passos numerados, e só depois de
-                                concluir a aula. Deixe vazio para a aula não ter
-                                exercício.
+                                A aluna vê os passos numerados. Deixe vazio para
+                                a aula não ter exercício.
                               </span>
+                            </label>
+
+                            <label className="flex flex-col gap-2">
+                              <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
+                                Aplicação — o que fazer com isso na vida
+                              </span>
+                              <textarea
+                                value={aplicacao}
+                                onChange={(e) => setAplicacao(e.target.value)}
+                                rows={6}
+                                placeholder={
+                                  "Texto corrido, fora do caderno.\n\n" +
+                                  "Onde isso encosta na semana dela: com quem falar,\n" +
+                                  "o que observar, o que mudar."
+                                }
+                                style={{
+                                  ...campo,
+                                  minHeight: 120,
+                                  padding: "10px 14px",
+                                  fontSize: 13,
+                                  lineHeight: 1.6,
+                                  resize: "vertical",
+                                  fontFamily: "inherit",
+                                }}
+                              />
                             </label>
 
                             <div className="mt-[2px] flex flex-wrap gap-2">

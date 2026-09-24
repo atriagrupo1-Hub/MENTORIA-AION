@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 import { Aviso } from "@/components/Aviso";
 import { Capa, capaAula, capaModulo } from "@/components/Capa";
@@ -272,6 +273,12 @@ export function TelaAula() {
   const cor = paleta(modulo.numero);
   const feita = concluida(aula.id);
   const passos = passosDoExercicio(aula.exercicio);
+  /*
+   * A aba só existe se houver o que ler. Aula sem nenhum dos três
+   * textos não ganha um botão que abre uma tela vazia.
+   */
+  const temAplicacao =
+    Boolean(aula.resumo?.trim()) || passos.length > 0 || Boolean(aula.aplicacao?.trim());
   const extras = aula.conteudos.filter((c) => c.publicado);
   /*
    * O minuto em que ela está. Com vídeo de verdade vem do player; sem
@@ -731,10 +738,17 @@ export function TelaAula() {
           </div>
         </div>
 
-        {/* O exercício ganha a própria linha: é leitura, não navegação. */}
-        {feita && passos.length > 0 ? (
+        {/*
+          A aplicação ganha a própria linha: é leitura, não navegação.
+
+          Antes só aparecia depois de "Concluir", para a aluna assistir
+          primeiro. Deixou de esperar: o resumo é a própria aula em
+          texto, e quem está sem vídeo — ônibus, dado no fim, casa com
+          internet fraca — precisa dele ANTES, não como prêmio.
+        */}
+        {temAplicacao ? (
           <button
-            onClick={() => setPainel(painel === "exercicio" ? "" : "exercicio")}
+            onClick={() => setPainel("exercicio")}
             className="mt-3 flex min-h-[46px] w-full items-center gap-3 rounded-botao px-4 text-corpo hover:opacity-85"
             style={{
               color: "#ffffff",
@@ -746,46 +760,145 @@ export function TelaAula() {
             <span className="text-corpo leading-none" style={{ color: SUAVE }}>
               ✎
             </span>
-            <span className="flex-1 text-left">Exercício da aula</span>
+            <span className="flex-1 text-left">Resumo e exercício desta aula</span>
             <span className="text-corpo leading-none" style={{ color: SUAVE }}>
-              {painel === "exercicio" ? "⌃" : "⌄"}
+              ›
             </span>
           </button>
         ) : null}
 
-        {painel === "exercicio" ? (
-          <div className="mt-3 rounded-botao p-4" style={{ background: "#141414" }}>
-            <div className="mb-3 flex items-center gap-3">
-              <h3 className="m-0 flex-1 text-corpo font-bold text-white">
-                Exercício da aula
-              </h3>
-              <button
-                onClick={() => setPainel("")}
-                aria-label="Fechar"
-                className="grid h-11 w-11 place-items-center border-none bg-transparent text-realce text-white/60 hover:text-white"
-                style={{ cursor: "pointer" }}
-              >
-                ✕
-              </button>
-            </div>
+        {/*
+          Tela cheia, e não sanfona.
 
-            <ol className="m-0 flex list-none flex-col gap-4 p-0">
-              {passos.map((passo, i) => (
-                <li key={i} className="flex gap-3">
-                  <span
-                    className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full text-apoio font-bold"
-                    style={{ color: "#ffffff", border: `1px solid ${LINHA}` }}
+          Sanfona empurrava o resto da página para baixo e obrigava a
+          rolar entre a pergunta e a resposta. Isto é para LER: a tela
+          inteira, só o texto, e uma saída visível no topo.
+
+          Vai direto no `body`, por portal. Dentro da página não
+          funcionava: `.entra` anima a tela com `transform`, e elemento
+          com transform prende o `fixed` e o `z-index` dos filhos. O
+          painel abria por baixo do cabeçalho do vídeo — medido: o ✕ de
+          fechar da aula interceptava o clique do ✕ do painel.
+        */}
+        {painel === "exercicio"
+          ? createPortal(
+          <div
+            className="fixed inset-0 z-[80] overflow-y-auto"
+            style={{ background: cores.fundo }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Resumo e exercício da aula"
+          >
+            <div className="mx-auto w-full max-w-[720px] px-5 pb-20 pt-5">
+              <div className="mb-6 flex items-start gap-4">
+                <div className="min-w-0 flex-1">
+                  <p className="m-0 text-apoio" style={{ color: SUAVE }}>
+                    Módulo {modulo.numero} · Aula {aula.numero}
+                  </p>
+                  <h2 className="mb-0 mt-1 text-secao font-bold text-white">
+                    {aula.titulo}
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setPainel("")}
+                  aria-label="Fechar"
+                  className="grid h-11 w-11 flex-none place-items-center border-none bg-transparent text-realce text-white/60 hover:text-white"
+                  style={{ cursor: "pointer" }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {aula.resumo?.trim() ? (
+                <section className="mb-8">
+                  <h3
+                    className="mb-3 mt-0 text-apoio font-bold uppercase"
+                    style={{ letterSpacing: ".14em", color: SUAVE }}
                   >
-                    {i + 1}
-                  </span>
-                  <span className="min-w-0 flex-1 pt-1 text-corpo text-white/80">
-                    {passo}
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </div>
-        ) : null}
+                    Resumo da aula
+                  </h3>
+                  {/*
+                    Uma linha em branco separa parágrafo. É o que se
+                    digita sem pensar, e o que o painel grava.
+                  */}
+                  {aula.resumo
+                    .split(/\n\s*\n/)
+                    .map((p) => p.trim())
+                    .filter(Boolean)
+                    .map((paragrafo, i) => (
+                      <p
+                        key={i}
+                        className="mb-4 mt-0 whitespace-pre-line text-corpo leading-[1.7] text-white/85"
+                      >
+                        {paragrafo}
+                      </p>
+                    ))}
+                </section>
+              ) : null}
+
+              {passos.length > 0 ? (
+                <section className="mb-8">
+                  <h3
+                    className="mb-3 mt-0 text-apoio font-bold uppercase"
+                    style={{ letterSpacing: ".14em", color: SUAVE }}
+                  >
+                    Exercício
+                  </h3>
+                  <ol className="m-0 flex list-none flex-col gap-4 p-0">
+                    {passos.map((passo, i) => (
+                      <li key={i} className="flex gap-3">
+                        <span
+                          className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full text-apoio font-bold"
+                          style={{ color: "#ffffff", border: `1px solid ${LINHA}` }}
+                        >
+                          {i + 1}
+                        </span>
+                        <span className="min-w-0 flex-1 pt-1 text-corpo leading-[1.6] text-white/85">
+                          {passo}
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              ) : null}
+
+              {aula.aplicacao?.trim() ? (
+                <section className="mb-8">
+                  <h3
+                    className="mb-3 mt-0 text-apoio font-bold uppercase"
+                    style={{ letterSpacing: ".14em", color: SUAVE }}
+                  >
+                    Aplicação na sua vida
+                  </h3>
+                  {aula.aplicacao
+                    .split(/\n\s*\n/)
+                    .map((p) => p.trim())
+                    .filter(Boolean)
+                    .map((paragrafo, i) => (
+                      <p
+                        key={i}
+                        className="mb-4 mt-0 whitespace-pre-line text-corpo leading-[1.7] text-white/85"
+                      >
+                        {paragrafo}
+                      </p>
+                    ))}
+                </section>
+              ) : null}
+
+              {/* A frase do material vem do curso, escrita uma vez só. */}
+              {modulo.avisoMaterial?.trim() ? (
+                <p
+                  className="mb-0 mt-8 rounded-botao p-4 text-apoio leading-[1.6]"
+                  style={{ color: SUAVE, border: `1px solid ${LINHA}` }}
+                >
+                  {modulo.avisoMaterial}
+                </p>
+              ) : null}
+            </div>
+          </div>,
+          document.body,
+            )
+          : null}
 
         {/*
           Os conteúdos extras desta aula — outro áudio, um texto, um

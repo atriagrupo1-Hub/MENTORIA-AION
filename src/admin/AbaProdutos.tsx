@@ -194,6 +194,8 @@ function ProdutoAberto({
   const [editandoConfig, setEditandoConfig] = useState(true);
   const configAberta = !novo || editandoConfig;
   const [descricao, setDescricao] = useState(produto.descricao);
+  const [fundacao, setFundacao] = useState(produto.fundacao ?? "");
+  const [avisoMaterial, setAvisoMaterial] = useState(produto.avisoMaterial ?? "");
   const [categoriaId, setCategoriaId] = useState(produto.categoriaId);
 
   const categorias = [...catalogo.categorias].sort((a, b) => a.ordem - b.ordem);
@@ -225,6 +227,8 @@ function ProdutoAberto({
         descricao: descricao.trim(),
         categoria_id: categoriaId,
         ordem: quantosLa,
+        fundacao: fundacao.trim() || null,
+        aviso_material: avisoMaterial.trim() || null,
       }),
     );
     if (!falha) setEditandoConfig(false);
@@ -243,6 +247,8 @@ function ProdutoAberto({
         descricao: descricao.trim(),
         categoria_id: categoriaId,
         ordem: quantosLa,
+        fundacao: fundacao.trim() || null,
+        aviso_material: avisoMaterial.trim() || null,
       }),
     );
   }
@@ -557,6 +563,57 @@ function ProdutoAberto({
             onChange={(e) => setDescricao(e.target.value)}
             rows={2}
             style={{ ...campo, minHeight: 64, padding: "12px 14px", resize: "vertical" }}
+          />
+        </label>
+
+        {/*
+          Dois textos que valem para TODAS as aulas do curso, e por isso
+          moram aqui e não na aula: escrever a mesma frase cinquenta e
+          uma vezes é cinquenta e uma chances de ela sair diferente.
+        */}
+        <label
+          className="mt-3 flex flex-col gap-[6px]"
+          style={{ maxWidth: LARGURA_DE_TEXTO }}
+        >
+          <span style={rotulo}>Fundação — o que é este curso</span>
+          <textarea
+            value={fundacao}
+            onChange={(e) => setFundacao(e.target.value)}
+            rows={6}
+            placeholder={
+              "Para quem é, o que promete, com que voz se fala aqui.\n\n" +
+              "A aluna não vê este texto. Ele existe para que tudo que " +
+              "for escrito nas aulas fale a mesma língua."
+            }
+            style={{
+              ...campo,
+              minHeight: 140,
+              padding: "12px 14px",
+              lineHeight: 1.6,
+              resize: "vertical",
+              fontFamily: "inherit",
+            }}
+          />
+        </label>
+
+        <label
+          className="mt-3 flex flex-col gap-[6px]"
+          style={{ maxWidth: LARGURA_DE_TEXTO }}
+        >
+          <span style={rotulo}>Aviso de material — aparece em toda aula</span>
+          <textarea
+            value={avisoMaterial}
+            onChange={(e) => setAvisoMaterial(e.target.value)}
+            rows={2}
+            placeholder="Quer o PDF desta aula? Peça no seu grupo da mentoria."
+            style={{
+              ...campo,
+              minHeight: 64,
+              padding: "12px 14px",
+              lineHeight: 1.6,
+              resize: "vertical",
+              fontFamily: "inherit",
+            }}
           />
         </label>
 

@@ -413,7 +413,9 @@ export async function atualizarAula(
     ordem: number;
     bloqueado_geral: boolean;
     capa_path: string | null;
+    resumo: string | null;
     exercicio: string | null;
+    aplicacao: string | null;
   }>,
 ) {
   const { error } = await supabase.from("aulas").update(patch).eq("id", id);
@@ -583,6 +585,8 @@ export async function atualizarProduto(
     ordem: number;
     publicado: boolean;
     bloqueado_geral: boolean;
+    fundacao: string | null;
+    aviso_material: string | null;
   }>,
 ) {
   const { error } = await supabase.from("produtos").update(patch).eq("id", id);

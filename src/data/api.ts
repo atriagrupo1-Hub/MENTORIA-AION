@@ -145,7 +145,9 @@ type LinhaAula = {
   titulo: string;
   ordem: number;
   duracao_segundos: number | null;
+  resumo: string | null;
   exercicio: string | null;
+  aplicacao: string | null;
   capa_path: string | null;
   bloqueado_geral: boolean;
 };
@@ -179,6 +181,8 @@ type LinhaProduto = {
   ordem: number;
   publicado: boolean;
   bloqueado_geral: boolean;
+  fundacao: string | null;
+  aviso_material: string | null;
 };
 
 type LinhaConteudo = {
@@ -321,6 +325,14 @@ export async function carregarCatalogo(): Promise<Catalogo> {
   const emOrdem = (lista: Conteudo[] | undefined) =>
     (lista ?? []).slice().sort((x, y) => x.ordem - y.ordem);
 
+  /*
+   * A frase do material é do produto, e quem precisa dela é a tela da
+   * aula, que só tem o módulo. O mapa leva uma até a outra.
+   */
+  const avisoDoProduto = new Map<string, string | null>(
+    ((produtos.data ?? []) as LinhaProduto[]).map((p) => [p.id, p.aviso_material]),
+  );
+
   const porModulo = new Map<string, LinhaAula[]>();
   for (const a of (aulas.data ?? []) as LinhaAula[]) {
     const lista = porModulo.get(a.modulo_id) ?? [];
@@ -338,6 +350,7 @@ export async function carregarCatalogo(): Promise<Catalogo> {
     capaPath: m.capa_path,
     bloqueadoGeral: m.bloqueado_geral,
     tituloNaArte: m.titulo_na_arte,
+    avisoMaterial: avisoDoProduto.get(m.produto_id ?? "") ?? null,
     conteudos: emOrdem(conteudoDoModulo.get(m.id)),
     aulas: (porModulo.get(m.id) ?? [])
       .sort((x, y) => x.ordem - y.ordem)
@@ -351,7 +364,9 @@ export async function carregarCatalogo(): Promise<Catalogo> {
         videoProvider: null,
         videoRef: null,
         materialPath: null,
+        resumo: a.resumo,
         exercicio: a.exercicio,
+        aplicacao: a.aplicacao,
         capaPath: a.capa_path,
         bloqueadoGeral: a.bloqueado_geral,
         conteudos: emOrdem(conteudoDaAula.get(a.id)),
@@ -398,6 +413,8 @@ export async function carregarCatalogo(): Promise<Catalogo> {
         .filter((i) => i.produtoId === p.id)
         .sort((x, y) => x.ordem - y.ordem),
       conteudos: emOrdem(conteudoDoProduto.get(p.id)),
+      fundacao: p.fundacao,
+      avisoMaterial: p.aviso_material,
     }),
   );
 
