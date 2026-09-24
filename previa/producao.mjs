@@ -40,9 +40,17 @@ const nav = await chromium.launch({
 const ctx = await nav.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
 const pg = await ctx.newPage();
 
+/*
+ * Guarda o endereço junto com o texto. Sem ele não dá para separar um
+ * erro de verdade de uma recusa esperada: a mensagem que o navegador
+ * escreve é a mesma — "Failed to load resource: 401".
+ */
 const erros = [];
-pg.on("console", (m) => m.type() === "error" && erros.push(m.text()));
-pg.on("pageerror", (e) => erros.push(String(e)));
+pg.on("console", (m) => {
+  if (m.type() !== "error") return;
+  erros.push({ texto: m.text(), onde: m.location()?.url || "" });
+});
+pg.on("pageerror", (e) => erros.push({ texto: String(e), onde: "" }));
 
 let resposta;
 try {
@@ -138,8 +146,28 @@ if (NOME && CODIGO) {
 }
 
 /* ---------- 6. o console do navegador ---------- */
-const graves = erros.filter((e) => !/favicon|404 \(Not Found\).*capas\//i.test(e));
-ok("nenhum erro grave no console do navegador", graves.length === 0, graves.slice(0, 3).join(" | "));
+/*
+ * O que NÃO é erro grave:
+ *
+ * - 401 vindo de `entrar`. É a recusa do acesso inválido que este
+ *   mesmo teste acabou de provocar, de propósito. O navegador escreve
+ *   no console toda resposta 4xx, e isso não quer dizer defeito: quer
+ *   dizer que o servidor respondeu "não" — que é o certo.
+ * - 403 de `video-assinado` numa aula sem vídeo, pelo mesmo motivo.
+ * - favicon e capa que não existe.
+ */
+const esperado = (e) =>
+  /favicon/i.test(e.onde) ||
+  (/functions\/v1\/entrar/.test(e.onde) && /401|403|423|429/.test(e.texto)) ||
+  (/video-assinado/.test(e.onde) && /403/.test(e.texto)) ||
+  (/\/capas\//.test(e.onde) && /400|404/.test(e.texto));
+
+const graves = erros.filter((e) => !esperado(e));
+ok(
+  "nenhum erro grave no console do navegador",
+  graves.length === 0,
+  graves.slice(0, 3).map((e) => e.texto + " @ " + e.onde).join(" | "),
+);
 
 await pg.screenshot({ path: "previa/producao-390.png", fullPage: false });
 await ctx.close();
