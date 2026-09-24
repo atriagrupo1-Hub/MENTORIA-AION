@@ -46,11 +46,49 @@ const VELOCIDADE_NORMAL = 2;
  * uma linha, um passo. Linha em branco não vira passo — assim ela pode
  * espaçar o texto enquanto escreve sem que apareça um número vazio.
  */
-function passosDoExercicio(texto: string | null | undefined): string[] {
+/**
+ * O texto da aula, como quem escreveu deixou.
+ *
+ * Uma linha em branco separa parágrafo — é o que se digita sem pensar.
+ * Dentro do parágrafo, a quebra de linha é respeitada: quem escreveu
+ * uma lista, uma oração ou um verso quis aquelas quebras ali.
+ *
+ * O destaque é `*assim*` ou `**assim**`, que é como se destaca no
+ * WhatsApp — a única marcação que este público já usa todo dia.
+ */
+function paragrafos(texto: string | null | undefined): string[] {
   return (texto ?? "")
-    .split("\n")
-    .map((linha) => linha.trim())
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
     .filter(Boolean);
+}
+
+/** Quebra um parágrafo em pedaços normais e pedaços em negrito. */
+function pedacos(paragrafo: string): Array<{ forte: boolean; texto: string }> {
+  return paragrafo
+    .split(/(\*\*[^*]+\*\*|\*[^*\n]+\*)/g)
+    .filter(Boolean)
+    .map((pedaco) => {
+      const forte = /^\*\*[^*]+\*\*$/.test(pedaco) || /^\*[^*\n]+\*$/.test(pedaco);
+      return { forte, texto: forte ? pedaco.replace(/^\*+|\*+$/g, "") : pedaco };
+    });
+}
+
+/** Um parágrafo pintado: quebras preservadas, destaque em negrito. */
+function Paragrafo({ texto }: { texto: string }) {
+  return (
+    <p className="mb-4 mt-0 whitespace-pre-line text-corpo leading-[1.7] text-white/85">
+      {pedacos(texto).map((p, i) =>
+        p.forte ? (
+          <strong key={i} className="font-bold text-white">
+            {p.texto}
+          </strong>
+        ) : (
+          <span key={i}>{p.texto}</span>
+        ),
+      )}
+    </p>
+  );
 }
 
 /** O preto e branco desta tela: uma linha e um cinza, e nada mais. */
@@ -272,13 +310,8 @@ export function TelaAula() {
 
   const cor = paleta(modulo.numero);
   const feita = concluida(aula.id);
-  const passos = passosDoExercicio(aula.exercicio);
-  /*
-   * A aba só existe se houver o que ler. Aula sem nenhum dos três
-   * textos não ganha um botão que abre uma tela vazia.
-   */
-  const temAplicacao =
-    Boolean(aula.resumo?.trim()) || passos.length > 0 || Boolean(aula.aplicacao?.trim());
+  /* A aba só existe se houver o que ler. */
+  const blocos = paragrafos(aula.texto);
   const extras = aula.conteudos.filter((c) => c.publicado);
   /*
    * O minuto em que ela está. Com vídeo de verdade vem do player; sem
@@ -746,7 +779,7 @@ export function TelaAula() {
           texto, e quem está sem vídeo — ônibus, dado no fim, casa com
           internet fraca — precisa dele ANTES, não como prêmio.
         */}
-        {temAplicacao ? (
+        {blocos.length > 0 ? (
           <button
             onClick={() => setPainel("exercicio")}
             className="mt-3 flex min-h-[46px] w-full items-center gap-3 rounded-botao px-4 text-corpo hover:opacity-85"
@@ -760,7 +793,7 @@ export function TelaAula() {
             <span className="text-corpo leading-none" style={{ color: SUAVE }}>
               ✎
             </span>
-            <span className="flex-1 text-left">Resumo e exercício desta aula</span>
+            <span className="flex-1 text-left">Ler esta aula</span>
             <span className="text-corpo leading-none" style={{ color: SUAVE }}>
               ›
             </span>
@@ -787,7 +820,7 @@ export function TelaAula() {
             style={{ background: cores.fundo }}
             role="dialog"
             aria-modal="true"
-            aria-label="Resumo e exercício da aula"
+            aria-label="O texto desta aula"
           >
             <div className="mx-auto w-full max-w-[720px] px-5 pb-20 pt-5">
               <div className="mb-6 flex items-start gap-4">
@@ -809,81 +842,9 @@ export function TelaAula() {
                 </button>
               </div>
 
-              {aula.resumo?.trim() ? (
-                <section className="mb-8">
-                  <h3
-                    className="mb-3 mt-0 text-apoio font-bold uppercase"
-                    style={{ letterSpacing: ".14em", color: SUAVE }}
-                  >
-                    Resumo da aula
-                  </h3>
-                  {/*
-                    Uma linha em branco separa parágrafo. É o que se
-                    digita sem pensar, e o que o painel grava.
-                  */}
-                  {aula.resumo
-                    .split(/\n\s*\n/)
-                    .map((p) => p.trim())
-                    .filter(Boolean)
-                    .map((paragrafo, i) => (
-                      <p
-                        key={i}
-                        className="mb-4 mt-0 whitespace-pre-line text-corpo leading-[1.7] text-white/85"
-                      >
-                        {paragrafo}
-                      </p>
-                    ))}
-                </section>
-              ) : null}
-
-              {passos.length > 0 ? (
-                <section className="mb-8">
-                  <h3
-                    className="mb-3 mt-0 text-apoio font-bold uppercase"
-                    style={{ letterSpacing: ".14em", color: SUAVE }}
-                  >
-                    Exercício
-                  </h3>
-                  <ol className="m-0 flex list-none flex-col gap-4 p-0">
-                    {passos.map((passo, i) => (
-                      <li key={i} className="flex gap-3">
-                        <span
-                          className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full text-apoio font-bold"
-                          style={{ color: "#ffffff", border: `1px solid ${LINHA}` }}
-                        >
-                          {i + 1}
-                        </span>
-                        <span className="min-w-0 flex-1 pt-1 text-corpo leading-[1.6] text-white/85">
-                          {passo}
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                </section>
-              ) : null}
-
-              {aula.aplicacao?.trim() ? (
-                <section className="mb-8">
-                  <h3
-                    className="mb-3 mt-0 text-apoio font-bold uppercase"
-                    style={{ letterSpacing: ".14em", color: SUAVE }}
-                  >
-                    Aplicação na sua vida
-                  </h3>
-                  {aula.aplicacao
-                    .split(/\n\s*\n/)
-                    .map((p) => p.trim())
-                    .filter(Boolean)
-                    .map((paragrafo, i) => (
-                      <p
-                        key={i}
-                        className="mb-4 mt-0 whitespace-pre-line text-corpo leading-[1.7] text-white/85"
-                      >
-                        {paragrafo}
-                      </p>
-                    ))}
-                </section>
-              ) : null}
+              {blocos.map((paragrafo, i) => (
+                <Paragrafo key={i} texto={paragrafo} />
+              ))}
 
               {/* A frase do material vem do curso, escrita uma vez só. */}
               {modulo.avisoMaterial?.trim() ? (

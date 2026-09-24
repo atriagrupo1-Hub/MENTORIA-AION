@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { createPortal } from "react-dom";
 import type { Aula, Modulo } from "@/data/tipos";
 import type { PedidoConfirmacao } from "./Confirmacao";
 import { Arrastavel, useArrastar } from "./arrastar";
@@ -14,6 +15,7 @@ import {
   painel as tema,
   rotulo,
 } from "./estilos";
+import { useTelaCheia } from "./telaCheia";
 import type { Painel } from "./usePainel";
 import { idDoVideo, provedorDoLink } from "./video";
 
@@ -87,9 +89,7 @@ export function AbaConteudo({
   const [conteudoDe, setConteudoDe] = useState("");
   const [video, setVideo] = useState("");
   const [capa, setCapa] = useState("");
-  const [resumo, setResumo] = useState("");
-  const [exercicio, setExercicio] = useState("");
-  const [aplicacao, setAplicacao] = useState("");
+  const [texto, setTexto] = useState("");
 
   const totalAulas = modulos.reduce((s, m) => s + m.aulas.length, 0);
 
@@ -187,6 +187,40 @@ export function AbaConteudo({
    * a lista é a página inteira, o cabeçalho continua fazendo falta.
    */
   const solta = !produtoId;
+
+  /*
+   * Abrir uma aula abre A AULA, e mais nada.
+   *
+   * Antes o editor descia dentro da linha, com as outras aulas do
+   * módulo e o "Nome da nova aula" logo abaixo — quem estava escrevendo
+   * o texto de uma aula via a lista das outras embaixo do campo e não
+   * sabia mais onde estava. É a mesma regra das outras telas do painel:
+   * o que não está em uso fica atrás.
+   */
+  const aberta = conteudoDe
+    ? modulos
+        .flatMap((m) => m.aulas.map((a) => ({ modulo: m, aula: a })))
+        .find((x) => x.aula.id === conteudoDe)
+    : undefined;
+
+  if (aberta) {
+    return (
+      <AulaAberta
+        aula={aberta.aula}
+        modulo={aberta.modulo}
+        painel={painel}
+        video={video}
+        setVideo={setVideo}
+        capa={capa}
+        setCapa={setCapa}
+        texto={texto}
+        setTexto={setTexto}
+        fechar={() => setConteudoDe("")}
+        pedirConfirmacao={pedirConfirmacao}
+        avisar={avisar}
+      />
+    );
+  }
 
   return (
     <>
@@ -593,13 +627,10 @@ export function AbaConteudo({
                           </button>
                           <button
                             onClick={() => {
-                              const aberto = conteudoDe === aula.id;
-                              setConteudoDe(aberto ? "" : aula.id);
+                              setConteudoDe(aula.id);
                               setVideo(midia?.ref ?? "");
                               setCapa(aula.capaPath ?? "");
-                              setResumo(aula.resumo ?? "");
-                              setExercicio(aula.exercicio ?? "");
-                              setAplicacao(aula.aplicacao ?? "");
+                              setTexto(aula.texto ?? "");
                             }}
                             style={{
                               ...BOTAO_LINHA,
@@ -607,7 +638,7 @@ export function AbaConteudo({
                               border: "1px solid rgba(255,255,255,.4)",
                             }}
                           >
-                            {conteudoDe === aula.id ? "Fechar" : "Conteúdos"}
+                            Abrir
                           </button>
                           {/*
                             Liberar para a turma inteira.
@@ -749,211 +780,6 @@ export function AbaConteudo({
                             Remover
                           </button>
                         </div>
-
-                        {conteudoDe === aula.id ? (
-                          <form
-                            onSubmit={async (e) => {
-                              e.preventDefault();
-                              const ref = idDoVideo(video);
-                              /*
-                                Os dois sempre gravam, e os dois são
-                                contados.
-
-                                Antes havia um `??` entre eles: falhando
-                                o vídeo, a capa e o exercício NEM
-                                chegavam a ser tentados — e a mensagem
-                                falava só do vídeo. A pessoa via um erro
-                                sobre vídeo, ia embora, e não sabia que
-                                o resto também não gravou.
-                              */
-                              const falhaVideo = await executar(() =>
-                                dados.definirMidiaDaAula(aula.id, provedorDoLink(video), ref),
-                              );
-                              const falhaResto = await executar(() =>
-                                dados.atualizarAula(aula.id, {
-                                  capa_path: capa.trim() || null,
-                                  resumo: resumo.trim() || null,
-                                  exercicio: exercicio.trim() || null,
-                                  aplicacao: aplicacao.trim() || null,
-                                }),
-                              );
-                              if (!falhaVideo && !falhaResto) {
-                                setConteudoDe("");
-                                avisar("Mídia salva.");
-                              } else if (falhaVideo && falhaResto) {
-                                avisar(`Nada foi salvo. ${falhaVideo}`);
-                              } else if (falhaVideo) {
-                                avisar(`Capa e textos salvos. O vídeo não: ${falhaVideo}`);
-                              } else {
-                                avisar(`Vídeo salvo. Capa e textos não: ${falhaResto}`);
-                              }
-                            }}
-                            className="flex flex-col gap-2 pb-[14px] pt-[6px]"
-                          >
-                            {[
-                              {
-                                rotulo: "Vídeo — link ou identificador (Cloudflare Stream)",
-                                valor: video,
-                                mudar: setVideo,
-                                dica: "https://iframe.videodelivery.net/<uid>  ou só o uid",
-                              },
-                              {
-                                rotulo: "Capa — arquivo no depósito `capas`",
-                                valor: capa,
-                                mudar: setCapa,
-                                dica: `modulo-${modulo.numero}-aula-${aula.numero}.webp`,
-                              },
-                            ].map((linha) => (
-                              <label key={linha.rotulo} className="flex flex-col gap-2">
-                                <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
-                                  {linha.rotulo}
-                                </span>
-                                <input
-                                  type="text"
-                                  value={linha.valor}
-                                  onChange={(e) => linha.mudar(e.target.value)}
-                                  placeholder={linha.dica}
-                                  style={{ ...campo, minHeight: 42, fontSize: 13 }}
-                                />
-                              </label>
-                            ))}
-
-                            {/*
-                              Os três textos da aula, na ordem em que a
-                              aluna lê: o que a aula ensinou, o que
-                              fazer no caderno, o que fazer na vida.
-
-                              O resumo não é enfeite. Quem está sem
-                              vídeo — ônibus, dado no fim, internet
-                              fraca — só tem ele.
-                            */}
-                            <label className="flex flex-col gap-2">
-                              <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
-                                Resumo — o que esta aula ensinou
-                              </span>
-                              <textarea
-                                value={resumo}
-                                onChange={(e) => setResumo(e.target.value)}
-                                rows={10}
-                                placeholder={
-                                  "Texto corrido. Uma linha em branco separa parágrafo.\n\n" +
-                                  "Escreva como se estivesse contando a aula para quem\n" +
-                                  "não pôde assistir hoje."
-                                }
-                                style={{
-                                  ...campo,
-                                  minHeight: 200,
-                                  padding: "10px 14px",
-                                  fontSize: 13,
-                                  lineHeight: 1.6,
-                                  resize: "vertical",
-                                  fontFamily: "inherit",
-                                }}
-                              />
-                              <span className="text-[11px] leading-[1.5] text-[rgba(255,255,255,.36)]">
-                                A aluna lê na aba "Resumo e exercício". Deixe
-                                vazio e a aula fica só com o vídeo.
-                              </span>
-                            </label>
-
-                            <label className="flex flex-col gap-2">
-                              <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
-                                Exercício — uma linha por passo
-                              </span>
-                              <textarea
-                                value={exercicio}
-                                onChange={(e) => setExercicio(e.target.value)}
-                                rows={6}
-                                placeholder={
-                                  "Abra seu caderno numa página nova.\n" +
-                                  "Escreva a data e o título da aula.\n" +
-                                  "Responda: o que esta aula revelou sobre você?"
-                                }
-                                style={{
-                                  ...campo,
-                                  minHeight: 120,
-                                  padding: "10px 14px",
-                                  fontSize: 13,
-                                  lineHeight: 1.6,
-                                  resize: "vertical",
-                                  fontFamily: "inherit",
-                                }}
-                              />
-                              <span className="text-[11px] leading-[1.5] text-[rgba(255,255,255,.36)]">
-                                A aluna vê os passos numerados. Deixe vazio para
-                                a aula não ter exercício.
-                              </span>
-                            </label>
-
-                            <label className="flex flex-col gap-2">
-                              <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
-                                Aplicação — o que fazer com isso na vida
-                              </span>
-                              <textarea
-                                value={aplicacao}
-                                onChange={(e) => setAplicacao(e.target.value)}
-                                rows={6}
-                                placeholder={
-                                  "Texto corrido, fora do caderno.\n\n" +
-                                  "Onde isso encosta na semana dela: com quem falar,\n" +
-                                  "o que observar, o que mudar."
-                                }
-                                style={{
-                                  ...campo,
-                                  minHeight: 120,
-                                  padding: "10px 14px",
-                                  fontSize: 13,
-                                  lineHeight: 1.6,
-                                  resize: "vertical",
-                                  fontFamily: "inherit",
-                                }}
-                              />
-                            </label>
-
-                            <div className="mt-[2px] flex flex-wrap gap-2">
-                              <button
-                                type="submit"
-                                style={{
-                                  ...botaoOuro,
-                                  minHeight: 42,
-                                  padding: "0 18px",
-                                  fontSize: 13,
-                                }}
-                              >
-                                Salvar mídia
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setConteudoDe("")}
-                                style={{ ...botaoNeutroGrande }}
-                              >
-                                Cancelar
-                              </button>
-                            </div>
-                          </form>
-                        ) : null}
-
-                        {/*
-                          Os conteúdos extras da aula. O vídeo
-                          principal, a capa e o exercício continuam nos
-                          campos de sempre, lidos pelo player — aqui
-                          entra o que a aula ganhou além disso: outro
-                          áudio, um texto, um PDF, um link.
-                        */}
-                        {conteudoDe === aula.id && modulo.produtoId ? (
-                          <div className="mb-3">
-                            <span className="mb-2 block" style={rotulo}>
-                              Conteúdo desta aula
-                            </span>
-                            <EditorConteudos
-                              dono={{ produtoId: modulo.produtoId, aulaId: aula.id }}
-                              conteudos={aula.conteudos}
-                              painel={painel}
-                              pedirConfirmacao={pedirConfirmacao}
-                              avisar={avisar}
-                            />
-                          </div>
-                        ) : null}
 
                         {editando === `a:${aula.id}` ? (
                           <form
@@ -1117,5 +943,195 @@ export function AbaConteudo({
       )}
       </section>
     </>
+  );
+}
+
+/**
+ * Uma aula aberta, sozinha na tela.
+ *
+ * Tudo que a aula tem em um lugar só: o vídeo, a capa, o texto que a
+ * aluna lê e os conteúdos extras. Nada do módulo em volta — nem as
+ * outras aulas, nem o campo de criar aula nova, que era o que confundia
+ * quem estava escrevendo.
+ *
+ * Vai por portal, no `body`. Trocar só o que esta aba desenha não
+ * bastava: esta aba mora DENTRO da tela do curso, e o cabeçalho do
+ * curso, o Voltar dele e os campos de configuração continuavam na tela
+ * por cima — medido, o "Voltar" mais próximo era o do curso, e saía do
+ * curso inteiro em vez de voltar para a lista de aulas.
+ *
+ * O texto é UM campo. Chegou a ser três (resumo, exercício, aplicação),
+ * e estava errado: o texto nasce inteiro na cabeça de quem escreve, e
+ * três caixas obrigam a inventar divisão onde não há.
+ */
+function AulaAberta({
+  aula,
+  modulo,
+  painel,
+  video,
+  setVideo,
+  capa,
+  setCapa,
+  texto,
+  setTexto,
+  fechar,
+  pedirConfirmacao,
+  avisar,
+}: {
+  aula: Aula;
+  modulo: Modulo;
+  painel: Painel;
+  video: string;
+  setVideo: (v: string) => void;
+  capa: string;
+  setCapa: (v: string) => void;
+  texto: string;
+  setTexto: (v: string) => void;
+  fechar: () => void;
+  pedirConfirmacao: (p: PedidoConfirmacao) => void;
+  avisar: (m: string) => void;
+}) {
+  useTelaCheia();
+  const { executar } = painel;
+
+  async function salvar(e: FormEvent) {
+    e.preventDefault();
+    /*
+      Os dois sempre gravam, e os dois são contados.
+
+      Antes havia um `??` entre eles: falhando o vídeo, a capa e o texto
+      NEM chegavam a ser tentados — e a mensagem falava só do vídeo. A
+      pessoa via um erro sobre vídeo, ia embora, e não sabia que o resto
+      também não gravou.
+    */
+    const falhaVideo = await executar(() =>
+      dados.definirMidiaDaAula(aula.id, provedorDoLink(video), idDoVideo(video)),
+    );
+    const falhaResto = await executar(() =>
+      dados.atualizarAula(aula.id, {
+        capa_path: capa.trim() || null,
+        texto: texto.trim() || null,
+      }),
+    );
+    if (!falhaVideo && !falhaResto) {
+      avisar("Aula salva.");
+    } else if (falhaVideo && falhaResto) {
+      avisar(`Nada foi salvo. ${falhaVideo}`);
+    } else if (falhaVideo) {
+      avisar(`Capa e texto salvos. O vídeo não: ${falhaVideo}`);
+    } else {
+      avisar(`Vídeo salvo. Capa e texto não: ${falhaResto}`);
+    }
+  }
+
+  return createPortal(
+    <section
+      className="fixed inset-0 z-[70] overflow-y-auto px-6 py-6"
+      style={{ background: tema.fundo }}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Editar a aula"
+    >
+      <div className="mb-6 flex flex-wrap items-start gap-4">
+        <span className="flex min-w-0 flex-[1_1_320px] flex-col gap-[3px]">
+          <span style={rotulo}>
+            Módulo {modulo.numero} · Aula {aula.numero}
+          </span>
+          <span className="font-titulo text-[22px] text-white">{aula.titulo}</span>
+        </span>
+        <button type="button" onClick={fechar} style={botaoNeutroGrande}>
+          ← Voltar
+        </button>
+      </div>
+
+      <form onSubmit={salvar} className="flex flex-col gap-4">
+        {[
+          {
+            rotulo: "Vídeo — link ou identificador (Cloudflare Stream)",
+            valor: video,
+            mudar: setVideo,
+            dica: "https://iframe.videodelivery.net/<uid>  ou só o uid",
+          },
+          {
+            rotulo: "Capa — arquivo no depósito `capas`",
+            valor: capa,
+            mudar: setCapa,
+            dica: `modulo-${modulo.numero}-aula-${aula.numero}.webp`,
+          },
+        ].map((linha) => (
+          <label key={linha.rotulo} className="flex flex-col gap-2" style={{ maxWidth: 780 }}>
+            <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
+              {linha.rotulo}
+            </span>
+            <input
+              type="text"
+              value={linha.valor}
+              onChange={(e) => linha.mudar(e.target.value)}
+              placeholder={linha.dica}
+              style={{ ...campo, minHeight: 42, fontSize: 13 }}
+            />
+          </label>
+        ))}
+
+        <label className="flex flex-col gap-2">
+          <span className="text-[11px] uppercase tracking-[.1em] text-[rgba(255,255,255,.6)]">
+            O texto desta aula — é o que a aluna lê
+          </span>
+          <textarea
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+            rows={24}
+            placeholder={
+              "Escreva a aula como você quiser.\n\n" +
+              "Uma linha em branco separa parágrafo. As quebras que você " +
+              "fizer dentro do parágrafo aparecem como você deixou.\n\n" +
+              "Para destacar, use *asteriscos* — igual ao WhatsApp."
+            }
+            style={{
+              ...campo,
+              minHeight: 460,
+              padding: "14px 16px",
+              fontSize: 14,
+              lineHeight: 1.7,
+              resize: "vertical",
+              fontFamily: "inherit",
+            }}
+          />
+          <span className="text-[11px] leading-[1.5] text-[rgba(255,255,255,.36)]">
+            Deixe vazio e a aula fica só com o vídeo.
+          </span>
+        </label>
+
+        <div className="flex flex-wrap gap-[10px]">
+          <button type="submit" style={botaoOuro}>
+            Salvar aula
+          </button>
+          <button type="button" onClick={fechar} style={botaoNeutroGrande}>
+            Voltar sem salvar
+          </button>
+        </div>
+      </form>
+
+      {/*
+        Os conteúdos extras: o vídeo, a capa e o texto vêm dos campos
+        acima; aqui entra o que a aula ganhou além disso — outro áudio,
+        um PDF, um link.
+      */}
+      {modulo.produtoId ? (
+        <div className="mt-10">
+          <span className="mb-2 block" style={rotulo}>
+            Conteúdo extra desta aula
+          </span>
+          <EditorConteudos
+            dono={{ produtoId: modulo.produtoId, aulaId: aula.id }}
+            conteudos={aula.conteudos}
+            painel={painel}
+            pedirConfirmacao={pedirConfirmacao}
+            avisar={avisar}
+          />
+        </div>
+      ) : null}
+    </section>,
+    document.body,
   );
 }

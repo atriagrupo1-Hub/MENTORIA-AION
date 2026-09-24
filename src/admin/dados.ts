@@ -413,9 +413,7 @@ export async function atualizarAula(
     ordem: number;
     bloqueado_geral: boolean;
     capa_path: string | null;
-    resumo: string | null;
-    exercicio: string | null;
-    aplicacao: string | null;
+    texto: string | null;
   }>,
 ) {
   const { error } = await supabase.from("aulas").update(patch).eq("id", id);

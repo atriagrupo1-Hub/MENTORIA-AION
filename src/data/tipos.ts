@@ -43,18 +43,19 @@ export type Aula = {
   videoRef: string | null;
   materialPath: string | null;
   /**
-   * O que a aula ensina, em texto.
+   * O que a aula ensina, escrito à mão. UM texto só.
    *
    * Existe porque o vídeo não serve sozinho: quem está no ônibus, com o
    * dado no fim ou numa casa de internet fraca ficava sem a aula
    * inteira. E é o único conteúdo que algo automático — uma busca, um
    * assistente de dúvidas — conseguiria ler: título não é conteúdo.
+   *
+   * Um campo, e não três (resumo/exercício/aplicação, como chegou a
+   * ser): o texto nasce inteiro na cabeça de quem escreve, e picá-lo em
+   * caixas obriga a inventar divisão onde não há. O espaçamento e o
+   * destaque são de quem escreve; a tela repete o que recebeu.
    */
-  resumo: string | null;
-  /** Passo a passo do exercício, uma linha por passo. Vazio = não tem. */
-  exercicio: string | null;
-  /** O que fazer com a aula fora do caderno. Texto corrido. */
-  aplicacao: string | null;
+  texto: string | null;
   capaPath: string | null;
   bloqueadoGeral: boolean;
   /** Conteúdos extras desta aula, além do vídeo e do material de sempre. */

@@ -145,9 +145,7 @@ type LinhaAula = {
   titulo: string;
   ordem: number;
   duracao_segundos: number | null;
-  resumo: string | null;
-  exercicio: string | null;
-  aplicacao: string | null;
+  texto: string | null;
   capa_path: string | null;
   bloqueado_geral: boolean;
 };
@@ -364,9 +362,7 @@ export async function carregarCatalogo(): Promise<Catalogo> {
         videoProvider: null,
         videoRef: null,
         materialPath: null,
-        resumo: a.resumo,
-        exercicio: a.exercicio,
-        aplicacao: a.aplicacao,
+        texto: a.texto,
         capaPath: a.capa_path,
         bloqueadoGeral: a.bloqueado_geral,
         conteudos: emOrdem(conteudoDaAula.get(a.id)),
