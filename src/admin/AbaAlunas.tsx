@@ -670,6 +670,7 @@ export function AbaAlunas({
         */
         <div
           className="fixed inset-0 z-[90] overflow-y-auto"
+          data-painel="sim"
           style={{ background: tema.fundo }}
           role="dialog"
           aria-modal="true"

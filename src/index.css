@@ -95,6 +95,82 @@
     box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.9);
   }
 
+  /*
+   * O painel responder ao toque.
+   *
+   * Os botões do painel são objeto de estilo (`botaoOuro`,
+   * `botaoNeutro`, `botaoRemover` em `admin/estilos.ts`), espalhados por
+   * 120 lugares. Objeto de estilo não tem `:hover` nem `:active`:
+   * apertar "Salvar" no celular não dava sinal nenhum de que pegou, e no
+   * computador o cursor passava por cima sem nada mudar. Quem administra
+   * a turma aperta o mesmo botão cinquenta vezes por dia e ficava sem
+   * saber se apertou.
+   *
+   * Uma regra, não 120 edições: o painel marca a raiz com
+   * `data-painel="sim"` e todo botão dentro dela ganha resposta. A área
+   * da aluna fica de fora — lá cada botão já tem a sua, em Tailwind.
+   *
+   * O véu é CINZA, e é o único jeito de uma regra só servir aos três
+   * botões do painel: cinza clareia o que é escuro (o botão de contorno
+   * sobre o preto) e escurece o que é claro (o botão branco). Clarear
+   * não servia — sobre branco não muda nada.
+   *
+   * `box-shadow` e `filter`, nunca `background` nem `opacity`: aqueles
+   * dois vêm em `style={{...}}` nos botões, e estilo em linha ganha da
+   * folha. Vinte botões — "Salvar", "Enviar" — trazem `opacity: 1` e
+   * ficariam sem resposta nenhuma.
+   */
+  /*
+   * Só a sombra transita. O afundar de 1px é instantâneo de propósito:
+   * os chips de ordenar são botões, e uma transição de `transform`
+   * fazia o chip arrastado andar atrasado atrás do dedo — o contrário
+   * do que se pediu do arrasto.
+   */
+  [data-painel="sim"] button:not(:disabled) {
+    transition: box-shadow 0.12s ease;
+  }
+
+  /*
+   * `(hover: hover)` porque no celular o dedo deixa o último botão
+   * tocado com o `:hover` preso — realçado para sempre, como se
+   * esperasse outro clique.
+   */
+  @media (hover: hover) {
+    [data-painel="sim"] button:not(:disabled):hover {
+      box-shadow: inset 0 0 0 999px rgba(127, 127, 127, 0.2);
+    }
+  }
+
+  /* Este é o que importa no dedo: acontece enquanto o toque dura. */
+  [data-painel="sim"] button:not(:disabled):active {
+    box-shadow: inset 0 0 0 999px rgba(127, 127, 127, 0.36);
+    transform: translateY(1px);
+  }
+
+  /*
+   * O anel escuro do foco de teclado é `box-shadow` também, e some
+   * quando o mouse passa por cima do botão focado. Aqui os dois
+   * convivem. (O contorno branco não depende disto.)
+   */
+  [data-painel="sim"] button:not(:disabled):focus-visible:hover {
+    box-shadow: inset 0 0 0 999px rgba(127, 127, 127, 0.2), 0 0 0 4px rgba(0, 0, 0, 0.9);
+  }
+  [data-painel="sim"] button:not(:disabled):focus-visible:active {
+    box-shadow: inset 0 0 0 999px rgba(127, 127, 127, 0.36), 0 0 0 4px rgba(0, 0, 0, 0.9);
+  }
+
+  /*
+   * Desabilitado não responde, e o cursor diz isso antes do clique.
+   *
+   * `!important` porque `cursor: pointer` vem no objeto de estilo do
+   * botão, em linha, e estilo em linha ganha da folha. Sem isto, a seta
+   * de ordenar que está no fim da fila continua com a mãozinha de
+   * "pode clicar" — e a pessoa clica, e nada acontece.
+   */
+  [data-painel="sim"] button:disabled {
+    cursor: not-allowed !important;
+  }
+
   a {
     color: #e2c485;
     text-decoration: none;

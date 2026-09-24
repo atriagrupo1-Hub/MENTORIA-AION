@@ -95,7 +95,7 @@ function EntradaAdmin({
   }
 
   return (
-    <div className="min-h-screen" style={{ background: FUNDO }}>
+    <div className="min-h-screen" data-painel="sim" style={{ background: FUNDO }}>
       <div className="flex min-h-screen items-center justify-center px-[18px] py-8">
         <form
           onSubmit={enviar}
@@ -316,7 +316,7 @@ function PainelLogado() {
     `${totalPresentes} ${totalPresentes === 1 ? "item" : "itens"}`;
 
   return (
-    <div className="min-h-screen" style={{ background: FUNDO }}>
+    <div className="min-h-screen" data-painel="sim" style={{ background: FUNDO }}>
       {/*
         Barra da marca. Fica separada do conteúdo por uma linha só — e
         sai inteira em tela cheia.
