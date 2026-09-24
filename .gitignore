@@ -10,6 +10,12 @@ dist/
 # raiz ao rodar. São ferramenta, não produto: a pasta `previa/` é
 # apagada ao fim de cada passagem, mas as capturas reaparecem sempre que
 # os testes rodam de novo.
-previa/
+previa/*
 *.png
 !public/*.png
+
+# Estes dois, não: o teste do site NO AR roda do computador do dono, e
+# por isso mora no repositório. (`previa/*` e não `previa/`, senão o
+# git nem olha para dentro da pasta e a exceção não vale.)
+!previa/producao.mjs
+!previa/README.md
