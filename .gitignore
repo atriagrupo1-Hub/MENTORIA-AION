@@ -19,6 +19,8 @@ previa/*
 # git nem olha para dentro da pasta e a exceção não vale.)
 !previa/producao.mjs
 !previa/README.md
+# A maquete do painel, para levar a uma ferramenta de desenho e voltar.
+!previa/painel-para-desenhar.html
 
 # O .zip do próprio projeto, gerado para download. Guardar dentro do
 # repositório uma cópia compactada do repositório só faz o histórico

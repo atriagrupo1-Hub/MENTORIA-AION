@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Painel AION — maquete para desenhar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+<!--
+  Maquete do painel administrativo, para mexer no layout sem mexer no
+  aplicativo.
+
+  É uma cópia visual: as cores, as medidas e os textos são os mesmos do
+  painel de verdade (`src/admin/estilos.ts`), e os dados são inventados.
+  Nada aqui salva, apaga ou fala com o banco.
+
+  Um arquivo só, sem dependência nenhuma além das fontes. Abre com dois
+  cliques no navegador, e sobe em qualquer ferramenta de desenho.
+
+  As medidas que importam, se você for mexer:
+    · botão principal e campo:  44px de altura
+    · botão de linha:           36px
+    · raio:                     8px (cartão: 12px)
+    · contorno de controle:     rgba(255,255,255,.36) — mínimo de norma
+    · vermelho:                 #e5645c, e só para o que apaga
+-->
+<style>
+  :root {
+    --fundo: #000000;
+    --superficie: #0b0b0d;
+    --superficie-alta: #141417;
+    --linha: rgba(255, 255, 255, 0.36);
+    --linha-suave: rgba(255, 255, 255, 0.07);
+    --texto: #ffffff;
+    --texto-2: rgba(255, 255, 255, 0.58);
+    --texto-3: rgba(255, 255, 255, 0.46);
+    --perigo: #e5645c;
+    --perigo-linha: rgba(229, 100, 92, 0.75);
+    --perigo-fundo: rgba(229, 100, 92, 0.1);
+    --ouro: #a58a52;
+    --raio: 8px;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: Lato, Helvetica, Arial, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .titulo { font-family: "Cormorant Garamond", Georgia, serif; }
+
+  /* ---------- controles ---------- */
+  .campo {
+    min-height: 44px;
+    padding: 0 14px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--texto);
+    background: var(--superficie);
+    border: 1px solid var(--linha);
+    border-radius: var(--raio);
+    width: 100%;
+  }
+  textarea.campo { padding: 12px 14px; line-height: 1.7; resize: vertical; }
+
+  .botao {
+    min-height: 44px;
+    padding: 0 20px;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: #000;
+    background: var(--texto);
+    border: 1px solid transparent;
+    border-radius: var(--raio);
+    cursor: pointer;
+  }
+  .botao-neutro {
+    min-height: 36px;
+    padding: 0 13px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--texto);
+    background: transparent;
+    border: 1px solid var(--linha);
+    border-radius: var(--raio);
+    cursor: pointer;
+  }
+  .botao-neutro.grande { min-height: 44px; padding: 0 18px; font-size: 14px; }
+  .botao-remover { color: var(--perigo); border-color: var(--perigo-linha); }
+
+  /* resposta ao toque, igual à do painel */
+  [data-painel] button:not(:disabled) { transition: box-shadow 0.12s ease; }
+  @media (hover: hover) {
+    [data-painel] button:not(:disabled):hover {
+      box-shadow: inset 0 0 0 999px rgba(127, 127, 127, 0.2);
+    }
+  }
+  [data-painel] button:not(:disabled):active {
+    box-shadow: inset 0 0 0 999px rgba(127, 127, 127, 0.36);
+    transform: translateY(1px);
+  }
+
+  .rotulo {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--texto-3);
+  }
+  .etiqueta {
+    padding: 5px 10px;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: 1px solid currentColor;
+    border-radius: 4px;
+  }
+  .cartao {
+    background: var(--superficie);
+    border: 1px solid var(--linha-suave);
+    border-radius: 12px;
+  }
+
+  /* ---------- moldura ---------- */
+  .marca {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--linha-suave);
+  }
+  .marca .selo {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 22px;
+    color: var(--ouro);
+    letter-spacing: 0.22em;
+  }
+  .conteudo { padding: 24px; }
+
+  .cabecalho { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; }
+  .cabecalho h1 { margin: 0; font-size: 26px; font-weight: 700; }
+  .cabecalho .contagem { font-size: 14px; color: var(--texto-2); }
+
+  .abas { display: flex; flex-wrap: wrap; margin: 18px 0 26px; border-bottom: 1px solid var(--linha-suave); }
+  .aba {
+    min-height: 40px;
+    padding: 0 2px;
+    margin-right: 26px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--texto-3);
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+  }
+  .aba[aria-selected="true"] { color: var(--texto); font-weight: 600; border-bottom-color: var(--texto); }
+
+  .tela { display: none; }
+  .tela.ativa { display: block; }
+
+  /* ---------- listas ---------- */
+  .linha {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--linha-suave);
+  }
+  .linha .nome { flex: 1 1 260px; min-width: 0; }
+  .linha .nome b { display: block; font-weight: 700; }
+  .linha .nome span { font-size: 13px; color: var(--texto-3); }
+  .acoes { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .bloco-modulo { border: 1px solid var(--linha-suave); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  .cabecalho-modulo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+  .cabecalho-modulo .nome { flex: 1 1 280px; }
+
+  .cartoes { display: flex; flex-wrap: wrap; gap: 12px; }
+  .cartao-curso {
+    flex: 0 1 240px;
+    padding: 14px 16px;
+    background: var(--superficie);
+    border: 1px solid var(--linha-suave);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+  }
+  .cartao-curso b { display: block; font-size: 15px; }
+  .cartao-curso span { font-size: 13px; color: var(--texto-3); }
+
+  .campos { display: flex; flex-wrap: wrap; gap: 14px; }
+  .grupo { display: flex; flex-direction: column; gap: 6px; }
+  .grupo.nome { flex: 1 1 320px; max-width: 520px; }
+  .grupo.largo { flex: 1 1 100%; max-width: 780px; }
+  .dica { font-size: 11px; line-height: 1.5; color: rgba(255, 255, 255, 0.36); }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    padding: 8px 14px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--texto);
+    background: var(--superficie-alta);
+    border: 1px solid var(--linha);
+    border-radius: 999px;
+    cursor: grab;
+  }
+
+  .aviso {
+    margin-top: 10px;
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--texto-2);
+    border: 1px solid var(--linha-suave);
+    border-radius: var(--raio);
+  }
+
+  @media (max-width: 720px) {
+    .conteudo { padding: 16px; }
+    .marca { padding: 12px 16px; }
+    .aba { margin-right: 16px; }
+  }
+</style>
+</head>
+
+<body data-painel="sim">
+  <div class="marca">
+    <span class="selo">AION</span>
+    <span class="rotulo">Painel administrativo</span>
+    <span style="flex:1"></span>
+    <span style="font-size:13px;color:var(--texto-2)">Administradora · Dono</span>
+    <button class="botao-neutro">Sair</button>
+  </div>
+
+  <div class="conteudo">
+    <div class="cabecalho">
+      <h1 id="tituloDaTela">Cursos e conteúdos</h1>
+      <span class="contagem" id="contagemDaTela">3 produtos · 12 módulos · 51 aulas</span>
+    </div>
+
+    <div class="abas" role="tablist">
+      <button class="aba" role="tab" data-tela="alunas">Alunas</button>
+      <button class="aba" role="tab" data-tela="layout">Categorias / Layout</button>
+      <button class="aba" role="tab" aria-selected="true" data-tela="cursos">Cursos e conteúdos</button>
+      <button class="aba" role="tab" data-tela="curso">↳ Curso aberto</button>
+      <button class="aba" role="tab" data-tela="aula">↳ Aula aberta</button>
+      <button class="aba" role="tab" data-tela="comentarios">Comentários</button>
+      <button class="aba" role="tab" data-tela="equipe">Equipe</button>
+    </div>
+
+    <!-- ============ ALUNAS ============ -->
+    <section class="tela" id="tela-alunas">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px">
+        <input class="campo" style="flex:1 1 280px;max-width:520px" placeholder="Procurar pelo nome" />
+        <button class="botao">Cadastrar aluna</button>
+      </div>
+
+      <div class="linha">
+        <span class="nome"><b>Maria das Graças</b><span>maria · entrou em 01/09 · acesso até 01/09/2027</span></span>
+        <span class="etiqueta" style="color:#9dc08b">Ativa</span>
+        <span class="acoes">
+          <button class="botao-neutro">Ficha</button>
+          <button class="botao-neutro">Liberar conteúdo</button>
+          <button class="botao-neutro">Cronograma</button>
+          <button class="botao-neutro">Renovar</button>
+          <button class="botao-neutro botao-remover">Bloquear</button>
+        </span>
+      </div>
+      <div class="linha">
+        <span class="nome"><b>Terezinha Alves</b><span>tere · entrou em 02/09 · acesso até 02/09/2027</span></span>
+        <span class="etiqueta" style="color:#9dc08b">Ativa</span>
+        <span class="acoes">
+          <button class="botao-neutro">Ficha</button>
+          <button class="botao-neutro">Liberar conteúdo</button>
+          <button class="botao-neutro">Cronograma</button>
+          <button class="botao-neutro">Renovar</button>
+          <button class="botao-neutro botao-remover">Bloquear</button>
+        </span>
+      </div>
+      <div class="linha">
+        <span class="nome"><b>Cleide Nogueira</b><span>cleide · entrou em 03/09 · acesso vencido</span></span>
+        <span class="etiqueta" style="color:var(--perigo)">Bloqueada</span>
+        <span class="acoes">
+          <button class="botao-neutro">Ficha</button>
+          <button class="botao-neutro">Liberar conteúdo</button>
+          <button class="botao-neutro">Cronograma</button>
+          <button class="botao-neutro">Renovar</button>
+          <button class="botao-neutro">Desbloquear</button>
+        </span>
+      </div>
+    </section>
+
+    <!-- ============ CATEGORIAS / LAYOUT ============ -->
+    <section class="tela" id="tela-layout">
+      <p class="rotulo" style="margin:0 0 10px">A ordem em que a aluna vê</p>
+      <div class="chips" style="margin-bottom:22px">
+        <button class="chip">Mentoria</button>
+        <button class="chip">Meditações guiadas</button>
+        <button class="chip">Ebooks</button>
+        <button class="chip">Documentários</button>
+        <button class="chip">Orações da manhã</button>
+        <button class="chip">Bônus</button>
+      </div>
+
+      <div class="bloco-modulo">
+        <div class="cabecalho-modulo">
+          <span class="nome"><b>Mentoria</b><br /><span style="font-size:13px;color:var(--texto-3)">1 curso</span></span>
+          <span class="acoes">
+            <button class="botao-neutro">Editar</button>
+            <button class="botao-neutro">↑</button>
+            <button class="botao-neutro">↓</button>
+            <button class="botao-neutro botao-remover">Remover</button>
+          </span>
+        </div>
+      </div>
+      <div class="bloco-modulo">
+        <div class="cabecalho-modulo">
+          <span class="nome"><b>Meditações guiadas</b><br /><span style="font-size:13px;color:var(--texto-3)">2 cursos</span></span>
+          <span class="acoes">
+            <button class="botao-neutro">Editar</button>
+            <button class="botao-neutro">↑</button>
+            <button class="botao-neutro">↓</button>
+            <button class="botao-neutro botao-remover">Remover</button>
+          </span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px">
+        <input class="campo" style="flex:1 1 260px;max-width:520px" placeholder="Nome da nova categoria" />
+        <button class="botao-neutro grande">+ Adicionar categoria</button>
+      </div>
+    </section>
+
+    <!-- ============ CURSOS ============ -->
+    <section class="tela ativa" id="tela-cursos">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:16px">
+        <span style="flex:1;color:var(--texto-2);font-size:14px">
+          Todos os produtos. Clique num deles para montar o conteúdo.
+        </span>
+        <button class="botao">+ Criar novo</button>
+      </div>
+      <div class="cartoes">
+        <button class="cartao-curso"><b>Caminho do Desbloqueio</b><span>Mentoria</span></button>
+        <button class="cartao-curso"><b>17 Frequências Genuínas</b><span>Meditações guiadas</span></button>
+        <button class="cartao-curso"><b>Manuscritos Sagrados</b><span>Ebooks</span></button>
+      </div>
+    </section>
+
+    <!-- ============ CURSO ABERTO ============ -->
+    <section class="tela" id="tela-curso">
+      <div style="display:flex;flex-wrap:wrap;align-items:start;gap:14px;margin-bottom:18px">
+        <span style="flex:1 1 320px">
+          <span class="rotulo">Curso</span>
+          <div class="titulo" style="font-size:22px">Caminho do Desbloqueio para Bênçãos Ilimitadas</div>
+        </span>
+        <button class="botao-neutro grande">← Voltar</button>
+      </div>
+
+      <p class="rotulo" style="margin:0 0 10px">Configurações</p>
+      <div class="cartao" style="padding:16px;margin-bottom:26px">
+        <div class="campos">
+          <label class="grupo nome">
+            <span class="rotulo">Nome</span>
+            <input class="campo" value="Caminho do Desbloqueio para Bênçãos Ilimitadas" />
+          </label>
+          <label class="grupo" style="flex:1 1 240px">
+            <span class="rotulo">Categoria onde aparece</span>
+            <select class="campo"><option>Mentoria</option></select>
+          </label>
+          <label class="grupo" style="flex:0 0 130px">
+            <span class="rotulo">Visibilidade</span>
+            <select class="campo"><option>Visível</option><option>Oculto</option></select>
+          </label>
+        </div>
+
+        <label class="grupo largo" style="margin-top:14px">
+          <span class="rotulo">Descrição</span>
+          <textarea class="campo" rows="2">A mentoria completa, em módulos e aulas.</textarea>
+        </label>
+
+        <label class="grupo largo" style="margin-top:14px">
+          <span class="rotulo">Fundação — o que é este curso</span>
+          <textarea class="campo" rows="5" placeholder="Para quem é, o que promete, com que voz se fala aqui."></textarea>
+        </label>
+
+        <label class="grupo largo" style="margin-top:14px">
+          <span class="rotulo">Aviso de material — aparece em toda aula</span>
+          <textarea class="campo" rows="2">Quer o PDF desta aula? Peça no seu grupo da mentoria.</textarea>
+        </label>
+
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:18px">
+          <button class="botao">Salvar</button>
+          <button class="botao-neutro grande">Cancelar</button>
+          <button class="botao-neutro grande botao-remover">Remover</button>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:12px">
+        <span class="rotulo">Conteúdo do produto</span>
+        <span style="font-size:13px;color:var(--texto-2)">11 módulos · 50 aulas</span>
+      </div>
+
+      <div class="bloco-modulo">
+        <div class="cabecalho-modulo">
+          <span class="nome"><b>Módulo 0 — BOAS-VINDAS E DIAGNÓSTICO</b><br /><span style="font-size:13px;color:var(--texto-3)">2 aulas</span></span>
+          <span class="acoes">
+            <span class="etiqueta" style="color:#9dc08b">Ativo</span>
+            <button class="botao-neutro">Editar</button>
+            <button class="botao-neutro">Bloquear para todas</button>
+            <button class="botao-neutro">↑</button>
+            <button class="botao-neutro">↓</button>
+            <button class="botao-neutro botao-remover">Remover módulo</button>
+            <button class="botao-neutro">⌄</button>
+          </span>
+        </div>
+
+        <div class="linha" style="margin-top:12px">
+          <span class="nome"><b>1. Você não entrou em mais um curso</b><span>com vídeo · com texto</span></span>
+          <span class="acoes">
+            <button class="botao-neutro">↑</button>
+            <button class="botao-neutro">↓</button>
+            <button class="botao-neutro">Abrir</button>
+            <button class="botao-neutro">Liberar para todas</button>
+            <button class="botao-neutro">Editar</button>
+            <button class="botao-neutro botao-remover">Bloquear</button>
+            <button class="botao-neutro botao-remover">Remover</button>
+          </span>
+        </div>
+        <div class="linha">
+          <span class="nome"><b>2. Seu ponto de partida e a vida que deseja construir</b><span>sem vídeo</span></span>
+          <span class="acoes">
+            <button class="botao-neutro">↑</button>
+            <button class="botao-neutro">↓</button>
+            <button class="botao-neutro">Abrir</button>
+            <button class="botao-neutro">Liberar para todas</button>
+            <button class="botao-neutro">Editar</button>
+            <button class="botao-neutro botao-remover">Bloquear</button>
+            <button class="botao-neutro botao-remover">Remover</button>
+          </span>
+        </div>
+
+        <button class="botao-neutro grande" style="margin-top:12px">+ Adicionar aula</button>
+      </div>
+
+      <div class="bloco-modulo">
+        <div class="cabecalho-modulo">
+          <span class="nome"><b>Módulo 1 — DESCOBRINDO O VERDADEIRO BLOQUEIO</b><br /><span style="font-size:13px;color:var(--texto-3)">4 aulas</span></span>
+          <span class="acoes">
+            <span class="etiqueta" style="color:#9dc08b">Ativo</span>
+            <button class="botao-neutro">Editar</button>
+            <button class="botao-neutro">Bloquear para todas</button>
+            <button class="botao-neutro">↑</button>
+            <button class="botao-neutro">↓</button>
+            <button class="botao-neutro botao-remover">Remover módulo</button>
+            <button class="botao-neutro">⌄</button>
+          </span>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;padding:16px;border:1px dashed rgba(255,255,255,.16);border-radius:14px">
+        <input class="campo" style="flex:1 1 260px;max-width:520px" placeholder="Nome do novo módulo" />
+        <button class="botao-neutro grande">+ Adicionar módulo</button>
+      </div>
+    </section>
+
+    <!-- ============ AULA ABERTA ============ -->
+    <section class="tela" id="tela-aula">
+      <div style="display:flex;flex-wrap:wrap;align-items:start;gap:14px;margin-bottom:22px">
+        <span style="flex:1 1 320px">
+          <span class="rotulo">Módulo 1 · Aula 1</span>
+          <div class="titulo" style="font-size:22px">O primeiro passo do desbloqueio</div>
+        </span>
+        <button class="botao-neutro grande">← Voltar</button>
+      </div>
+
+      <label class="grupo largo" style="margin-bottom:16px">
+        <span class="rotulo">Vídeo — link ou identificador (Cloudflare Stream)</span>
+        <input class="campo" placeholder="https://iframe.videodelivery.net/&lt;uid&gt;  ou só o uid" />
+      </label>
+
+      <label class="grupo largo" style="margin-bottom:16px">
+        <span class="rotulo">Capa da aula</span>
+        <span style="display:flex;flex-wrap:wrap;gap:8px">
+          <input class="campo" style="flex:1 1 240px" placeholder="modulo-1-aula-1.webp" />
+          <button class="botao-neutro grande">Escolher imagem</button>
+        </span>
+        <span class="dica">Escolha a imagem do computador e o caminho se preenche sozinho.</span>
+      </label>
+
+      <label class="grupo largo" style="margin-bottom:18px">
+        <span class="rotulo">O texto desta aula — é o que a aluna lê</span>
+        <textarea class="campo" rows="16" style="min-height:420px" placeholder="Escreva a aula como você quiser.
+
+Uma linha em branco separa parágrafo.
+
+Para destacar, use *asteriscos* — igual ao WhatsApp."></textarea>
+        <span class="dica">Deixe vazio e a aula fica só com o vídeo.</span>
+      </label>
+
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:34px">
+        <button class="botao">Salvar aula</button>
+        <button class="botao-neutro grande">Voltar sem salvar</button>
+      </div>
+
+      <p class="rotulo" style="margin:0 0 10px">Conteúdo extra desta aula</p>
+      <div class="cartao" style="padding:16px">
+        <div class="chips" style="margin-bottom:14px">
+          <button class="chip">Vídeo</button>
+          <button class="chip">Áudio</button>
+          <button class="chip">Texto</button>
+          <button class="chip">PDF / e-book</button>
+          <button class="chip">Link</button>
+          <button class="chip">Imagem / capa</button>
+        </div>
+        <div class="campos">
+          <label class="grupo nome">
+            <span class="rotulo">Nome do conteúdo</span>
+            <input class="campo" placeholder="Baixar o PDF" />
+          </label>
+          <label class="grupo" style="flex:1 1 240px">
+            <span class="rotulo">Arquivo no depósito materiais</span>
+            <span style="display:flex;gap:8px">
+              <input class="campo" placeholder="livro.pdf" />
+              <button class="botao-neutro grande">Enviar arquivo</button>
+            </span>
+          </label>
+        </div>
+        <div style="margin-top:14px"><button class="botao">Adicionar</button></div>
+      </div>
+    </section>
+
+    <!-- ============ COMENTÁRIOS ============ -->
+    <section class="tela" id="tela-comentarios">
+      <div class="chips" style="margin-bottom:20px">
+        <button class="chip">Para moderar (2)</button>
+        <button class="chip">Publicados</button>
+        <button class="chip">Ocultos</button>
+      </div>
+
+      <div class="cartao" style="padding:16px;margin-bottom:12px">
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:baseline">
+          <b style="flex:1 1 220px">Maria das Graças</b>
+          <span style="font-size:13px;color:var(--texto-3)">Módulo 1 · Aula 1 · hoje, 09:14</span>
+        </div>
+        <p style="margin:10px 0 14px;color:rgba(255,255,255,.85)">
+          Essa aula mexeu comigo. Fiz o exercício ontem à noite e chorei.
+        </p>
+        <div class="acoes">
+          <button class="botao-neutro">Publicar</button>
+          <button class="botao-neutro">Ocultar</button>
+          <button class="botao-neutro">Responder</button>
+          <button class="botao-neutro botao-remover">Remover</button>
+        </div>
+      </div>
+
+      <div class="cartao" style="padding:16px">
+        <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:baseline">
+          <b style="flex:1 1 220px">Terezinha Alves</b>
+          <span style="font-size:13px;color:var(--texto-3)">Módulo 0 · Aula 2 · ontem, 21:40</span>
+        </div>
+        <p style="margin:10px 0 14px;color:rgba(255,255,255,.85)">
+          Não consegui abrir o vídeo pelo celular. Alguém mais?
+        </p>
+        <div class="acoes">
+          <button class="botao-neutro">Publicar</button>
+          <button class="botao-neutro">Ocultar</button>
+          <button class="botao-neutro">Responder</button>
+          <button class="botao-neutro botao-remover">Remover</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ EQUIPE ============ -->
+    <section class="tela" id="tela-equipe">
+      <div class="linha">
+        <span class="nome"><b>Administradora</b><span>admin · dono</span></span>
+        <span class="acoes">
+          <button class="botao-neutro">Trocar código</button>
+        </span>
+      </div>
+      <div class="linha">
+        <span class="nome"><b>Joana Suporte</b><span>joana · suporte</span></span>
+        <span class="acoes">
+          <button class="botao-neutro">Trocar código</button>
+          <button class="botao-neutro botao-remover">Bloquear</button>
+          <button class="botao-neutro botao-remover">Remover</button>
+        </span>
+      </div>
+
+      <div class="cartao" style="padding:16px;margin-top:20px;max-width:780px">
+        <p class="rotulo" style="margin:0 0 12px">Adicionar alguém à equipe</p>
+        <div class="campos">
+          <label class="grupo nome"><span class="rotulo">Nome</span><input class="campo" /></label>
+          <label class="grupo" style="flex:1 1 200px"><span class="rotulo">Login</span><input class="campo" /></label>
+          <label class="grupo" style="flex:0 0 150px"><span class="rotulo">Papel</span>
+            <select class="campo"><option>Suporte</option><option>Administrador</option></select>
+          </label>
+        </div>
+        <div style="margin-top:16px"><button class="botao">Adicionar</button></div>
+      </div>
+    </section>
+
+    <p class="aviso">
+      Maquete. Nada aqui salva, apaga ou fala com o banco — é a casca do painel
+      para mexer no layout à vontade.
+    </p>
+  </div>
+
+<script>
+  /* Trocar de tela. É só isso: a maquete não tem lógica nenhuma. */
+  const nomes = {
+    alunas: ["Alunas", "3 alunas · 2 ativas"],
+    layout: ["Categorias / Layout", "6 categorias"],
+    cursos: ["Cursos e conteúdos", "3 produtos · 12 módulos · 51 aulas"],
+    curso: ["Caminho do Desbloqueio", "11 módulos · 50 aulas"],
+    aula: ["O primeiro passo do desbloqueio", "Módulo 1 · Aula 1"],
+    comentarios: ["Comentários", "2 para moderar"],
+    equipe: ["Equipe", "2 pessoas"],
+  };
+  for (const aba of document.querySelectorAll(".aba")) {
+    aba.addEventListener("click", () => {
+      for (const o of document.querySelectorAll(".aba")) o.removeAttribute("aria-selected");
+      aba.setAttribute("aria-selected", "true");
+      for (const t of document.querySelectorAll(".tela")) t.classList.remove("ativa");
+      document.getElementById("tela-" + aba.dataset.tela).classList.add("ativa");
+      const [titulo, contagem] = nomes[aba.dataset.tela];
+      document.getElementById("tituloDaTela").textContent = titulo;
+      document.getElementById("contagemDaTela").textContent = contagem;
+    });
+  }
+</script>
+</body>
+</html>

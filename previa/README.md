@@ -61,3 +61,27 @@ não passam por conversa nenhuma, e somem quando você fechar a janela.
 ## Se falhar
 
 Copie a saída inteira e me mande junto com `previa/producao-390.png`.
+
+---
+
+# A maquete do painel, para desenhar fora daqui
+
+`previa/painel-para-desenhar.html` é a casca do painel administrativo
+num arquivo só: as cores, as medidas e os textos do painel de verdade,
+com dados inventados. Abre com dois cliques no navegador e sobe em
+qualquer ferramenta de desenho.
+
+Sete telas, nas abas de cima: Alunas, Categorias / Layout, Cursos e
+conteúdos, Curso aberto, Aula aberta, Comentários e Equipe.
+
+**Nada ali salva, apaga ou fala com o banco.** É layout, e só.
+
+Mexa à vontade e devolva o arquivo — ou prints, ou os dois. A tradução
+para os componentes de verdade (`src/admin/*.tsx`) é comigo: o que a
+maquete não tem é permissão, cronograma, arrastar para ordenar e o
+banco, e é isso que precisa continuar funcionando do outro lado.
+
+Duas medidas que vale conhecer antes de mexer: controle tem **44px** de
+altura (36px quando mora dentro de uma linha de lista), e o contorno é
+`rgba(255,255,255,.36)` — abaixo disso ele some contra o preto, e a
+norma de acessibilidade pede 3:1 para o limite de um controle.
